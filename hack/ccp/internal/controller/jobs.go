@@ -160,17 +160,18 @@ func newOutputDecisionJob(j *job) (*outputDecisionJob, error) {
 }
 
 func (l *outputDecisionJob) exec(ctx context.Context) (uuid.UUID, error) {
+	if err := l.j.pkg.reload(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("reload: %v", err)
+	}
+	if err := l.j.save(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("save: %v", err)
+	}
+
 	// TODO: store active agent with l.j.p.saveValue.
 	return uuid.Nil, nil
 }
 
 // nextChainDecisionJob.
-//
-// 1. Reload *Package (pull state from db into memory since it can be changed by client scripts).
-// 2. Persist job in database: https://github.com/artefactual/archivematica/blob/fbda1a91d6dff086e7124fa1d7a3c7953d8755bb/src/MCPServer/lib/server/jobs/base.py#L76.
-// 3. Load preconfigured choices, and resolve the job if the decision is preconfigured.
-// 4. Otherwise, mark as awaiting decision, put on hold. Decision must be made by the user via the API.
-// 5. ...
 //
 // Manager: linkTaskManagerChoice.
 // Class: NextChainDecisionJob(DecisionJob).
@@ -194,17 +195,18 @@ func newNextChainDecisionJob(j *job) (*nextChainDecisionJob, error) {
 }
 
 func (l *nextChainDecisionJob) exec(ctx context.Context) (uuid.UUID, error) {
-	// When we have a preconfigured choice.
-	choice, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID)
-	if err != nil {
-		return uuid.Nil, err
+	if err := l.j.pkg.reload(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("reload: %v", err)
 	}
-	if choice != nil {
-		if ret, err := uuid.Parse(choice.GoToChain); err != nil {
-			l.j.logger.Info("Preconfigured choice is not a valid UUID.", "choice", choice.GoToChain, "err", err)
-		} else {
-			return ret, nil
-		}
+	if err := l.j.save(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("save: %v", err)
+	}
+
+	// When we have a preconfigured choice.
+	if chainID, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID); err != nil {
+		return uuid.Nil, err
+	} else if chainID != uuid.Nil {
+		return chainID, nil
 	}
 
 	// Build decision point and await resolution.
@@ -264,6 +266,13 @@ func newUpdateContextDecisionJob(j *job) (*updateContextDecisionJob, error) {
 }
 
 func (l *updateContextDecisionJob) exec(ctx context.Context) (uuid.UUID, error) {
+	if err := l.j.pkg.reload(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("reload: %v", err)
+	}
+	if err := l.j.save(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("save: %v", err)
+	}
+
 	id := l.j.wl.ExitCodes[0].LinkID
 	if id == nil || *id == uuid.Nil {
 		return uuid.Nil, errors.New("ops")
@@ -314,11 +323,15 @@ func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) 
 		return uuid.Nil, err
 	}
 
-	if ec, ok := l.j.wl.ExitCodes[taskResult.ExitCode]; ok && ec.LinkID != nil {
+	if ec, ok := l.j.wl.ExitCodes[taskResult.ExitCode]; ok {
+		if ec.LinkID == nil {
+			return uuid.Nil, io.EOF // End of chain.
+		}
 		return *ec.LinkID, nil
 	}
+
 	if l.j.wl.FallbackLinkID == uuid.Nil {
-		return uuid.Nil, io.EOF
+		return uuid.Nil, io.EOF // End of chain.
 	}
 
 	return l.j.wl.FallbackLinkID, nil

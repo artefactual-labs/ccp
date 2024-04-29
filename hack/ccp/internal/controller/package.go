@@ -109,51 +109,59 @@ func (p *Package) String() string {
 	return p.Name()
 }
 
-func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (*workflow.Choice, error) {
-	li := linkID.String()
-
-	// TODO: automate "Approve standard transfer" until we can submit decisions.
-	if li == "0c94e6b5-4714-4bec-82c8-e187e0c04d77" {
-		return &workflow.Choice{
-			AppliesTo: "0c94e6b5-4714-4bec-82c8-e187e0c04d77",
-			GoToChain: "b4567e89-9fea-4256-99f5-a88987026488",
-		}, nil
+// PreconfiguredChoice looks up a pre-configured choice in the processing
+// configuration file that is part of the package.
+func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
+	// TODO: auto-approval should only happen if requested by the user, but
+	// this is convenient during initial development.
+	if chainID := Transfers.Decide(linkID); chainID != uuid.Nil {
+		return chainID, nil
 	}
 
 	f, err := os.Open(filepath.Join(p.path, "processingMCP.xml"))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return uuid.Nil, nil
 		}
-		return nil, err
+		return uuid.Nil, err
 	}
 
-	// TODO: this could be cached if the file isn't going to change.
+	// TODO: this could be cached if the file isn't going to change, but
+	// Archivematica is not doing any caching.
 	choices, err := workflow.ParseConfig(f)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
 
-	var match *workflow.Choice
+	var chainID uuid.UUID
+	li := linkID.String()
 	for _, choice := range choices {
 		if choice.AppliesTo == li {
-			match = &choice
+			if id, err := uuid.Parse(choice.GoToChain); err != nil {
+				return uuid.Nil, err
+			} else {
+				chainID = id
+			}
 			break
 		}
 	}
 
 	// Resort to automated config.
 	// TODO: allow user to choose the system processing config to use.
-	if match == nil {
+	if chainID == uuid.Nil {
 		for _, choice := range workflow.AutomatedConfig.Choices.Choices {
 			if choice.AppliesTo == li {
-				match = &choice
+				if id, err := uuid.Parse(choice.GoToChain); err != nil {
+					return uuid.Nil, err
+				} else {
+					chainID = id
+				}
 				break
 			}
 		}
 	}
 
-	return match, nil
+	return chainID, nil
 }
 
 // Decide resolves an awaiting decision.
