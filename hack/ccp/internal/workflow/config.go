@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var builtinConfigs = map[string]ProcessingConfig{
@@ -297,6 +299,24 @@ type Choice struct {
 	Comment   string   `xml:"-"`
 	AppliesTo string   `xml:"appliesTo"`
 	GoToChain string   `xml:"goToChain"`
+}
+
+func (c Choice) LinkID() uuid.UUID {
+	if id, err := uuid.Parse(c.AppliesTo); err != nil {
+		return id
+	}
+	return uuid.Nil
+}
+
+func (c Choice) ChainID() uuid.UUID {
+	if id, err := uuid.Parse(c.GoToChain); err != nil {
+		return id
+	}
+	return uuid.Nil
+}
+
+func (c Choice) Value() string {
+	return c.GoToChain
 }
 
 type Choices struct {

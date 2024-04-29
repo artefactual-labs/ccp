@@ -134,14 +134,9 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
 	}
 
 	var chainID uuid.UUID
-	li := linkID.String()
 	for _, choice := range choices {
-		if choice.AppliesTo == li {
-			if id, err := uuid.Parse(choice.GoToChain); err != nil {
-				return uuid.Nil, err
-			} else {
-				chainID = id
-			}
+		if choice.LinkID() == linkID {
+			chainID = choice.ChainID()
 			break
 		}
 	}
@@ -150,12 +145,8 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
 	// TODO: allow user to choose the system processing config to use.
 	if chainID == uuid.Nil {
 		for _, choice := range workflow.AutomatedConfig.Choices.Choices {
-			if choice.AppliesTo == li {
-				if id, err := uuid.Parse(choice.GoToChain); err != nil {
-					return uuid.Nil, err
-				} else {
-					chainID = id
-				}
+			if choice.LinkID() == linkID {
+				chainID = choice.ChainID()
 				break
 			}
 		}
