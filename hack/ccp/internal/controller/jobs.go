@@ -562,7 +562,7 @@ func (l *getUnitVarLinkJob) exec(ctx context.Context) (uuid.UUID, error) {
 	}
 
 	linkID, err := l.j.pkg.store.ReadUnitLinkID(ctx, l.j.pkg.id, l.j.pkg.packageType(), l.config.Variable)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, store.ErrNotFound) {
 		return l.config.LinkID, nil
 	}
 	if err != nil {

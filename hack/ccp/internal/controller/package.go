@@ -62,7 +62,7 @@ func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, path
 		store:     store,
 		path:      path,
 		isDir:     fi.IsDir(),
-		sharedDir: sharedDir,
+		sharedDir: joinPath(sharedDir, ""),
 		watchedAt: wd,
 	}
 
@@ -355,9 +355,9 @@ func (u *Transfer) replacements(filterSubdirPath string) replacementMapping {
 	mapping := u.pkg.replacements()
 	maps.Copy(mapping, baseReplacements(u.pkg))
 	maps.Copy(mapping, map[string]replacement{
-		u.replacementPath():        replacement(u.pkg.Path()),
-		"%unitType%":               replacement(u.packageType()),
-		"%processingConfiguration": replacement(u.processingConfiguration),
+		u.replacementPath():         replacement(u.pkg.Path()),
+		"%unitType%":                replacement(u.packageType()),
+		"%processingConfiguration%": replacement(u.processingConfiguration),
 	})
 
 	return mapping
