@@ -1,7 +1,7 @@
 name: Tests
 on:
-  - push
-  - pull_request
+  pull_request:
+  push:
 permissions:
   contents: read
 jobs:
@@ -13,11 +13,13 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-      - name: Check out repository
-        uses: actions/checkout@v4
+          go-version-file: hack/ccp/go.mod
+          cache-dependency-path: hack/ccp/go.sum
       - name: Run tests
         run: go test -race ./...
+        working-directory: hack/ccp
