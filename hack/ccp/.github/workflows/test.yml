@@ -1,0 +1,23 @@
+name: Tests
+on:
+  - push
+  - pull_request
+permissions:
+  contents: read
+jobs:
+  test:
+    name: Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: go test -race ./...
