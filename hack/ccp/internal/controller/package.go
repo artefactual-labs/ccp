@@ -90,7 +90,7 @@ func (p *Package) Path() string {
 }
 
 func (p *Package) UpdatePath(path string) {
-	p.path = strings.Replace(p.path, "%sharedPath%", p.sharedDir, 1)
+	p.path = strings.Replace(path, "%sharedPath%", p.sharedDir, 1)
 }
 
 // PathForDB returns the path to the package, as stored in the database.
