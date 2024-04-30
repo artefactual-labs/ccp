@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 func TestParseConfig(t *testing.T) {

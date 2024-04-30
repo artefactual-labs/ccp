@@ -148,7 +148,7 @@ func (i *iterator) runJob(ctx context.Context, id uuid.UUID) (uuid.UUID, error) 
 
 // buildJob configures a workflow job given the workflow chain link definition.
 func (i *iterator) buildJob(wl *workflow.Link, logger logr.Logger) (*job, error) {
-	j, err := newJob(logger, i.chain, i.p, i.gearman, wl)
+	j, err := newJob(logger, i.chain, i.p, i.gearman, wl, i.wf)
 	if err != nil {
 		return nil, fmt.Errorf("build job: %v", err)
 	}
