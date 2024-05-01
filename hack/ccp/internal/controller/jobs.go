@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -317,22 +318,22 @@ var _ jobRunner = (*updateContextDecisionJob)(nil)
 // TODO: this should be defined in the workflow, not hardcoded here.
 //
 // nolint: unused
-var updateContextDecisionJobChoiceMapping = map[string]string{
+var updateContextDecisionJobChoiceMapping = map[uuid.UUID]uuid.UUID{
 	// Decision point "Assign UUIDs to directories?".
-	"8882bad4-561c-4126-89c9-f7f0c083d5d7": "bd899573-694e-4d33-8c9b-df0af802437d",
-	"e10a31c3-56df-4986-af7e-2794ddfe8686": "bd899573-694e-4d33-8c9b-df0af802437d",
-	"d6f6f5db-4cc2-4652-9283-9ec6a6d181e5": "bd899573-694e-4d33-8c9b-df0af802437d",
-	"1563f22f-f5f7-4dfe-a926-6ab50d408832": "bd899573-694e-4d33-8c9b-df0af802437d",
+	uuid.MustParse("8882bad4-561c-4126-89c9-f7f0c083d5d7"): uuid.MustParse("bd899573-694e-4d33-8c9b-df0af802437d"),
+	uuid.MustParse("e10a31c3-56df-4986-af7e-2794ddfe8686"): uuid.MustParse("bd899573-694e-4d33-8c9b-df0af802437d"),
+	uuid.MustParse("d6f6f5db-4cc2-4652-9283-9ec6a6d181e5"): uuid.MustParse("bd899573-694e-4d33-8c9b-df0af802437d"),
+	uuid.MustParse("1563f22f-f5f7-4dfe-a926-6ab50d408832"): uuid.MustParse("bd899573-694e-4d33-8c9b-df0af802437d"),
 	// Decision "Yes" (for "Assign UUIDs to directories?").
-	"7e4cf404-e62d-4dc2-8d81-6141e390f66f": "2dc3f487-e4b0-4e07-a4b3-6216ed24ca14",
-	"2732a043-b197-4cbc-81ab-4e2bee9b74d3": "2dc3f487-e4b0-4e07-a4b3-6216ed24ca14",
-	"aa793efa-1b62-498c-8f92-cab187a99a2a": "2dc3f487-e4b0-4e07-a4b3-6216ed24ca14",
-	"efd98ddb-80a6-4206-80bf-81bf00f84416": "2dc3f487-e4b0-4e07-a4b3-6216ed24ca14",
+	uuid.MustParse("7e4cf404-e62d-4dc2-8d81-6141e390f66f"): uuid.MustParse("2dc3f487-e4b0-4e07-a4b3-6216ed24ca14"),
+	uuid.MustParse("2732a043-b197-4cbc-81ab-4e2bee9b74d3"): uuid.MustParse("2dc3f487-e4b0-4e07-a4b3-6216ed24ca14"),
+	uuid.MustParse("aa793efa-1b62-498c-8f92-cab187a99a2a"): uuid.MustParse("2dc3f487-e4b0-4e07-a4b3-6216ed24ca14"),
+	uuid.MustParse("efd98ddb-80a6-4206-80bf-81bf00f84416"): uuid.MustParse("2dc3f487-e4b0-4e07-a4b3-6216ed24ca14"),
 	// Decision "No" (for "Assign UUIDs to directories?").
-	"0053c670-3e61-4a3e-a188-3a2dd1eda426": "891f60d0-1ba8-48d3-b39e-dd0934635d29",
-	"8e93e523-86bb-47e1-a03a-4b33e13f8c5e": "891f60d0-1ba8-48d3-b39e-dd0934635d29",
-	"6dfbeff8-c6b1-435b-833a-ed764229d413": "891f60d0-1ba8-48d3-b39e-dd0934635d29",
-	"dc0ee6b6-ed5f-42a3-bc8f-c9c7ead03ed1": "891f60d0-1ba8-48d3-b39e-dd0934635d29",
+	uuid.MustParse("0053c670-3e61-4a3e-a188-3a2dd1eda426"): uuid.MustParse("891f60d0-1ba8-48d3-b39e-dd0934635d29"),
+	uuid.MustParse("8e93e523-86bb-47e1-a03a-4b33e13f8c5e"): uuid.MustParse("891f60d0-1ba8-48d3-b39e-dd0934635d29"),
+	uuid.MustParse("6dfbeff8-c6b1-435b-833a-ed764229d413"): uuid.MustParse("891f60d0-1ba8-48d3-b39e-dd0934635d29"),
+	uuid.MustParse("dc0ee6b6-ed5f-42a3-bc8f-c9c7ead03ed1"): uuid.MustParse("891f60d0-1ba8-48d3-b39e-dd0934635d29"),
 }
 
 func newUpdateContextDecisionJob(j *job) (*updateContextDecisionJob, error) {
@@ -347,7 +348,7 @@ func newUpdateContextDecisionJob(j *job) (*updateContextDecisionJob, error) {
 	}, nil
 }
 
-func (l *updateContextDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
+func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("nextChainDecisionJob: %v", err)
@@ -355,6 +356,12 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err e
 		}
 		if e := l.j.markComplete(ctx); e != nil {
 			err = e
+			return
+		}
+		if id := l.j.wl.ExitCodes[0].LinkID; id == nil || *id == uuid.Nil {
+			err = fmt.Errorf("nextChainDecisionJob: linkID undefined")
+		} else {
+			linkID = *id
 		}
 	}()
 
@@ -365,19 +372,133 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err e
 		return uuid.Nil, fmt.Errorf("save: %v", err)
 	}
 
-	panic("not implemented")
-
-	// TODO:
-	// - Load settings from DashboardSetting to update context.
-	// - Or load preconfigured choice to update context.
-	// - Or mark as awaiting.
-
-	id := l.j.wl.ExitCodes[0].LinkID
-	if id == nil || *id == uuid.Nil {
-		return uuid.Nil, errors.New("ops")
+	// Load new context from the database (DashboardSettings).
+	// TODO: split this out? Workflow items with no replacements configured
+	// seems like a different case.
+	if len(l.config.Replacements) == 0 {
+		if dict, err := l.loadDatabaseContext(ctx); err != nil {
+			return uuid.Nil, fmt.Errorf("load dict from db: %v", err)
+		} else if dict != nil {
+			l.j.chain.update(dict)
+			return uuid.Nil, nil
+		}
 	}
 
-	return *id, nil
+	// Load new context from processing configuration.
+	if dict, err := l.loadPreconfiguredContext(); err != nil {
+		return uuid.Nil, fmt.Errorf("load context with preconfigured choice: %v", err)
+	} else if dict != nil {
+		l.j.chain.update(dict)
+		return uuid.Nil, nil
+	}
+
+	// Build decision point and await resolution.
+	opts := make([]option, len(l.config.Replacements))
+	for i, item := range l.config.Replacements {
+		opts[i] = option(item.Description.String())
+	}
+
+	return l.await(ctx, opts)
+}
+
+// loadDatabaseContext loads the context dictionary from the database.
+func (l *updateContextDecisionJob) loadDatabaseContext(ctx context.Context) (map[string]string, error) {
+	ln, ok := l.j.wf.Links[l.j.wl.FallbackLinkID]
+	if !ok {
+		return nil, nil
+	}
+	cfg, ok := ln.Config.(workflow.LinkStandardTaskConfig)
+	if !ok {
+		return nil, nil
+	}
+	if cfg.Execute == "" {
+		return nil, nil
+	}
+
+	ret, err := l.j.pkg.store.ReadDict(ctx, cfg.Execute)
+	if err != nil {
+		return nil, err
+	}
+
+	return l.formatChoices(ret), nil
+}
+
+// loadPreconfiguredContext loads the context dictionary from the workflow.
+func (l *updateContextDecisionJob) loadPreconfiguredContext() (map[string]string, error) {
+	var normalizedChoice uuid.UUID
+	if v, ok := updateContextDecisionJobChoiceMapping[l.j.wl.ID]; ok {
+		normalizedChoice = v
+	} else {
+		normalizedChoice = l.j.wl.ID
+	}
+
+	choices, err := l.j.pkg.parseProcessingConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, choice := range choices {
+		if choice.AppliesTo != normalizedChoice.String() {
+			continue
+		}
+		desiredChoice, err := uuid.Parse(choice.GoToChain)
+		if err != nil {
+			return nil, err
+		}
+		if v, ok := updateContextDecisionJobChoiceMapping[desiredChoice]; ok {
+			desiredChoice = v
+		}
+		ln, ok := l.j.wf.Links[normalizedChoice]
+		if !ok {
+			return nil, nil // fmt.Errorf("desired choice not found: %s", desiredChoice)
+		}
+		config, ok := ln.Config.(workflow.LinkMicroServiceChoiceReplacementDic)
+		if !ok {
+			return nil, fmt.Errorf("desired choice doesn't have the expected type: %s", desiredChoice)
+		}
+		for _, replacement := range config.Replacements {
+			if replacement.ID == desiredChoice.String() {
+				choices := maps.Clone(replacement.Items)
+				return l.formatChoices(choices), nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func (l *updateContextDecisionJob) formatChoices(choices map[string]string) map[string]string {
+	for k, v := range choices {
+		delete(choices, k)
+		choices[fmt.Sprintf("%%%s%%", k)] = v
+	}
+
+	return choices
+}
+
+func (l *updateContextDecisionJob) await(ctx context.Context, opts []option) (_ uuid.UUID, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("await: %v", err)
+			return
+		}
+	}()
+
+	if err := l.j.markAwaitingDecision(ctx); err != nil {
+		return uuid.Nil, err
+	}
+
+	decision, err := l.j.pkg.AwaitDecision(ctx, opts)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// TODO: decision here should be an integer.
+	// https://github.com/artefactual/archivematica/blob/2dd5a2366bf0529c193a19a5546087ed9a0b5534/src/MCPServer/lib/server/jobs/decisions.py#L286-L298
+
+	panic("not implemented")
+
+	return decision.uuid(), nil
 }
 
 // directoryClientScriptJob.

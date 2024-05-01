@@ -61,6 +61,16 @@ type Store interface {
 	// interface; rangefunc did work but it's not supported by linters yet.
 	Files(ctx context.Context, id uuid.UUID, packageType enums.PackageType, filterFilenameEnd, filterSubdir, replacementPath string) ([]File, error)
 
+	// ReadPipelineID reads the identifier of this pipeline.
+	ReadPipelineID(ctx context.Context) (uuid.UUID, error)
+
+	// ReadDict reads a dictionary given its name.
+	ReadDict(ctx context.Context, name string) (map[string]string, error)
+
+	// ReadStorageServiceConfig reads the connection attributes of the
+	// Archivematica Storage Service associated to this pipeline.
+	ReadStorageServiceConfig(ctx context.Context) (StorageServiceConfig, error)
+
 	Running() bool
 	Close() error
 }
@@ -99,4 +109,10 @@ type File struct {
 	CurrentLocation  string    `db:"currentLocation"`
 	OriginalLocation string    `db:"originalLocation"`
 	FileGrpUse       string    `db:"fileGrpUse"`
+}
+
+type StorageServiceConfig struct {
+	URL      string
+	Username string
+	APIKey   string
 }

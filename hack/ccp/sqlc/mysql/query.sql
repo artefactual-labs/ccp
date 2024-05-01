@@ -72,3 +72,12 @@ SELECT COALESCE(GET_LOCK('lock', 0), 0);
 
 -- name: ReleaseLock :one
 SELECT RELEASE_LOCK('lock');
+
+-- name: ReadDashboardSettingsWithScope :many
+SELECT name, value, scope FROM DashboardSettings WHERE scope = ?;
+
+-- name: ReadDashboardSettingsWithNameLike :many
+SELECT name, value, scope FROM DashboardSettings WHERE name LIKE ?;
+
+-- name: ReadDashboardSetting :one
+SELECT name, value, scope FROM DashboardSettings WHERE name = ?;

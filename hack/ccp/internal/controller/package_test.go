@@ -8,17 +8,22 @@ import (
 )
 
 func TestReplacements(t *testing.T) {
-	pCtx := &packageContext{OrderedMap: orderedmap.NewOrderedMap[string, string]()}
-	pCtx.Set("%path%", "/mnt/disk")
-	pCtx.Set("%name%", `Dr. Evelyn "The Innovator" O'Neill: The Complete Digital Archives`)
+	t.Parallel()
 
-	rm := replacementMapping(map[string]replacement{
-		"%uuid%": "91354225-f28b-433c-8280-cf6a5edea2ff",
-		"%job%":  `cool \\stuff`,
-	}).update(pCtx)
+	t.Run("Updates itself with a given packageContext", func(t *testing.T) {
+		t.Parallel()
+		pCtx := &packageContext{OrderedMap: orderedmap.NewOrderedMap[string, string]()}
+		pCtx.Set("%path%", "/mnt/disk")
+		pCtx.Set("%name%", `Dr. Evelyn "The Innovator" O'Neill: The Complete Digital Archives`)
 
-	assert.Equal(t,
-		rm.replaceValues(`%name% with path="%path%" and uuid="%uuid%" did: %job%`),
-		`Dr. Evelyn \"The Innovator\" O'Neill: The Complete Digital Archives with path="/mnt/disk" and uuid="91354225-f28b-433c-8280-cf6a5edea2ff" did: cool \\\\\\\\stuff`,
-	)
+		rm := replacementMapping(map[string]replacement{
+			"%uuid%": "91354225-f28b-433c-8280-cf6a5edea2ff",
+			"%job%":  `cool \\stuff`,
+		}).update(pCtx)
+
+		assert.Equal(t,
+			rm.replaceValues(`%name% with path="%path%" and uuid="%uuid%" did: %job%`),
+			`Dr. Evelyn \"The Innovator\" O'Neill: The Complete Digital Archives with path="/mnt/disk" and uuid="91354225-f28b-433c-8280-cf6a5edea2ff" did: cool \\\\\\\\stuff`,
+		)
+	})
 }

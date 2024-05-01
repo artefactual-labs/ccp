@@ -162,6 +162,89 @@ func (q *Queries) GetLock(ctx context.Context) (interface{}, error) {
 	return coalesce, err
 }
 
+const readDashboardSetting = `-- name: ReadDashboardSetting :one
+SELECT name, value, scope FROM DashboardSettings WHERE name = ?
+`
+
+type ReadDashboardSettingRow struct {
+	Name  string
+	Value string
+	Scope string
+}
+
+func (q *Queries) ReadDashboardSetting(ctx context.Context, name string) (*ReadDashboardSettingRow, error) {
+	row := q.queryRow(ctx, q.readDashboardSettingStmt, readDashboardSetting, name)
+	var i ReadDashboardSettingRow
+	err := row.Scan(&i.Name, &i.Value, &i.Scope)
+	return &i, err
+}
+
+const readDashboardSettingsWithNameLike = `-- name: ReadDashboardSettingsWithNameLike :many
+SELECT name, value, scope FROM DashboardSettings WHERE name LIKE ?
+`
+
+type ReadDashboardSettingsWithNameLikeRow struct {
+	Name  string
+	Value string
+	Scope string
+}
+
+func (q *Queries) ReadDashboardSettingsWithNameLike(ctx context.Context, name string) ([]*ReadDashboardSettingsWithNameLikeRow, error) {
+	rows, err := q.query(ctx, q.readDashboardSettingsWithNameLikeStmt, readDashboardSettingsWithNameLike, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ReadDashboardSettingsWithNameLikeRow{}
+	for rows.Next() {
+		var i ReadDashboardSettingsWithNameLikeRow
+		if err := rows.Scan(&i.Name, &i.Value, &i.Scope); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const readDashboardSettingsWithScope = `-- name: ReadDashboardSettingsWithScope :many
+SELECT name, value, scope FROM DashboardSettings WHERE scope = ?
+`
+
+type ReadDashboardSettingsWithScopeRow struct {
+	Name  string
+	Value string
+	Scope string
+}
+
+func (q *Queries) ReadDashboardSettingsWithScope(ctx context.Context, scope string) ([]*ReadDashboardSettingsWithScopeRow, error) {
+	rows, err := q.query(ctx, q.readDashboardSettingsWithScopeStmt, readDashboardSettingsWithScope, scope)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ReadDashboardSettingsWithScopeRow{}
+	for rows.Next() {
+		var i ReadDashboardSettingsWithScopeRow
+		if err := rows.Scan(&i.Name, &i.Value, &i.Scope); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const readTransferLocation = `-- name: ReadTransferLocation :one
 SELECT transferUUID, currentLocation FROM Transfers WHERE transferUUID = ?
 `

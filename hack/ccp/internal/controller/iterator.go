@@ -37,6 +37,12 @@ type chain struct {
 	choices any             // TODO: see `generated_choices` in `chain.py`.
 }
 
+func (c *chain) update(kvs map[string]string) {
+	for k, v := range kvs {
+		c.pCtx.Set(k, string(v))
+	}
+}
+
 // iterator carries a package through all its workflow.
 type iterator struct {
 	logger logr.Logger

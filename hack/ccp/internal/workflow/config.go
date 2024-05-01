@@ -302,14 +302,14 @@ type Choice struct {
 }
 
 func (c Choice) LinkID() uuid.UUID {
-	if id, err := uuid.Parse(c.AppliesTo); err != nil {
+	if id, err := uuid.Parse(c.AppliesTo); err == nil {
 		return id
 	}
 	return uuid.Nil
 }
 
 func (c Choice) ChainID() uuid.UUID {
-	if id, err := uuid.Parse(c.GoToChain); err != nil {
+	if id, err := uuid.Parse(c.GoToChain); err == nil {
 		return id
 	}
 	return uuid.Nil
