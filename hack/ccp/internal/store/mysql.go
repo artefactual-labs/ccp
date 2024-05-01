@@ -507,7 +507,71 @@ func (s *mysqlStoreImpl) Files(ctx context.Context, id uuid.UUID, packageType en
 			break
 		} else {
 			ret = append(ret, files...)
-			offset++
+			offset += uint(len(files))
+		}
+	}
+
+	return ret, nil
+}
+
+func (s *mysqlStoreImpl) ReadPipelineID(ctx context.Context) (_ uuid.UUID, err error) {
+	defer wrap(&err, "ReadPipelineID()")
+
+	ret, err := s.queries.ReadDashboardSetting(ctx, "dashboard_uuid")
+	if err == sql.ErrNoRows {
+		return uuid.Nil, ErrNotFound
+	}
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	id, err := uuid.Parse(ret.Value)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, err
+}
+
+func (s *mysqlStoreImpl) ReadDict(ctx context.Context, name string) (_ map[string]string, err error) {
+	defer wrap(&err, "ReadDict(%s)", name)
+
+	rows, err := s.queries.ReadDashboardSettingsWithScope(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	ln := len(rows)
+	if ln == 0 {
+		return nil, ErrNotFound
+	}
+
+	ret := make(map[string]string, ln)
+	for _, row := range rows {
+		ret[row.Name] = ret[row.Value]
+	}
+
+	return ret, nil
+}
+
+func (s *mysqlStoreImpl) ReadStorageServiceConfig(ctx context.Context) (ret StorageServiceConfig, err error) {
+	defer wrap(&err, "ReadStorageServiceConfig()")
+
+	rows, err := s.queries.ReadDashboardSettingsWithNameLike(ctx, "storage_service_%")
+	if err != nil {
+		return ret, err
+	}
+	if len(rows) == 0 {
+		return ret, ErrNotFound
+	}
+
+	for _, row := range rows {
+		switch row.Name {
+		case "storage_service_url":
+			ret.URL = row.Value
+		case "storage_service_user":
+			ret.Username = row.Value
+		case "storage_service_apikey":
+			ret.APIKey = row.Value
 		}
 	}
 

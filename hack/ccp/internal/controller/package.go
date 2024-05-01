@@ -109,6 +109,25 @@ func (p *Package) String() string {
 	return p.Name()
 }
 
+// parseProcessingConfig returns a list of preconfigured choices. A missing
+// configuration file is a non-error, i.e. returns an empty slice of choices.
+func (p *Package) parseProcessingConfig() ([]workflow.Choice, error) {
+	f, err := os.Open(filepath.Join(p.path, "processingMCP.xml"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	choices, err := workflow.ParseConfig(f)
+	if err != nil {
+		return nil, fmt.Errorf("parse: %v", err)
+	}
+
+	return choices, nil
+}
+
 // PreconfiguredChoice looks up a pre-configured choice in the processing
 // configuration file that is part of the package.
 func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
@@ -118,19 +137,11 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
 		return chainID, nil
 	}
 
-	f, err := os.Open(filepath.Join(p.path, "processingMCP.xml"))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return uuid.Nil, nil
-		}
-		return uuid.Nil, err
-	}
-
-	// TODO: this could be cached if the file isn't going to change, but
-	// Archivematica is not doing any caching.
-	choices, err := workflow.ParseConfig(f)
+	choices, err := p.parseProcessingConfig()
 	if err != nil {
 		return uuid.Nil, err
+	} else if len(choices) == 0 {
+		return uuid.Nil, nil
 	}
 
 	var chainID uuid.UUID
@@ -194,7 +205,7 @@ func (p *Package) Files(ctx context.Context, filterFilenameEnd, filterSubdir str
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]replacementMapping, len(files))
+	ret := make([]replacementMapping, 0, len(files))
 	seen := make(map[string]struct{}, len(files))
 
 	for _, f := range files {
@@ -218,6 +229,9 @@ func (p *Package) Files(ctx context.Context, filterFilenameEnd, filterSubdir str
 		if err != nil {
 			return err
 		}
+		if d.IsDir() {
+			return nil
+		}
 		fname := d.Name()
 		if filterFilenameEnd != "" && !strings.HasPrefix(fname, filterFilenameEnd) {
 			return nil
@@ -227,7 +241,7 @@ func (p *Package) Files(ctx context.Context, filterFilenameEnd, filterSubdir str
 		}
 		ret = append(ret, map[string]replacement{
 			"%relativeLocation": replacement(path),
-			"%fileUUID%":        replacement(""),
+			"%fileUUID%":        replacement("None"),
 			"%fileGrpUse%":      replacement(""),
 		})
 		return nil
@@ -546,8 +560,8 @@ func fileReplacements(pkg *Package, f *store.File) replacementMapping {
 	ext := filepath.Ext(f.CurrentLocation)
 	extWithDot := "." + ext
 	name := filepath.Base(strings.TrimSuffix(f.CurrentLocation, ext))
-	absolutePath := strings.ReplaceAll(f.CurrentLocation, "%SIPDirectory%", pkg.Path())
-	absolutePath = strings.ReplaceAll(absolutePath, "%transferDirectory%", pkg.Path())
+	absolutePath := strings.ReplaceAll(f.CurrentLocation, "%SIPDirectory%", joinPath(pkg.Path(), ""))
+	absolutePath = strings.ReplaceAll(absolutePath, "%transferDirectory%", joinPath(pkg.Path(), ""))
 
 	maps.Copy(mapping, map[string]replacement{
 		"%fileUUID%":             replacement(f.ID.String()),

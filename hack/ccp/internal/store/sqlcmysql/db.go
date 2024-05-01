@@ -54,6 +54,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getLockStmt, err = db.PrepareContext(ctx, getLock); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLock: %w", err)
 	}
+	if q.readDashboardSettingStmt, err = db.PrepareContext(ctx, readDashboardSetting); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadDashboardSetting: %w", err)
+	}
+	if q.readDashboardSettingsWithNameLikeStmt, err = db.PrepareContext(ctx, readDashboardSettingsWithNameLike); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadDashboardSettingsWithNameLike: %w", err)
+	}
+	if q.readDashboardSettingsWithScopeStmt, err = db.PrepareContext(ctx, readDashboardSettingsWithScope); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadDashboardSettingsWithScope: %w", err)
+	}
 	if q.readTransferLocationStmt, err = db.PrepareContext(ctx, readTransferLocation); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadTransferLocation: %w", err)
 	}
@@ -133,6 +142,21 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getLockStmt: %w", cerr)
 		}
 	}
+	if q.readDashboardSettingStmt != nil {
+		if cerr := q.readDashboardSettingStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readDashboardSettingStmt: %w", cerr)
+		}
+	}
+	if q.readDashboardSettingsWithNameLikeStmt != nil {
+		if cerr := q.readDashboardSettingsWithNameLikeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readDashboardSettingsWithNameLikeStmt: %w", cerr)
+		}
+	}
+	if q.readDashboardSettingsWithScopeStmt != nil {
+		if cerr := q.readDashboardSettingsWithScopeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readDashboardSettingsWithScopeStmt: %w", cerr)
+		}
+	}
 	if q.readTransferLocationStmt != nil {
 		if cerr := q.readTransferLocationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing readTransferLocationStmt: %w", cerr)
@@ -210,49 +234,55 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                               DBTX
-	tx                               *sql.Tx
-	cleanUpActiveJobsStmt            *sql.Stmt
-	cleanUpActiveSIPsStmt            *sql.Stmt
-	cleanUpActiveTasksStmt           *sql.Stmt
-	cleanUpActiveTransfersStmt       *sql.Stmt
-	cleanUpAwaitingJobsStmt          *sql.Stmt
-	cleanUpTasksWithAwaitingJobsStmt *sql.Stmt
-	createJobStmt                    *sql.Stmt
-	createTransferStmt               *sql.Stmt
-	createUnitVarStmt                *sql.Stmt
-	getLockStmt                      *sql.Stmt
-	readTransferLocationStmt         *sql.Stmt
-	readTransferWithLocationStmt     *sql.Stmt
-	readUnitVarStmt                  *sql.Stmt
-	readUnitVarsStmt                 *sql.Stmt
-	releaseLockStmt                  *sql.Stmt
-	updateJobStatusStmt              *sql.Stmt
-	updateTransferLocationStmt       *sql.Stmt
-	updateUnitVarStmt                *sql.Stmt
+	db                                    DBTX
+	tx                                    *sql.Tx
+	cleanUpActiveJobsStmt                 *sql.Stmt
+	cleanUpActiveSIPsStmt                 *sql.Stmt
+	cleanUpActiveTasksStmt                *sql.Stmt
+	cleanUpActiveTransfersStmt            *sql.Stmt
+	cleanUpAwaitingJobsStmt               *sql.Stmt
+	cleanUpTasksWithAwaitingJobsStmt      *sql.Stmt
+	createJobStmt                         *sql.Stmt
+	createTransferStmt                    *sql.Stmt
+	createUnitVarStmt                     *sql.Stmt
+	getLockStmt                           *sql.Stmt
+	readDashboardSettingStmt              *sql.Stmt
+	readDashboardSettingsWithNameLikeStmt *sql.Stmt
+	readDashboardSettingsWithScopeStmt    *sql.Stmt
+	readTransferLocationStmt              *sql.Stmt
+	readTransferWithLocationStmt          *sql.Stmt
+	readUnitVarStmt                       *sql.Stmt
+	readUnitVarsStmt                      *sql.Stmt
+	releaseLockStmt                       *sql.Stmt
+	updateJobStatusStmt                   *sql.Stmt
+	updateTransferLocationStmt            *sql.Stmt
+	updateUnitVarStmt                     *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                               tx,
-		tx:                               tx,
-		cleanUpActiveJobsStmt:            q.cleanUpActiveJobsStmt,
-		cleanUpActiveSIPsStmt:            q.cleanUpActiveSIPsStmt,
-		cleanUpActiveTasksStmt:           q.cleanUpActiveTasksStmt,
-		cleanUpActiveTransfersStmt:       q.cleanUpActiveTransfersStmt,
-		cleanUpAwaitingJobsStmt:          q.cleanUpAwaitingJobsStmt,
-		cleanUpTasksWithAwaitingJobsStmt: q.cleanUpTasksWithAwaitingJobsStmt,
-		createJobStmt:                    q.createJobStmt,
-		createTransferStmt:               q.createTransferStmt,
-		createUnitVarStmt:                q.createUnitVarStmt,
-		getLockStmt:                      q.getLockStmt,
-		readTransferLocationStmt:         q.readTransferLocationStmt,
-		readTransferWithLocationStmt:     q.readTransferWithLocationStmt,
-		readUnitVarStmt:                  q.readUnitVarStmt,
-		readUnitVarsStmt:                 q.readUnitVarsStmt,
-		releaseLockStmt:                  q.releaseLockStmt,
-		updateJobStatusStmt:              q.updateJobStatusStmt,
-		updateTransferLocationStmt:       q.updateTransferLocationStmt,
-		updateUnitVarStmt:                q.updateUnitVarStmt,
+		db:                                    tx,
+		tx:                                    tx,
+		cleanUpActiveJobsStmt:                 q.cleanUpActiveJobsStmt,
+		cleanUpActiveSIPsStmt:                 q.cleanUpActiveSIPsStmt,
+		cleanUpActiveTasksStmt:                q.cleanUpActiveTasksStmt,
+		cleanUpActiveTransfersStmt:            q.cleanUpActiveTransfersStmt,
+		cleanUpAwaitingJobsStmt:               q.cleanUpAwaitingJobsStmt,
+		cleanUpTasksWithAwaitingJobsStmt:      q.cleanUpTasksWithAwaitingJobsStmt,
+		createJobStmt:                         q.createJobStmt,
+		createTransferStmt:                    q.createTransferStmt,
+		createUnitVarStmt:                     q.createUnitVarStmt,
+		getLockStmt:                           q.getLockStmt,
+		readDashboardSettingStmt:              q.readDashboardSettingStmt,
+		readDashboardSettingsWithNameLikeStmt: q.readDashboardSettingsWithNameLikeStmt,
+		readDashboardSettingsWithScopeStmt:    q.readDashboardSettingsWithScopeStmt,
+		readTransferLocationStmt:              q.readTransferLocationStmt,
+		readTransferWithLocationStmt:          q.readTransferWithLocationStmt,
+		readUnitVarStmt:                       q.readUnitVarStmt,
+		readUnitVarsStmt:                      q.readUnitVarsStmt,
+		releaseLockStmt:                       q.releaseLockStmt,
+		updateJobStatusStmt:                   q.updateJobStatusStmt,
+		updateTransferLocationStmt:            q.updateTransferLocationStmt,
+		updateUnitVarStmt:                     q.updateUnitVarStmt,
 	}
 }
