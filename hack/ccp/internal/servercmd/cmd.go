@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 
 	"github.com/peterbourgon/ff/v3"
@@ -18,6 +19,37 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
 )
 
+const (
+	DefaultVerbosity int = 0
+)
+
+func (c *Config) RegisterFlags(fs *flag.FlagSet) {
+	fs.String("conifg", "", "Configuration file in the TOML file format")
+	fs.StringVar(&c.sharedDir, "shared-dir", "", "Shared directory")
+	fs.StringVar(&c.workflow, "workflow", "", "Workflow document")
+	fs.StringVar(&c.db.driver, "db.driver", "", "Database driver")
+	fs.StringVar(&c.db.dsn, "db.dsn", "", "Database DSN")
+	fs.StringVar(&c.api.admin.Addr, "api.admin.addr", "", "Admin API listen address")
+	fs.StringVar(&c.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
+
+	c.rootConfig.RegisterFlags(fs)
+}
+
+func (c *Config) ConfigureFromEnv() {
+	if v := os.Getenv("VERBOSITY"); v != "" {
+		c.rootConfig.Verbosity = parseVerbosity(v)
+	}
+}
+
+func parseVerbosity(v string) int {
+	value, err := strconv.Atoi(v)
+	if err == nil || value < 0 || value > 10 {
+		return DefaultVerbosity
+	}
+
+	return value
+}
+
 func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	cfg := Config{
 		rootConfig: rootConfig,
@@ -25,15 +57,8 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	}
 
 	fs := flag.NewFlagSet("ccp server", flag.ExitOnError)
-	fs.String("config", "", "Configuration file in the TOML file format")
-	fs.StringVar(&cfg.sharedDir, "shared-dir", "", "Shared directory")
-	fs.StringVar(&cfg.workflow, "workflow", "", "Workflow document")
-	fs.StringVar(&cfg.db.driver, "db.driver", "", "Database driver")
-	fs.StringVar(&cfg.db.dsn, "db.dsn", "", "Database DSN")
-	fs.StringVar(&cfg.api.admin.Addr, "api.admin.addr", "", "Admin API listen address")
-	fs.StringVar(&cfg.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
-
-	rootConfig.RegisterFlags(fs)
+	cfg.RegisterFlags(fs)
+	cfg.ConfigureFromEnv()
 
 	return &ffcli.Command{
 		Name:       "server",
