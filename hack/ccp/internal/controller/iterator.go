@@ -123,12 +123,12 @@ func (i *iterator) runJob(ctx context.Context, id uuid.UUID) (uuid.UUID, error) 
 
 	logger := i.logger.WithName("job").WithValues("type", "link", "linkID", id, "desc", wl.Description, "manager", wl.Manager)
 	logger.Info("Running job.")
+	if wl.End {
+		logger.Info("This job is a terminator.")
+	}
 
 	if !ok {
 		return uuid.Nil, fmt.Errorf("link %s couldn't be found", id)
-	}
-	if wl.End {
-		return uuid.Nil, io.EOF
 	}
 
 	s, err := i.buildJob(wl, logger)
@@ -142,6 +142,10 @@ func (i *iterator) runJob(ctx context.Context, id uuid.UUID) (uuid.UUID, error) 
 			return uuid.Nil, err
 		}
 		return uuid.Nil, fmt.Errorf("link %s with manager %s (%s) couldn't be executed: %v", id, wl.Manager, wl.Description, err)
+	}
+
+	if wl.End {
+		return uuid.Nil, io.EOF
 	}
 
 	// Workflow needs to be reactivated by another watched directory.
