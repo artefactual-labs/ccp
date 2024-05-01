@@ -317,7 +317,7 @@ type Transfer struct {
 var _ unit = (*Transfer)(nil)
 
 func (u *Transfer) hydrate(ctx context.Context, path, watchedDir string) error {
-	path = strings.Replace(path, "%sharedPath%", u.pkg.sharedDir, 1)
+	path = joinPath(strings.Replace(path, u.pkg.sharedDir, "%sharedPath%", 1), "")
 	id := uuidFromPath(path)
 	created := false
 

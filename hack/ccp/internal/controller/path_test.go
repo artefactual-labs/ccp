@@ -15,6 +15,10 @@ func TestUUIDFromPath(t *testing.T) {
 		want uuid.UUID
 	}{
 		{
+			path: "Test-773f0be9-b2ab-48ac-93d6-4c0b068cb7a4/",
+			want: uuid.MustParse("773f0be9-b2ab-48ac-93d6-4c0b068cb7a4"),
+		},
+		{
 			path: "Test-773f0be9-b2ab-48ac-93d6-4c0b068cb7a4",
 			want: uuid.MustParse("773f0be9-b2ab-48ac-93d6-4c0b068cb7a4"),
 		},
