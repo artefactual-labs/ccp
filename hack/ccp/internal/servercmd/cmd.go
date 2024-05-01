@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	DefaultVerbosity int = 0
-	MinimumVerbosity int = 0
-	MaximumVerbosity int = 10
+	defaultVerbosity int = 0
+	minimumVerbosity int = 0
+	maximumVerbosity int = 10
 )
 
 func (c *Config) RegisterFlags(fs *flag.FlagSet) {
@@ -45,8 +45,8 @@ func (c *Config) ConfigureFromEnv() {
 
 func parseVerbosity(v string) int {
 	value, err := strconv.Atoi(v)
-	if err == nil || value < MinimumVerbosity || value > MaximumVerbosity {
-		return DefaultVerbosity
+	if err == nil || value < minimumVerbosity || value > maximumVerbosity {
+		return defaultVerbosity
 	}
 
 	return value
