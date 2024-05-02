@@ -607,11 +607,13 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 	if err := l.j.save(ctx); err != nil {
 		return uuid.Nil, fmt.Errorf("save: %v", err)
 	}
-	if filter, err := l.filterSubDir(ctx); err != nil {
-		l.config.FilterSubdir = filter
+
+	filterSubDir, err := l.filterSubDir(ctx)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("look up filterSubDir: %v", err)
 	}
 
-	taskResults, err := l.submitTasks(ctx)
+	taskResults, err := l.submitTasks(ctx, filterSubDir)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
@@ -638,11 +640,11 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 	return l.j.wl.FallbackLinkID, nil
 }
 
-func (l *filesClientScriptJob) submitTasks(ctx context.Context) (*taskResults, error) {
-	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain.pCtx)
+func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) (*taskResults, error) {
+	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain.pCtx)
 	taskBackend := newTaskBackend(l.j.logger, l.j, l.config)
 
-	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, l.config.FilterSubdir)
+	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, filterSubDir)
 	if err != nil {
 		return nil, err
 	}
@@ -673,11 +675,18 @@ func (l *filesClientScriptJob) submitTasks(ctx context.Context) (*taskResults, e
 func (l *filesClientScriptJob) filterSubDir(ctx context.Context) (string, error) {
 	filterSubDir := l.config.FilterSubdir
 
+	// Check if filterSubDir has been overridden for this Transfer/SIP.
 	val, err := l.j.pkg.store.ReadUnitVar(ctx, l.j.pkg.id, l.j.pkg.packageType(), l.config.Execute)
-	if err != nil && err != store.ErrNotFound {
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return filterSubDir, nil
+		}
 		return "", err
 	}
 
+	if val == "" {
+		return filterSubDir, nil
+	}
 	if m, err := python.EvalMap(val); err != nil {
 		if override, ok := m["filterSubDir"]; ok {
 			filterSubDir = override
