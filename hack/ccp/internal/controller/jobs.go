@@ -193,7 +193,7 @@ func (l *outputDecisionJob) exec(ctx context.Context) (uuid.UUID, error) {
 
 	panic("not implemented")
 
-	return uuid.Nil, nil
+	return uuid.Nil, nil // nolint: govet
 }
 
 // nextChainDecisionJob.
@@ -488,7 +488,7 @@ func (l *updateContextDecisionJob) await(ctx context.Context, opts []option) (_ 
 		return uuid.Nil, err
 	}
 
-	decision, err := l.j.pkg.AwaitDecision(ctx, opts)
+	decision, err := l.j.pkg.AwaitDecision(ctx, opts) // nolint: staticcheck
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -498,7 +498,7 @@ func (l *updateContextDecisionJob) await(ctx context.Context, opts []option) (_ 
 
 	panic("not implemented")
 
-	return decision.uuid(), nil
+	return decision.uuid(), nil // nolint: govet
 }
 
 // directoryClientScriptJob.
@@ -736,7 +736,7 @@ func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 
 	panic("not implemented")
 
-	return uuid.Nil, nil
+	return uuid.Nil, nil // nolint: govet
 }
 
 // setUnitVarLinkJob is a local job that sets the unit variable configured in

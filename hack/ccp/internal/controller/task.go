@@ -32,7 +32,7 @@ func newTaskBackend(logger logr.Logger, job *job, config *workflow.LinkStandardT
 	}
 }
 
-func (b *taskBackend) submit(pCtx *packageContext, args string, wantsOutput bool, stdoutFilePath, stderrFilePath string) uuid.UUID {
+func (b *taskBackend) submit(pCtx *packageContext, args string, wantsOutput bool, stdoutFilePath, stderrFilePath string) {
 	t := &task{
 		ID:             uuid.New(),
 		CreatedAt:      time.Now().UTC(),
@@ -47,8 +47,6 @@ func (b *taskBackend) submit(pCtx *packageContext, args string, wantsOutput bool
 	}
 
 	b.tasks.Tasks[t.ID] = t
-
-	return t.ID
 }
 
 func (b *taskBackend) wait(ctx context.Context) (*taskResults, error) {
