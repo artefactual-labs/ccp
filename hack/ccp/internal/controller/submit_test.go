@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"github.com/sevein/gearmin"
 	"gotest.tools/v3/assert"
 )
 

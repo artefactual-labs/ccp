@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/artefactual-labs/gearmin"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
-	"github.com/sevein/gearmin"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"

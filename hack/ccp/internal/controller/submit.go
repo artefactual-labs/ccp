@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
-	"github.com/sevein/gearmin"
 )
 
 func submitJob(ctx context.Context, logger logr.Logger, gearman *gearmin.Server, funcName string, tasks *tasks) (_ *taskResults, err error) {

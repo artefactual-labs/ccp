@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/gohugoio/hugo/watcher"
-	"github.com/sevein/gearmin"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
