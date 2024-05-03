@@ -1,14 +1,20 @@
 # syntax = docker/dockerfile:1.4
 
 FROM golang:1.22.2-alpine AS build
+ARG VERSION_PATH=github.com/artefactual/archivematica/hack/ccp/internal/version
+ARG VERSION_NUMBER
+ARG VERSION_GIT_COMMIT
 WORKDIR /src
 ENV CGO_ENABLED=0
-ENV GOEXPERIMENT=rangefunc
 COPY --link go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY --link . .
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
-	go build -trimpath -o /out/ccp .
+	go build \
+	-ldflags="-X '${VERSION_PATH}.version=${VERSION_NUMBER}' -X '${VERSION_PATH}.gitCommit=${VERSION_GIT_COMMIT}'" \
+	-trimpath \
+	-o /out/ccp \
+	.
 
 FROM alpine:3.19.1 AS ccp
 ARG USER_ID=1000

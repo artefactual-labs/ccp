@@ -9,6 +9,7 @@ import (
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/servercmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/version"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 
 	rootCommand.Subcommands = []*ffcli.Command{
 		servercmd.New(rootConfig, out),
+		version.New(out),
 	}
 
 	if err := rootCommand.Parse(os.Args[1:]); err != nil {
