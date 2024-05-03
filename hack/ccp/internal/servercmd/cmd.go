@@ -16,6 +16,7 @@ import (
 	"go.artefactual.dev/tools/log"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/version"
 )
 
 func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
@@ -56,8 +57,10 @@ func (c *Config) Exec(ctx context.Context, args []string) error {
 
 	logger = logger.WithName("server")
 	logger.Info("Starting...",
-		"version", "TODO", "commit", "TODO",
-		"pid", os.Getpid(), "go", runtime.Version(),
+		"version", version.Version(),
+		"commit", version.GitCommit(),
+		"pid", os.Getpid(),
+		"go", runtime.Version(),
 	)
 
 	if c.sharedDir == "" {
