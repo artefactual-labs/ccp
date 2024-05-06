@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"path/filepath"
 	"time"
 
@@ -98,9 +99,11 @@ func (s *Server) Run() error {
 	}
 
 	s.logger.V(1).Info("Creating Gearman job server.")
-	s.gearman = gearmin.NewServer(gearmin.Config{ListenAddr: s.config.gearmin.addr})
-	if err := s.gearman.Start(); err != nil {
-		return fmt.Errorf("error creating Gearmin job server: %v", err)
+	ln, err := net.Listen("tcp", s.config.gearmin.addr)
+	if err != nil {
+		return fmt.Errorf("error creating gearmin listener: %v", err)
+	} else {
+		s.gearman = gearmin.NewServer(ln)
 	}
 
 	s.logger.V(1).Info("Creating controller.")

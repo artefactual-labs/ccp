@@ -69,10 +69,9 @@ func TestSubmitJob(t *testing.T) {
 func fakeGearman(t *testing.T) *gearmin.Server {
 	t.Helper()
 
-	srv := gearmin.NewServer(gearmin.Config{ListenAddr: "127.0.0.1:0"})
-	t.Cleanup(func() {
-		srv.Stop()
-	})
+	srv, err := gearmin.NewServerWithAddr("127.0.0.1:0")
+	assert.NilError(t, err)
+	t.Cleanup(func() { srv.Stop() })
 
 	return srv
 }
