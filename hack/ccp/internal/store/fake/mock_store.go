@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	store "github.com/artefactual/archivematica/hack/ccp/internal/store"
+	enums "github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	sqlcmysql "github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -118,8 +119,46 @@ func (c *MockStoreCreateJobCall) DoAndReturn(f func(context.Context, *sqlcmysql.
 	return c
 }
 
+// CreateTasks mocks base method.
+func (m *MockStore) CreateTasks(ctx context.Context, tasks []*store.Task) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTasks", ctx, tasks)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateTasks indicates an expected call of CreateTasks.
+func (mr *MockStoreMockRecorder) CreateTasks(ctx, tasks any) *MockStoreCreateTasksCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTasks", reflect.TypeOf((*MockStore)(nil).CreateTasks), ctx, tasks)
+	return &MockStoreCreateTasksCall{Call: call}
+}
+
+// MockStoreCreateTasksCall wrap *gomock.Call
+type MockStoreCreateTasksCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreCreateTasksCall) Return(arg0 error) *MockStoreCreateTasksCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreCreateTasksCall) Do(f func(context.Context, []*store.Task) error) *MockStoreCreateTasksCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreCreateTasksCall) DoAndReturn(f func(context.Context, []*store.Task) error) *MockStoreCreateTasksCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // CreateUnitVar mocks base method.
-func (m *MockStore) CreateUnitVar(ctx context.Context, id uuid.UUID, packageType, name, value string, linkID uuid.UUID, update bool) error {
+func (m *MockStore) CreateUnitVar(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name, value string, linkID uuid.UUID, update bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUnitVar", ctx, id, packageType, name, value, linkID, update)
 	ret0, _ := ret[0].(error)
@@ -145,13 +184,13 @@ func (c *MockStoreCreateUnitVarCall) Return(arg0 error) *MockStoreCreateUnitVarC
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreCreateUnitVarCall) Do(f func(context.Context, uuid.UUID, string, string, string, uuid.UUID, bool) error) *MockStoreCreateUnitVarCall {
+func (c *MockStoreCreateUnitVarCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, string, string, uuid.UUID, bool) error) *MockStoreCreateUnitVarCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreCreateUnitVarCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string, string, uuid.UUID, bool) error) *MockStoreCreateUnitVarCall {
+func (c *MockStoreCreateUnitVarCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, string, string, uuid.UUID, bool) error) *MockStoreCreateUnitVarCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -196,6 +235,162 @@ func (c *MockStoreEnsureTransferCall) DoAndReturn(f func(context.Context, string
 	return c
 }
 
+// Files mocks base method.
+func (m *MockStore) Files(ctx context.Context, id uuid.UUID, packageType enums.PackageType, filterFilenameEnd, filterSubdir, replacementPath string) ([]store.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Files", ctx, id, packageType, filterFilenameEnd, filterSubdir, replacementPath)
+	ret0, _ := ret[0].([]store.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Files indicates an expected call of Files.
+func (mr *MockStoreMockRecorder) Files(ctx, id, packageType, filterFilenameEnd, filterSubdir, replacementPath any) *MockStoreFilesCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Files", reflect.TypeOf((*MockStore)(nil).Files), ctx, id, packageType, filterFilenameEnd, filterSubdir, replacementPath)
+	return &MockStoreFilesCall{Call: call}
+}
+
+// MockStoreFilesCall wrap *gomock.Call
+type MockStoreFilesCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreFilesCall) Return(arg0 []store.File, arg1 error) *MockStoreFilesCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreFilesCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, string, string, string) ([]store.File, error)) *MockStoreFilesCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreFilesCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, string, string, string) ([]store.File, error)) *MockStoreFilesCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadDict mocks base method.
+func (m *MockStore) ReadDict(ctx context.Context, name string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadDict", ctx, name)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadDict indicates an expected call of ReadDict.
+func (mr *MockStoreMockRecorder) ReadDict(ctx, name any) *MockStoreReadDictCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadDict", reflect.TypeOf((*MockStore)(nil).ReadDict), ctx, name)
+	return &MockStoreReadDictCall{Call: call}
+}
+
+// MockStoreReadDictCall wrap *gomock.Call
+type MockStoreReadDictCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadDictCall) Return(arg0 map[string]string, arg1 error) *MockStoreReadDictCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadDictCall) Do(f func(context.Context, string) (map[string]string, error)) *MockStoreReadDictCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadDictCall) DoAndReturn(f func(context.Context, string) (map[string]string, error)) *MockStoreReadDictCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadPipelineID mocks base method.
+func (m *MockStore) ReadPipelineID(ctx context.Context) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadPipelineID", ctx)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadPipelineID indicates an expected call of ReadPipelineID.
+func (mr *MockStoreMockRecorder) ReadPipelineID(ctx any) *MockStoreReadPipelineIDCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadPipelineID", reflect.TypeOf((*MockStore)(nil).ReadPipelineID), ctx)
+	return &MockStoreReadPipelineIDCall{Call: call}
+}
+
+// MockStoreReadPipelineIDCall wrap *gomock.Call
+type MockStoreReadPipelineIDCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadPipelineIDCall) Return(arg0 uuid.UUID, arg1 error) *MockStoreReadPipelineIDCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadPipelineIDCall) Do(f func(context.Context) (uuid.UUID, error)) *MockStoreReadPipelineIDCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadPipelineIDCall) DoAndReturn(f func(context.Context) (uuid.UUID, error)) *MockStoreReadPipelineIDCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadStorageServiceConfig mocks base method.
+func (m *MockStore) ReadStorageServiceConfig(ctx context.Context) (store.StorageServiceConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadStorageServiceConfig", ctx)
+	ret0, _ := ret[0].(store.StorageServiceConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadStorageServiceConfig indicates an expected call of ReadStorageServiceConfig.
+func (mr *MockStoreMockRecorder) ReadStorageServiceConfig(ctx any) *MockStoreReadStorageServiceConfigCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadStorageServiceConfig", reflect.TypeOf((*MockStore)(nil).ReadStorageServiceConfig), ctx)
+	return &MockStoreReadStorageServiceConfigCall{Call: call}
+}
+
+// MockStoreReadStorageServiceConfigCall wrap *gomock.Call
+type MockStoreReadStorageServiceConfigCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadStorageServiceConfigCall) Return(arg0 store.StorageServiceConfig, arg1 error) *MockStoreReadStorageServiceConfigCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadStorageServiceConfigCall) Do(f func(context.Context) (store.StorageServiceConfig, error)) *MockStoreReadStorageServiceConfigCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadStorageServiceConfigCall) DoAndReturn(f func(context.Context) (store.StorageServiceConfig, error)) *MockStoreReadStorageServiceConfigCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // ReadTransferLocation mocks base method.
 func (m *MockStore) ReadTransferLocation(ctx context.Context, id uuid.UUID) (string, error) {
 	m.ctrl.T.Helper()
@@ -236,7 +431,7 @@ func (c *MockStoreReadTransferLocationCall) DoAndReturn(f func(context.Context, 
 }
 
 // ReadUnitLinkID mocks base method.
-func (m *MockStore) ReadUnitLinkID(ctx context.Context, id uuid.UUID, packageType, name string) (uuid.UUID, error) {
+func (m *MockStore) ReadUnitLinkID(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name string) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadUnitLinkID", ctx, id, packageType, name)
 	ret0, _ := ret[0].(uuid.UUID)
@@ -263,19 +458,19 @@ func (c *MockStoreReadUnitLinkIDCall) Return(arg0 uuid.UUID, arg1 error) *MockSt
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreReadUnitLinkIDCall) Do(f func(context.Context, uuid.UUID, string, string) (uuid.UUID, error)) *MockStoreReadUnitLinkIDCall {
+func (c *MockStoreReadUnitLinkIDCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, string) (uuid.UUID, error)) *MockStoreReadUnitLinkIDCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreReadUnitLinkIDCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string) (uuid.UUID, error)) *MockStoreReadUnitLinkIDCall {
+func (c *MockStoreReadUnitLinkIDCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, string) (uuid.UUID, error)) *MockStoreReadUnitLinkIDCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
 // ReadUnitVar mocks base method.
-func (m *MockStore) ReadUnitVar(ctx context.Context, id uuid.UUID, packageType, name string) (string, error) {
+func (m *MockStore) ReadUnitVar(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadUnitVar", ctx, id, packageType, name)
 	ret0, _ := ret[0].(string)
@@ -302,19 +497,19 @@ func (c *MockStoreReadUnitVarCall) Return(arg0 string, arg1 error) *MockStoreRea
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreReadUnitVarCall) Do(f func(context.Context, uuid.UUID, string, string) (string, error)) *MockStoreReadUnitVarCall {
+func (c *MockStoreReadUnitVarCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, string) (string, error)) *MockStoreReadUnitVarCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreReadUnitVarCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string) (string, error)) *MockStoreReadUnitVarCall {
+func (c *MockStoreReadUnitVarCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, string) (string, error)) *MockStoreReadUnitVarCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
 // ReadUnitVars mocks base method.
-func (m *MockStore) ReadUnitVars(ctx context.Context, id uuid.UUID, packageType, name string) ([]store.UnitVar, error) {
+func (m *MockStore) ReadUnitVars(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name string) ([]store.UnitVar, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadUnitVars", ctx, id, packageType, name)
 	ret0, _ := ret[0].([]store.UnitVar)
@@ -341,13 +536,13 @@ func (c *MockStoreReadUnitVarsCall) Return(arg0 []store.UnitVar, arg1 error) *Mo
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreReadUnitVarsCall) Do(f func(context.Context, uuid.UUID, string, string) ([]store.UnitVar, error)) *MockStoreReadUnitVarsCall {
+func (c *MockStoreReadUnitVarsCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, string) ([]store.UnitVar, error)) *MockStoreReadUnitVarsCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreReadUnitVarsCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string) ([]store.UnitVar, error)) *MockStoreReadUnitVarsCall {
+func (c *MockStoreReadUnitVarsCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, string) ([]store.UnitVar, error)) *MockStoreReadUnitVarsCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -466,40 +661,40 @@ func (c *MockStoreUpdateJobStatusCall) DoAndReturn(f func(context.Context, uuid.
 	return c
 }
 
-// UpdateUnitStatus mocks base method.
-func (m *MockStore) UpdateUnitStatus(ctx context.Context, id uuid.UUID, unitType, status string) error {
+// UpdatePackageStatus mocks base method.
+func (m *MockStore) UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUnitStatus", ctx, id, unitType, status)
+	ret := m.ctrl.Call(m, "UpdatePackageStatus", ctx, id, packageType, status)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUnitStatus indicates an expected call of UpdateUnitStatus.
-func (mr *MockStoreMockRecorder) UpdateUnitStatus(ctx, id, unitType, status any) *MockStoreUpdateUnitStatusCall {
+// UpdatePackageStatus indicates an expected call of UpdatePackageStatus.
+func (mr *MockStoreMockRecorder) UpdatePackageStatus(ctx, id, packageType, status any) *MockStoreUpdatePackageStatusCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUnitStatus", reflect.TypeOf((*MockStore)(nil).UpdateUnitStatus), ctx, id, unitType, status)
-	return &MockStoreUpdateUnitStatusCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePackageStatus", reflect.TypeOf((*MockStore)(nil).UpdatePackageStatus), ctx, id, packageType, status)
+	return &MockStoreUpdatePackageStatusCall{Call: call}
 }
 
-// MockStoreUpdateUnitStatusCall wrap *gomock.Call
-type MockStoreUpdateUnitStatusCall struct {
+// MockStoreUpdatePackageStatusCall wrap *gomock.Call
+type MockStoreUpdatePackageStatusCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockStoreUpdateUnitStatusCall) Return(arg0 error) *MockStoreUpdateUnitStatusCall {
+func (c *MockStoreUpdatePackageStatusCall) Return(arg0 error) *MockStoreUpdatePackageStatusCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreUpdateUnitStatusCall) Do(f func(context.Context, uuid.UUID, string, string) error) *MockStoreUpdateUnitStatusCall {
+func (c *MockStoreUpdatePackageStatusCall) Do(f func(context.Context, uuid.UUID, enums.PackageType, enums.PackageStatus) error) *MockStoreUpdatePackageStatusCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreUpdateUnitStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string) error) *MockStoreUpdateUnitStatusCall {
+func (c *MockStoreUpdatePackageStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, enums.PackageStatus) error) *MockStoreUpdatePackageStatusCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
@@ -25,6 +27,9 @@ type Store interface {
 
 	// UpdateJobStatus modifies the status of a Job.
 	UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) error
+
+	// CreateTasks creates a group of Tasks in bulk.
+	CreateTasks(ctx context.Context, tasks []*Task) error
 
 	// UpdatePackageStatus modifies the status of a Transfer, DIP or SIP.
 	UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) error
@@ -109,6 +114,22 @@ type File struct {
 	CurrentLocation  string    `db:"currentLocation"`
 	OriginalLocation string    `db:"originalLocation"`
 	FileGrpUse       string    `db:"fileGrpUse"`
+}
+
+type Task struct {
+	ID        uuid.UUID     `db:"taskUUID"`
+	CreatedAt time.Time     `db:"createdTime"`
+	FileID    uuid.NullUUID `db:"fileUUID"`
+	Filename  string        `db:"fileName"`
+	Exec      string        `db:"exec"`
+	Arguments string        `db:"arguments"`
+	StartedAt sql.NullTime  `db:"startTime"`
+	EndedAt   sql.NullTime  `db:"endTime"`
+	Client    string        `db:"client"`
+	Stdout    string        `db:"stdOut"`
+	Stderr    string        `db:"stdError"`
+	ExitCode  sql.NullInt16 `db:"exitCode"`
+	JobID     uuid.UUID     `db:"jobuuid"`
 }
 
 type StorageServiceConfig struct {
