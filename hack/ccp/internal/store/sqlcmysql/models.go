@@ -17,8 +17,8 @@ type Access struct {
 	Resource   string
 	Target     string
 	Status     string
-	Statuscode sql.NullInt32
-	Exitcode   sql.NullInt32
+	Statuscode sql.NullInt16
+	Exitcode   sql.NullInt16
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
@@ -542,7 +542,7 @@ type Sip struct {
 	Siptype     string
 	Diruuids    bool
 	CompletedAt sql.NullTime
-	Status      uint32
+	Status      uint16
 }
 
 type SipsIdentifier struct {
@@ -610,7 +610,7 @@ type Transfer struct {
 	Diruuids                   bool
 	AccessSystemID             string
 	CompletedAt                sql.NullTime
-	Status                     uint32
+	Status                     uint16
 }
 
 type Transfermetadatafield struct {
