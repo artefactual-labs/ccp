@@ -1,13 +1,103 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/artefactual-labs/gearmin/gearmintest"
+	"github.com/elliotchance/orderedmap/v2"
+	"github.com/go-logr/logr/testr"
 	"github.com/google/uuid"
+	"github.com/mikespook/gearman-go/worker"
+	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/fs"
+
+	"github.com/artefactual/archivematica/hack/ccp/internal/store"
+	fakestore "github.com/artefactual/archivematica/hack/ccp/internal/store/fake"
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
+
+// workerHandler is a fake worker function.
+func workerHandler(t *testing.T, job worker.Job) ([]byte, error) {
+	t.Helper()
+
+	defer func() {
+		if err := recover(); err != nil {
+			t.Logf("testHandler panic recovered: %v", err)
+		}
+	}()
+
+	// Decode request.
+	tasks := &tasks{}
+	err := json.Unmarshal(job.Data(), tasks)
+	assert.NilError(t, err)
+
+	// Encode response.
+	ret := &taskResults{Results: map[uuid.UUID]*taskResult{}}
+	for _, task := range tasks.Tasks {
+		ret.Results[task.ID] = &taskResult{
+			ExitCode:   0,
+			FinishedAt: time.Now(),
+			Stdout:     "stdout",
+			Stderr:     "stderr",
+		}
+	}
+	data, err := json.Marshal(ret)
+	assert.NilError(t, err)
+
+	return data, nil
+}
+
+func TestTaskBackend(t *testing.T) {
+	t.Parallel()
+
+	batchSize = 128
+	fnName := "do"
+
+	tmpDir := fs.NewDir(t, "ccp")
+
+	var runs int
+	ctx := context.Background()
+	srv := gearmintest.Server(t, map[string]gearmintest.Handler{
+		fnName: func(job worker.Job) ([]byte, error) {
+			runs++
+			return workerHandler(t, job)
+		},
+	})
+
+	s := fakestore.NewMockStore(gomock.NewController(t))
+	s.EXPECT().CreateTasks(gomock.Any(), gomock.Cond(func(tt any) bool {
+		tasks := tt.([]*store.Task)
+		return len(tasks) <= batchSize // It should never exceed the batch size.
+	})).AnyTimes()
+
+	logger := testr.NewWithOptions(t, testr.Options{Verbosity: 10})
+	backend := newTaskBackend(logger, &job{}, s, srv, &workflow.LinkStandardTaskConfig{
+		Execute:    fnName,
+		StdoutFile: tmpDir.Join("stdout.log"),
+		StderrFile: tmpDir.Join("stderr.log"),
+	})
+
+	// Submit 1k jobs, i.e. 8 batches.
+	for range 1000 {
+		pCtx := &packageContext{orderedmap.NewOrderedMap[string, string]()}
+		backend.submit(ctx, pCtx, "args", true, tmpDir.Join("stdout.log"), tmpDir.Join("stderr.log"))
+	}
+
+	res, err := backend.wait(ctx)
+
+	assert.NilError(t, err)
+	assert.Equal(t, runs, 8)
+	assert.DeepEqual(t, len(res.Results), 1000)
+
+	assert.Assert(t, fs.Equal(tmpDir.Path(), fs.Expected(t,
+		fs.WithFile("stdout.log", "", fs.MatchAnyFileContent, fs.WithMode(0o750)),
+		fs.WithFile("stderr.log", "", fs.MatchAnyFileContent, fs.WithMode(0o750)),
+	)))
+}
 
 func TestTasksEncoding(t *testing.T) {
 	t.Parallel()

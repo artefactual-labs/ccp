@@ -148,6 +148,17 @@ func (s *mysqlStoreImpl) UpdateJobStatus(ctx context.Context, id uuid.UUID, stat
 	})
 }
 
+func (s *mysqlStoreImpl) CreateTasks(ctx context.Context, tasks []*Task) (err error) {
+	defer wrap(&err, "CreateTasks(tasks)")
+
+	insert := s.goqu.Insert("Tasks").Rows(tasks).Executor()
+	if _, err := insert.ExecContext(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *mysqlStoreImpl) UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) (err error) {
 	defer wrap(&err, "UpdateUnitStatus(%s, %s, %s)", id, packageType, status)
 

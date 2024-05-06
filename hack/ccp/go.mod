@@ -14,6 +14,7 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gohugoio/hugo v0.125.0
 	github.com/google/uuid v1.6.0
+	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/rs/cors v1.10.1
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a

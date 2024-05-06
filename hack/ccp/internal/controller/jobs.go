@@ -561,8 +561,10 @@ func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResult
 	stdout := rm.replaceValues(l.config.StdoutFile)
 	stderr := rm.replaceValues(l.config.StderrFile)
 
-	taskBackend := newTaskBackend(l.j.logger, l.j, l.config)
-	taskBackend.submit(l.j.chain.pCtx, args, false, stdout, stderr)
+	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
+	if err := taskBackend.submit(ctx, l.j.chain.pCtx, args, false, stdout, stderr); err != nil {
+		return nil, err
+	}
 
 	results, err := taskBackend.wait(ctx)
 	if err != nil {
@@ -642,7 +644,7 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 
 func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) (*taskResults, error) {
 	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain.pCtx)
-	taskBackend := newTaskBackend(l.j.logger, l.j, l.config)
+	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
 
 	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, filterSubDir)
 	if err != nil {
@@ -658,7 +660,9 @@ func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir str
 		stdout := rm.replaceValues(l.config.StdoutFile)
 		stderr := rm.replaceValues(l.config.StderrFile)
 
-		taskBackend.submit(l.j.chain.pCtx, args, false, stdout, stderr)
+		if err := taskBackend.submit(ctx, l.j.chain.pCtx, args, false, stdout, stderr); err != nil {
+			return nil, err
+		}
 	}
 
 	res, err := taskBackend.wait(ctx)
