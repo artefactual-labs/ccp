@@ -87,8 +87,7 @@ func (s *mysqlStoreImpl) RemoveTransientData(ctx context.Context) (err error) {
 
 	q := sqlc.New(conn)
 
-	// q.GetLock(ctx)
-	// defer q.ReleaseLock(ctx)
+	// TODO: lock database?
 
 	if err := q.CleanUpActiveTasks(ctx); err != nil {
 		return err
@@ -216,7 +215,7 @@ func (s *mysqlStoreImpl) ReadTransferLocation(ctx context.Context, id uuid.UUID)
 }
 
 func (s *mysqlStoreImpl) UpsertTransfer(ctx context.Context, id uuid.UUID, path string) (_ bool, err error) {
-	defer wrap(&err, "UpdateTransfer(%s, %s)", id, path)
+	defer wrap(&err, "UpsertTransfer(%s, %s)", id, path)
 
 	tx, err := s.pool.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -277,15 +276,6 @@ func (s *mysqlStoreImpl) EnsureTransfer(ctx context.Context, path string) (_ uui
 		return uuid.Nil, false, fmt.Errorf("read transfer: %v", err)
 	}
 
-	commit := func(tx *sql.Tx) error {
-		err := tx.Commit()
-		if err != nil {
-			return fmt.Errorf("commit: %v", nil)
-		}
-
-		return nil
-	}
-
 	// Create the transfer as it has not been created yet.
 	if err == sql.ErrNoRows {
 		id := uuid.New()
@@ -295,11 +285,208 @@ func (s *mysqlStoreImpl) EnsureTransfer(ctx context.Context, path string) (_ uui
 		}); err != nil {
 			return uuid.Nil, false, fmt.Errorf("create transfer: %v", err)
 		} else {
-			return id, true, commit(tx)
+			return id, true, tx.Commit()
 		}
 	}
 
-	return id, false, nil
+	return id, false, nil // Transfer found!
+}
+
+func (s *mysqlStoreImpl) ReadSIP(ctx context.Context, id uuid.UUID) (_ SIP, err error) {
+	defer wrap(&err, "ReadSIP(%s)", id)
+
+	sip := SIP{}
+
+	row, err := s.queries.ReadSIP(ctx, id)
+	if err == sql.ErrNoRows {
+		return sip, ErrNotFound
+	}
+	if err != nil {
+		return sip, err
+	}
+
+	sip.ID = row.SIPID
+	sip.CreatedAt = row.CreatedAt
+	sip.CurrentPath = row.Currentpath.String
+	sip.Hidden = row.Hidden
+	sip.AIPFilename = row.Aipfilename.String
+	sip.DirIDs = row.Diruuids
+	sip.Status = int(row.Status)
+	sip.CompletedAt = row.CompletedAt.Time
+
+	return sip, nil
+}
+
+func (s *mysqlStoreImpl) UpsertSIP(ctx context.Context, id uuid.UUID, path string) (_ bool, err error) {
+	defer wrap(&err, "UpsertSIP(%s, %s)", id, path)
+
+	tx, err := s.pool.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	q := s.queries.WithTx(tx)
+
+	r, err := q.ReadSIPLocation(ctx, id)
+
+	// Return an error as we've failed to read the transfer.
+	if err != nil && err != sql.ErrNoRows {
+		return false, fmt.Errorf("read SIP: %v", err)
+	}
+
+	// Create the transfer as it has not been created yet.
+	if err == sql.ErrNoRows {
+		if err := q.CreateSIP(ctx, &sqlc.CreateSIPParams{
+			SIPID:       id,
+			Currentpath: sql.NullString{String: path, Valid: true},
+			Siptype:     "SIP",
+		}); err != nil {
+			return false, fmt.Errorf("create SIP: %v", err)
+		} else {
+			return true, tx.Commit()
+		}
+	}
+
+	// Update current location if needed.
+	if r.Currentpath.String == path {
+		return false, nil
+	}
+	if err := q.UpdateSIPLocation(ctx, &sqlc.UpdateSIPLocationParams{
+		SIPID:       id,
+		Currentpath: sql.NullString{String: path, Valid: true},
+	}); err != nil {
+		return false, fmt.Errorf("update SIP: %v", err)
+	}
+
+	return false, tx.Commit()
+}
+
+func (s *mysqlStoreImpl) EnsureSIP(ctx context.Context, path string) (_ uuid.UUID, _ bool, err error) {
+	defer wrap(&err, "EnsureSIP(%s)", path)
+
+	tx, err := s.pool.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return uuid.Nil, false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	q := s.queries.WithTx(tx)
+
+	id, err := q.ReadSIPWithLocation(ctx, sql.NullString{String: path, Valid: true})
+
+	// Return an error as we've failed to read the transfer.
+	if err != nil && err != sql.ErrNoRows {
+		return uuid.Nil, false, fmt.Errorf("read SIP: %v", err)
+	}
+
+	// Create the SIP as it has not been created yet.
+	if err == sql.ErrNoRows {
+		id := uuid.New()
+		if err := q.CreateSIP(ctx, &sqlc.CreateSIPParams{
+			SIPID:       id,
+			Currentpath: sql.NullString{String: path, Valid: true},
+			Siptype:     "SIP",
+		}); err != nil {
+			return uuid.Nil, false, fmt.Errorf("create SIP: %v", err)
+		} else {
+			return id, true, tx.Commit()
+		}
+	}
+
+	return id, false, nil // SIP found!
+}
+
+func (s *mysqlStoreImpl) ReadDIP(ctx context.Context, id uuid.UUID) (dip DIP, err error) {
+	defer wrap(&err, "ReadDIP(%s)", id)
+
+	row, err := s.queries.ReadSIP(ctx, id)
+	if err == sql.ErrNoRows {
+		return dip, ErrNotFound
+	}
+	if err != nil {
+		return dip, err
+	}
+
+	dip.ID = row.SIPID
+	dip.CreatedAt = row.CreatedAt
+	dip.CurrentPath = row.Currentpath.String
+	dip.Hidden = row.Hidden
+	dip.AIPFilename = row.Aipfilename.String
+	dip.DirIDs = row.Diruuids
+	dip.Status = int(row.Status)
+	dip.CompletedAt = row.CompletedAt.Time
+
+	return dip, nil
+}
+
+func (s *mysqlStoreImpl) UpsertDIP(ctx context.Context, id uuid.UUID, path string) (_ bool, err error) {
+	defer wrap(&err, "UpsertDIP(%s, %s)", id, path)
+
+	tx, err := s.pool.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	q := s.queries.WithTx(tx)
+
+	_, err = q.ReadSIPLocation(ctx, id)
+
+	// Return an error as we've failed to read the transfer.
+	if err != nil && err != sql.ErrNoRows {
+		return false, fmt.Errorf("read DIP: %v", err)
+	}
+
+	// Create the transfer as it has not been created yet.
+	if err == sql.ErrNoRows {
+		if err := q.CreateSIP(ctx, &sqlc.CreateSIPParams{
+			SIPID:       id,
+			Currentpath: sql.NullString{String: path, Valid: true},
+			Siptype:     "DIP",
+		}); err != nil {
+			return false, fmt.Errorf("create DIP: %v", err)
+		} else {
+			return true, tx.Commit()
+		}
+	}
+
+	return false, tx.Commit()
+}
+
+func (s *mysqlStoreImpl) EnsureDIP(ctx context.Context, path string) (_ uuid.UUID, _ bool, err error) {
+	defer wrap(&err, "EnsureDIP(%s)", path)
+
+	tx, err := s.pool.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return uuid.Nil, false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	q := s.queries.WithTx(tx)
+
+	id, err := q.ReadSIPWithLocation(ctx, sql.NullString{String: path, Valid: true})
+
+	// Return an error as we've failed to read the transfer.
+	if err != nil && err != sql.ErrNoRows {
+		return uuid.Nil, false, fmt.Errorf("read DIP: %v", err)
+	}
+
+	// Create the SIP as it has not been created yet.
+	if err == sql.ErrNoRows {
+		id := uuid.New()
+		if err := q.CreateSIP(ctx, &sqlc.CreateSIPParams{
+			SIPID:       id,
+			Currentpath: sql.NullString{String: path, Valid: true},
+			Siptype:     "DIP",
+		}); err != nil {
+			return uuid.Nil, false, fmt.Errorf("create DIP: %v", err)
+		} else {
+			return id, true, tx.Commit()
+		}
+	}
+
+	return id, false, nil // SIP found!
 }
 
 func (s *mysqlStoreImpl) ReadUnitVars(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name string) (vars []UnitVar, err error) {

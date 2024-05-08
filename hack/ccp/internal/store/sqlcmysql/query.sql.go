@@ -59,15 +59,18 @@ func (q *Queries) CleanUpAwaitingJobs(ctx context.Context) error {
 }
 
 const cleanUpTasksWithAwaitingJobs = `-- name: CleanUpTasksWithAwaitingJobs :exec
+
 DELETE FROM Tasks WHERE jobuuid IN (SELECT jobUUID FROM Jobs WHERE currentStep = 1)
 `
 
+// Clean-ups
 func (q *Queries) CleanUpTasksWithAwaitingJobs(ctx context.Context) error {
 	_, err := q.exec(ctx, q.cleanUpTasksWithAwaitingJobsStmt, cleanUpTasksWithAwaitingJobs)
 	return err
 }
 
 const createJob = `-- name: CreateJob :exec
+
 INSERT INTO Jobs (jobUUID, jobType, createdTime, createdTimeDec, directory, SIPUUID, unitType, currentStep, microserviceGroup, hidden, MicroServiceChainLinksPK, subJobOf) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
@@ -86,6 +89,7 @@ type CreateJobParams struct {
 	Subjobof                 string
 }
 
+// Jobs
 func (q *Queries) CreateJob(ctx context.Context, arg *CreateJobParams) error {
 	_, err := q.exec(ctx, q.createJobStmt, createJob,
 		arg.ID,
@@ -104,7 +108,25 @@ func (q *Queries) CreateJob(ctx context.Context, arg *CreateJobParams) error {
 	return err
 }
 
+const createSIP = `-- name: CreateSIP :exec
+
+INSERT INTO SIPs (sipUUID, createdTime, currentPath, hidden, aipFilename, sipType, dirUUIDs, status, completed_at) VALUES (?, UTC_TIMESTAMP(), ?, 0, '', ?, 0, 0, NULL)
+`
+
+type CreateSIPParams struct {
+	SIPID       uuid.UUID
+	Currentpath sql.NullString
+	Siptype     string
+}
+
+// SIPs
+func (q *Queries) CreateSIP(ctx context.Context, arg *CreateSIPParams) error {
+	_, err := q.exec(ctx, q.createSIPStmt, createSIP, arg.SIPID, arg.Currentpath, arg.Siptype)
+	return err
+}
+
 const createTransfer = `-- name: CreateTransfer :exec
+
 INSERT INTO Transfers (transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at) VALUES (?, ?, '', '', '', '', '', '', '', 0, NULL, 0, 0, NULL)
 `
 
@@ -113,6 +135,7 @@ type CreateTransferParams struct {
 	Currentlocation string
 }
 
+// Transfers
 func (q *Queries) CreateTransfer(ctx context.Context, arg *CreateTransferParams) error {
 	_, err := q.exec(ctx, q.createTransferStmt, createTransfer, arg.Transferuuid, arg.Currentlocation)
 	return err
@@ -149,17 +172,6 @@ func (q *Queries) CreateUnitVar(ctx context.Context, arg *CreateUnitVarParams) e
 		arg.LinkID,
 	)
 	return err
-}
-
-const getLock = `-- name: GetLock :one
-SELECT COALESCE(GET_LOCK('lock', 0), 0)
-`
-
-func (q *Queries) GetLock(ctx context.Context) (interface{}, error) {
-	row := q.queryRow(ctx, q.getLockStmt, getLock)
-	var coalesce interface{}
-	err := row.Scan(&coalesce)
-	return coalesce, err
 }
 
 const readDashboardSetting = `-- name: ReadDashboardSetting :one
@@ -213,6 +225,7 @@ func (q *Queries) ReadDashboardSettingsWithNameLike(ctx context.Context, name st
 }
 
 const readDashboardSettingsWithScope = `-- name: ReadDashboardSettingsWithScope :many
+
 SELECT name, value, scope FROM DashboardSettings WHERE scope = ?
 `
 
@@ -222,6 +235,7 @@ type ReadDashboardSettingsWithScopeRow struct {
 	Scope string
 }
 
+// Dashboard settings
 func (q *Queries) ReadDashboardSettingsWithScope(ctx context.Context, scope string) ([]*ReadDashboardSettingsWithScopeRow, error) {
 	rows, err := q.query(ctx, q.readDashboardSettingsWithScopeStmt, readDashboardSettingsWithScope, scope)
 	if err != nil {
@@ -243,6 +257,66 @@ func (q *Queries) ReadDashboardSettingsWithScope(ctx context.Context, scope stri
 		return nil, err
 	}
 	return items, nil
+}
+
+const readSIP = `-- name: ReadSIP :one
+SELECT sipUUID, createdTime, currentPath, hidden, aipFilename, sipType, dirUUIDs, status, completed_at FROM SIPs WHERE sipUUID = ?
+`
+
+type ReadSIPRow struct {
+	SIPID       uuid.UUID
+	CreatedAt   time.Time
+	Currentpath sql.NullString
+	Hidden      bool
+	Aipfilename sql.NullString
+	Siptype     string
+	Diruuids    bool
+	Status      uint16
+	CompletedAt sql.NullTime
+}
+
+func (q *Queries) ReadSIP(ctx context.Context, sipuuid uuid.UUID) (*ReadSIPRow, error) {
+	row := q.queryRow(ctx, q.readSIPStmt, readSIP, sipuuid)
+	var i ReadSIPRow
+	err := row.Scan(
+		&i.SIPID,
+		&i.CreatedAt,
+		&i.Currentpath,
+		&i.Hidden,
+		&i.Aipfilename,
+		&i.Siptype,
+		&i.Diruuids,
+		&i.Status,
+		&i.CompletedAt,
+	)
+	return &i, err
+}
+
+const readSIPLocation = `-- name: ReadSIPLocation :one
+SELECT sipUUID, currentPath FROM SIPs WHERE sipUUID = ?
+`
+
+type ReadSIPLocationRow struct {
+	SIPID       uuid.UUID
+	Currentpath sql.NullString
+}
+
+func (q *Queries) ReadSIPLocation(ctx context.Context, sipuuid uuid.UUID) (*ReadSIPLocationRow, error) {
+	row := q.queryRow(ctx, q.readSIPLocationStmt, readSIPLocation, sipuuid)
+	var i ReadSIPLocationRow
+	err := row.Scan(&i.SIPID, &i.Currentpath)
+	return &i, err
+}
+
+const readSIPWithLocation = `-- name: ReadSIPWithLocation :one
+SELECT sipUUID FROM SIPs WHERE currentPath = ?
+`
+
+func (q *Queries) ReadSIPWithLocation(ctx context.Context, currentpath sql.NullString) (uuid.UUID, error) {
+	row := q.queryRow(ctx, q.readSIPWithLocationStmt, readSIPWithLocation, currentpath)
+	var sipuuid uuid.UUID
+	err := row.Scan(&sipuuid)
+	return sipuuid, err
 }
 
 const readTransferLocation = `-- name: ReadTransferLocation :one
@@ -273,6 +347,7 @@ func (q *Queries) ReadTransferWithLocation(ctx context.Context, currentlocation 
 }
 
 const readUnitVar = `-- name: ReadUnitVar :one
+
 SELECT variableValue, microServiceChainLink FROM UnitVariables WHERE unitType = ? AND unitUUID = ? AND variable = ?
 `
 
@@ -287,6 +362,7 @@ type ReadUnitVarRow struct {
 	LinkID        uuid.NullUUID
 }
 
+// Unit variables
 func (q *Queries) ReadUnitVar(ctx context.Context, arg *ReadUnitVarParams) (*ReadUnitVarRow, error) {
 	row := q.queryRow(ctx, q.readUnitVarStmt, readUnitVar, arg.UnitType, arg.UnitID, arg.Name)
 	var i ReadUnitVarRow
@@ -340,17 +416,6 @@ func (q *Queries) ReadUnitVars(ctx context.Context, arg *ReadUnitVarsParams) ([]
 	return items, nil
 }
 
-const releaseLock = `-- name: ReleaseLock :one
-SELECT RELEASE_LOCK('lock')
-`
-
-func (q *Queries) ReleaseLock(ctx context.Context) (bool, error) {
-	row := q.queryRow(ctx, q.releaseLockStmt, releaseLock)
-	var release_lock bool
-	err := row.Scan(&release_lock)
-	return release_lock, err
-}
-
 const updateJobStatus = `-- name: UpdateJobStatus :exec
 UPDATE Jobs SET currentStep = ? WHERE jobUUID = ?
 `
@@ -365,6 +430,34 @@ func (q *Queries) UpdateJobStatus(ctx context.Context, arg *UpdateJobStatusParam
 	return err
 }
 
+const updateSIPLocation = `-- name: UpdateSIPLocation :exec
+UPDATE SIPs SET currentPath = ? WHERE sipUUID = ?
+`
+
+type UpdateSIPLocationParams struct {
+	Currentpath sql.NullString
+	SIPID       uuid.UUID
+}
+
+func (q *Queries) UpdateSIPLocation(ctx context.Context, arg *UpdateSIPLocationParams) error {
+	_, err := q.exec(ctx, q.updateSIPLocationStmt, updateSIPLocation, arg.Currentpath, arg.SIPID)
+	return err
+}
+
+const updateSIPStatus = `-- name: UpdateSIPStatus :exec
+UPDATE SIPs SET status = ? WHERE sipUUID = ?
+`
+
+type UpdateSIPStatusParams struct {
+	Status uint16
+	SIPID  uuid.UUID
+}
+
+func (q *Queries) UpdateSIPStatus(ctx context.Context, arg *UpdateSIPStatusParams) error {
+	_, err := q.exec(ctx, q.updateSIPStatusStmt, updateSIPStatus, arg.Status, arg.SIPID)
+	return err
+}
+
 const updateTransferLocation = `-- name: UpdateTransferLocation :exec
 UPDATE Transfers SET currentLocation = ? WHERE transferUUID = ?
 `
@@ -376,6 +469,20 @@ type UpdateTransferLocationParams struct {
 
 func (q *Queries) UpdateTransferLocation(ctx context.Context, arg *UpdateTransferLocationParams) error {
 	_, err := q.exec(ctx, q.updateTransferLocationStmt, updateTransferLocation, arg.Currentlocation, arg.Transferuuid)
+	return err
+}
+
+const updateTransferStatus = `-- name: UpdateTransferStatus :exec
+UPDATE Transfers SET status = ? WHERE transferUUID = ?
+`
+
+type UpdateTransferStatusParams struct {
+	Status       uint16
+	Transferuuid uuid.UUID
+}
+
+func (q *Queries) UpdateTransferStatus(ctx context.Context, arg *UpdateTransferStatusParams) error {
+	_, err := q.exec(ctx, q.updateTransferStatusStmt, updateTransferStatus, arg.Status, arg.Transferuuid)
 	return err
 }
 

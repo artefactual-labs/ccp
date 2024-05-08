@@ -46,6 +46,24 @@ type Store interface {
 	// a new Transfer with a new UUID otherwise.
 	EnsureTransfer(ctx context.Context, path string) (id uuid.UUID, created bool, err error)
 
+	// ReadSIP returns a SIP given its identifier.
+	ReadSIP(ctx context.Context, id uuid.UUID) (sip SIP, err error)
+
+	// UpsertSIP is like UpsertTransfer but targets a SIP instead.
+	UpsertSIP(ctx context.Context, id uuid.UUID, path string) (created bool, err error)
+
+	// EnsureTransfer is like EnsureTransfer but targets a SIP instead.
+	EnsureSIP(ctx context.Context, path string) (id uuid.UUID, created bool, err error)
+
+	// ReadDIP returns a DIP given its identifier.
+	ReadDIP(ctx context.Context, id uuid.UUID) (dip DIP, err error)
+
+	// UpsertDIP is like UpsertTransfer but targets a SIP instead.
+	UpsertDIP(ctx context.Context, id uuid.UUID, path string) (created bool, err error)
+
+	// EnsureDIP is like EnsureTransfer but targets a SIP instead.
+	EnsureDIP(ctx context.Context, path string) (id uuid.UUID, created bool, err error)
+
 	// ReadUnitVars retrieves a list of package variables associated with a
 	// specific package identified by its type and UUID. It filters the
 	// variables based on the provided name. If name is an empty string, it
@@ -107,6 +125,29 @@ type UnitVar struct {
 	Name   string
 	Value  *string
 	LinkID *uuid.UUID
+}
+
+type SIP struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	CurrentPath string
+	Hidden      bool
+	AIPFilename string
+	Type        string // SIP, AIC, AIP-REIN, AIC-REN
+	DirIDs      bool
+	Status      int
+	CompletedAt time.Time
+}
+
+type DIP struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	CurrentPath string
+	Hidden      bool
+	AIPFilename string
+	DirIDs      bool
+	Status      int
+	CompletedAt time.Time
 }
 
 type File struct {
