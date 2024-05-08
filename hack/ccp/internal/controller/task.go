@@ -311,8 +311,9 @@ type task struct {
 	rm             replacementMapping
 	stdoutFilePath string
 	stderrFilePath string
-	exitCode       *int
-	completedAt    time.Time
+
+	// exitCode       *int
+	// completedAt    time.Time
 }
 
 func (t task) MarshalJSON() ([]byte, error) {
