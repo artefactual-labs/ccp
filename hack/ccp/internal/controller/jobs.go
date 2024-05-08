@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -316,8 +317,6 @@ var _ jobRunner = (*updateContextDecisionJob)(nil)
 // 'bd899573-694e-4d33-8c9b-df0af802437d', should result in that decision taking
 // effect for all of the others as well. This allows that.
 // TODO: this should be defined in the workflow, not hardcoded here.
-//
-// nolint: unused
 var updateContextDecisionJobChoiceMapping = map[uuid.UUID]uuid.UUID{
 	// Decision point "Assign UUIDs to directories?".
 	uuid.MustParse("8882bad4-561c-4126-89c9-f7f0c083d5d7"): uuid.MustParse("bd899573-694e-4d33-8c9b-df0af802437d"),
@@ -723,24 +722,77 @@ func newOutputClientScriptJob(j *job) (*outputClientScriptJob, error) {
 	}, nil
 }
 
+// The list of choices are represented using a dictionary as follows:
+//
+//	{
+//	  "default": {"description": "asdf", "uri": "asdf"},
+//	  "5c732a52-6cdb-4b50-ac2e-ae10361b019a": {"description": "asdf", "uri": "asdf"},
+//	}
 type outputClientScriptChoice struct {
 	Description string `json:"description"`
 	URI         string `json:"uri"`
 }
 
 func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	// We always need output for this type of job.
-	// Submission of one task only, like in directoryClientScriptJob.
-	// Unmarshal task.stdout:
-	// {
-	//   "default": {"description": "asdf", "uri": "asdf"},
-	//   "5c732a52-6cdb-4b50-ac2e-ae10361b019a": {"description": "asdf", "uri": "asdf"},
-	// }
-	// Then update generated_choices: self.job_chain.generated_choices = choices.
+	if err := l.j.pkg.reload(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("reload: %v", err)
+	}
+	if err := l.j.save(ctx); err != nil {
+		return uuid.Nil, fmt.Errorf("save: %v", err)
+	}
 
-	panic("not implemented")
+	taskResult, err := l.submitTasks(ctx)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("submit task: %v", err)
+	}
 
-	return uuid.Nil, nil // nolint: govet
+	choices := map[string]outputClientScriptChoice{}
+	if err := json.Unmarshal([]byte(taskResult.Stdout), &choices); err != nil {
+		l.j.logger.Error(err, "Unable to parse output: %s", taskResult.Stdout)
+	} else {
+		l.j.chain.choices = choices
+	}
+
+	if err := l.j.updateStatusFromExitCode(ctx, taskResult.ExitCode); err != nil {
+		return uuid.Nil, err
+	}
+
+	if ec, ok := l.j.wl.ExitCodes[taskResult.ExitCode]; ok {
+		if ec.LinkID == nil {
+			return uuid.Nil, io.EOF // End of chain.
+		}
+		return *ec.LinkID, nil
+	}
+
+	if l.j.wl.FallbackLinkID == uuid.Nil {
+		return uuid.Nil, io.EOF // End of chain.
+	}
+
+	return uuid.Nil, nil
+}
+
+func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResult, error) {
+	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain.pCtx)
+	args := rm.replaceValues(l.config.Arguments)
+	stdout := rm.replaceValues(l.config.StdoutFile)
+	stderr := rm.replaceValues(l.config.StderrFile)
+
+	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
+	if err := taskBackend.submit(ctx, rm, args, true, stdout, stderr); err != nil {
+		return nil, err
+	}
+
+	results, err := taskBackend.wait(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("wait: %v", err)
+	}
+
+	ret := results.First()
+	if ret == nil {
+		return nil, errors.New("submit task: no results")
+	}
+
+	return ret, nil
 }
 
 // setUnitVarLinkJob is a local job that sets the unit variable configured in

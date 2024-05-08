@@ -8,10 +8,6 @@ linters:
     - gci
     - unparam
     - gosec
-  disable:
-    # There is too much WIP code at the moment.
-    # TODO: enable this ASAP.
-    - unused
 
 issues:
   exclude-dirs:

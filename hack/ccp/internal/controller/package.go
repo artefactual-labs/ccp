@@ -680,7 +680,7 @@ func loadContext(ctx context.Context, p *Package) (*packageContext, error) {
 	return pCtx, nil
 }
 
-func (ctx *packageContext) copy() *orderedmap.OrderedMap[string, string] {
+func (ctx *packageContext) copy() *orderedmap.OrderedMap[string, string] { //nolint: unused
 	return ctx.Copy()
 }
 
