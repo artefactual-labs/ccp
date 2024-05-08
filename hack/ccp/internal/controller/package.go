@@ -390,21 +390,59 @@ func (u *Transfer) jobUnitType() string {
 
 type SIP struct {
 	pkg         *Package
-	aipFilename string
 	sipType     string
+	aipFilename string
 }
 
 var _ unit = (*SIP)(nil)
 
 func (u *SIP) hydrate(ctx context.Context, path, watchedDir string) error {
+	path = joinPath(strings.Replace(path, u.pkg.sharedDir, "%sharedPath%", 1), "")
+	id := uuidFromPath(path)
+	created := false
+
+	// Ensure that a SIP is either created or updated. The strategy differs
+	// depending on whether we know both its identifier and location, or only
+	// the latter.
+	if id != uuid.Nil {
+		var opErr error
+		created, opErr = u.pkg.store.UpsertSIP(ctx, id, path)
+		if opErr != nil {
+			return opErr
+		}
+	} else {
+		var opErr error
+		id, created, opErr = u.pkg.store.EnsureSIP(ctx, path)
+		if opErr != nil {
+			return opErr
+		}
+	}
+
+	// SIP package is a partial (objects or metadata-only) reingest.
+	// Full reingests use a different workflow chain.
+	if strings.Contains(watchedDir, "system/reingestAIP") {
+		if err := u.pkg.saveValue(ctx, "isPartialReingest", "true"); err != nil {
+			return err
+		}
+	}
+
+	u.pkg.id = id
+	u.pkg.path = path
+	u.pkg.logger.V(1).Info("SIP hydrated.", "created", created, "id", id)
+
 	return nil
 }
 
 func (u *SIP) reload(ctx context.Context) error {
-	// sip = models.SIP.objects.get(uuid=self.uuid)
-	// self.current_path = sip.currentpath
-	// self.aip_filename = sip.aip_filename or ""
-	// self.sip_type = sip.sip_type
+	sip, err := u.pkg.store.ReadSIP(ctx, u.pkg.id)
+	if err != nil {
+		return err
+	}
+
+	u.pkg.UpdatePath(sip.CurrentPath)
+	u.aipFilename = sip.AIPFilename
+	u.sipType = sip.Type
+
 	return nil
 }
 
@@ -438,6 +476,28 @@ type DIP struct {
 var _ unit = (*DIP)(nil)
 
 func (u *DIP) hydrate(ctx context.Context, path, watchedDir string) error {
+	path = joinPath(strings.Replace(path, u.pkg.sharedDir, "%sharedPath%", 1), "")
+	id := uuidFromPath(path)
+	created := false
+
+	if id != uuid.Nil {
+		var opErr error
+		created, opErr = u.pkg.store.UpsertDIP(ctx, id, path)
+		if opErr != nil {
+			return opErr
+		}
+	} else {
+		var opErr error
+		id, created, opErr = u.pkg.store.EnsureDIP(ctx, path)
+		if opErr != nil {
+			return opErr
+		}
+	}
+
+	u.pkg.id = id
+	u.pkg.path = path
+	u.pkg.logger.V(1).Info("DIP hydrated.", "created", created, "id", id)
+
 	return nil
 }
 

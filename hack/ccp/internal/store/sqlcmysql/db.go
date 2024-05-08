@@ -45,14 +45,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createJobStmt, err = db.PrepareContext(ctx, createJob); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateJob: %w", err)
 	}
+	if q.createSIPStmt, err = db.PrepareContext(ctx, createSIP); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateSIP: %w", err)
+	}
 	if q.createTransferStmt, err = db.PrepareContext(ctx, createTransfer); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTransfer: %w", err)
 	}
 	if q.createUnitVarStmt, err = db.PrepareContext(ctx, createUnitVar); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUnitVar: %w", err)
-	}
-	if q.getLockStmt, err = db.PrepareContext(ctx, getLock); err != nil {
-		return nil, fmt.Errorf("error preparing query GetLock: %w", err)
 	}
 	if q.readDashboardSettingStmt, err = db.PrepareContext(ctx, readDashboardSetting); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadDashboardSetting: %w", err)
@@ -62,6 +62,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.readDashboardSettingsWithScopeStmt, err = db.PrepareContext(ctx, readDashboardSettingsWithScope); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadDashboardSettingsWithScope: %w", err)
+	}
+	if q.readSIPStmt, err = db.PrepareContext(ctx, readSIP); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadSIP: %w", err)
+	}
+	if q.readSIPLocationStmt, err = db.PrepareContext(ctx, readSIPLocation); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadSIPLocation: %w", err)
+	}
+	if q.readSIPWithLocationStmt, err = db.PrepareContext(ctx, readSIPWithLocation); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadSIPWithLocation: %w", err)
 	}
 	if q.readTransferLocationStmt, err = db.PrepareContext(ctx, readTransferLocation); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadTransferLocation: %w", err)
@@ -75,14 +84,20 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.readUnitVarsStmt, err = db.PrepareContext(ctx, readUnitVars); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadUnitVars: %w", err)
 	}
-	if q.releaseLockStmt, err = db.PrepareContext(ctx, releaseLock); err != nil {
-		return nil, fmt.Errorf("error preparing query ReleaseLock: %w", err)
-	}
 	if q.updateJobStatusStmt, err = db.PrepareContext(ctx, updateJobStatus); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateJobStatus: %w", err)
 	}
+	if q.updateSIPLocationStmt, err = db.PrepareContext(ctx, updateSIPLocation); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateSIPLocation: %w", err)
+	}
+	if q.updateSIPStatusStmt, err = db.PrepareContext(ctx, updateSIPStatus); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateSIPStatus: %w", err)
+	}
 	if q.updateTransferLocationStmt, err = db.PrepareContext(ctx, updateTransferLocation); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateTransferLocation: %w", err)
+	}
+	if q.updateTransferStatusStmt, err = db.PrepareContext(ctx, updateTransferStatus); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateTransferStatus: %w", err)
 	}
 	if q.updateUnitVarStmt, err = db.PrepareContext(ctx, updateUnitVar); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUnitVar: %w", err)
@@ -127,6 +142,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createJobStmt: %w", cerr)
 		}
 	}
+	if q.createSIPStmt != nil {
+		if cerr := q.createSIPStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createSIPStmt: %w", cerr)
+		}
+	}
 	if q.createTransferStmt != nil {
 		if cerr := q.createTransferStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTransferStmt: %w", cerr)
@@ -135,11 +155,6 @@ func (q *Queries) Close() error {
 	if q.createUnitVarStmt != nil {
 		if cerr := q.createUnitVarStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUnitVarStmt: %w", cerr)
-		}
-	}
-	if q.getLockStmt != nil {
-		if cerr := q.getLockStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getLockStmt: %w", cerr)
 		}
 	}
 	if q.readDashboardSettingStmt != nil {
@@ -155,6 +170,21 @@ func (q *Queries) Close() error {
 	if q.readDashboardSettingsWithScopeStmt != nil {
 		if cerr := q.readDashboardSettingsWithScopeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing readDashboardSettingsWithScopeStmt: %w", cerr)
+		}
+	}
+	if q.readSIPStmt != nil {
+		if cerr := q.readSIPStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readSIPStmt: %w", cerr)
+		}
+	}
+	if q.readSIPLocationStmt != nil {
+		if cerr := q.readSIPLocationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readSIPLocationStmt: %w", cerr)
+		}
+	}
+	if q.readSIPWithLocationStmt != nil {
+		if cerr := q.readSIPWithLocationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readSIPWithLocationStmt: %w", cerr)
 		}
 	}
 	if q.readTransferLocationStmt != nil {
@@ -177,19 +207,29 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing readUnitVarsStmt: %w", cerr)
 		}
 	}
-	if q.releaseLockStmt != nil {
-		if cerr := q.releaseLockStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing releaseLockStmt: %w", cerr)
-		}
-	}
 	if q.updateJobStatusStmt != nil {
 		if cerr := q.updateJobStatusStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateJobStatusStmt: %w", cerr)
 		}
 	}
+	if q.updateSIPLocationStmt != nil {
+		if cerr := q.updateSIPLocationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateSIPLocationStmt: %w", cerr)
+		}
+	}
+	if q.updateSIPStatusStmt != nil {
+		if cerr := q.updateSIPStatusStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateSIPStatusStmt: %w", cerr)
+		}
+	}
 	if q.updateTransferLocationStmt != nil {
 		if cerr := q.updateTransferLocationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateTransferLocationStmt: %w", cerr)
+		}
+	}
+	if q.updateTransferStatusStmt != nil {
+		if cerr := q.updateTransferStatusStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateTransferStatusStmt: %w", cerr)
 		}
 	}
 	if q.updateUnitVarStmt != nil {
@@ -243,19 +283,24 @@ type Queries struct {
 	cleanUpAwaitingJobsStmt               *sql.Stmt
 	cleanUpTasksWithAwaitingJobsStmt      *sql.Stmt
 	createJobStmt                         *sql.Stmt
+	createSIPStmt                         *sql.Stmt
 	createTransferStmt                    *sql.Stmt
 	createUnitVarStmt                     *sql.Stmt
-	getLockStmt                           *sql.Stmt
 	readDashboardSettingStmt              *sql.Stmt
 	readDashboardSettingsWithNameLikeStmt *sql.Stmt
 	readDashboardSettingsWithScopeStmt    *sql.Stmt
+	readSIPStmt                           *sql.Stmt
+	readSIPLocationStmt                   *sql.Stmt
+	readSIPWithLocationStmt               *sql.Stmt
 	readTransferLocationStmt              *sql.Stmt
 	readTransferWithLocationStmt          *sql.Stmt
 	readUnitVarStmt                       *sql.Stmt
 	readUnitVarsStmt                      *sql.Stmt
-	releaseLockStmt                       *sql.Stmt
 	updateJobStatusStmt                   *sql.Stmt
+	updateSIPLocationStmt                 *sql.Stmt
+	updateSIPStatusStmt                   *sql.Stmt
 	updateTransferLocationStmt            *sql.Stmt
+	updateTransferStatusStmt              *sql.Stmt
 	updateUnitVarStmt                     *sql.Stmt
 }
 
@@ -270,19 +315,24 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		cleanUpAwaitingJobsStmt:               q.cleanUpAwaitingJobsStmt,
 		cleanUpTasksWithAwaitingJobsStmt:      q.cleanUpTasksWithAwaitingJobsStmt,
 		createJobStmt:                         q.createJobStmt,
+		createSIPStmt:                         q.createSIPStmt,
 		createTransferStmt:                    q.createTransferStmt,
 		createUnitVarStmt:                     q.createUnitVarStmt,
-		getLockStmt:                           q.getLockStmt,
 		readDashboardSettingStmt:              q.readDashboardSettingStmt,
 		readDashboardSettingsWithNameLikeStmt: q.readDashboardSettingsWithNameLikeStmt,
 		readDashboardSettingsWithScopeStmt:    q.readDashboardSettingsWithScopeStmt,
+		readSIPStmt:                           q.readSIPStmt,
+		readSIPLocationStmt:                   q.readSIPLocationStmt,
+		readSIPWithLocationStmt:               q.readSIPWithLocationStmt,
 		readTransferLocationStmt:              q.readTransferLocationStmt,
 		readTransferWithLocationStmt:          q.readTransferWithLocationStmt,
 		readUnitVarStmt:                       q.readUnitVarStmt,
 		readUnitVarsStmt:                      q.readUnitVarsStmt,
-		releaseLockStmt:                       q.releaseLockStmt,
 		updateJobStatusStmt:                   q.updateJobStatusStmt,
+		updateSIPLocationStmt:                 q.updateSIPLocationStmt,
+		updateSIPStatusStmt:                   q.updateSIPStatusStmt,
 		updateTransferLocationStmt:            q.updateTransferLocationStmt,
+		updateTransferStatusStmt:              q.updateTransferStatusStmt,
 		updateUnitVarStmt:                     q.updateUnitVarStmt,
 	}
 }

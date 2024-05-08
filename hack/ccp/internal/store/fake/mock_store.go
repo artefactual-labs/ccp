@@ -195,6 +195,86 @@ func (c *MockStoreCreateUnitVarCall) DoAndReturn(f func(context.Context, uuid.UU
 	return c
 }
 
+// EnsureDIP mocks base method.
+func (m *MockStore) EnsureDIP(ctx context.Context, path string) (uuid.UUID, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureDIP", ctx, path)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnsureDIP indicates an expected call of EnsureDIP.
+func (mr *MockStoreMockRecorder) EnsureDIP(ctx, path any) *MockStoreEnsureDIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDIP", reflect.TypeOf((*MockStore)(nil).EnsureDIP), ctx, path)
+	return &MockStoreEnsureDIPCall{Call: call}
+}
+
+// MockStoreEnsureDIPCall wrap *gomock.Call
+type MockStoreEnsureDIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreEnsureDIPCall) Return(id uuid.UUID, created bool, err error) *MockStoreEnsureDIPCall {
+	c.Call = c.Call.Return(id, created, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreEnsureDIPCall) Do(f func(context.Context, string) (uuid.UUID, bool, error)) *MockStoreEnsureDIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreEnsureDIPCall) DoAndReturn(f func(context.Context, string) (uuid.UUID, bool, error)) *MockStoreEnsureDIPCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// EnsureSIP mocks base method.
+func (m *MockStore) EnsureSIP(ctx context.Context, path string) (uuid.UUID, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureSIP", ctx, path)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnsureSIP indicates an expected call of EnsureSIP.
+func (mr *MockStoreMockRecorder) EnsureSIP(ctx, path any) *MockStoreEnsureSIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureSIP", reflect.TypeOf((*MockStore)(nil).EnsureSIP), ctx, path)
+	return &MockStoreEnsureSIPCall{Call: call}
+}
+
+// MockStoreEnsureSIPCall wrap *gomock.Call
+type MockStoreEnsureSIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreEnsureSIPCall) Return(id uuid.UUID, created bool, err error) *MockStoreEnsureSIPCall {
+	c.Call = c.Call.Return(id, created, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreEnsureSIPCall) Do(f func(context.Context, string) (uuid.UUID, bool, error)) *MockStoreEnsureSIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreEnsureSIPCall) DoAndReturn(f func(context.Context, string) (uuid.UUID, bool, error)) *MockStoreEnsureSIPCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // EnsureTransfer mocks base method.
 func (m *MockStore) EnsureTransfer(ctx context.Context, path string) (uuid.UUID, bool, error) {
 	m.ctrl.T.Helper()
@@ -274,6 +354,45 @@ func (c *MockStoreFilesCall) DoAndReturn(f func(context.Context, uuid.UUID, enum
 	return c
 }
 
+// ReadDIP mocks base method.
+func (m *MockStore) ReadDIP(ctx context.Context, id uuid.UUID) (store.DIP, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadDIP", ctx, id)
+	ret0, _ := ret[0].(store.DIP)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadDIP indicates an expected call of ReadDIP.
+func (mr *MockStoreMockRecorder) ReadDIP(ctx, id any) *MockStoreReadDIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadDIP", reflect.TypeOf((*MockStore)(nil).ReadDIP), ctx, id)
+	return &MockStoreReadDIPCall{Call: call}
+}
+
+// MockStoreReadDIPCall wrap *gomock.Call
+type MockStoreReadDIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadDIPCall) Return(dip store.DIP, err error) *MockStoreReadDIPCall {
+	c.Call = c.Call.Return(dip, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadDIPCall) Do(f func(context.Context, uuid.UUID) (store.DIP, error)) *MockStoreReadDIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadDIPCall) DoAndReturn(f func(context.Context, uuid.UUID) (store.DIP, error)) *MockStoreReadDIPCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // ReadDict mocks base method.
 func (m *MockStore) ReadDict(ctx context.Context, name string) (map[string]string, error) {
 	m.ctrl.T.Helper()
@@ -348,6 +467,45 @@ func (c *MockStoreReadPipelineIDCall) Do(f func(context.Context) (uuid.UUID, err
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreReadPipelineIDCall) DoAndReturn(f func(context.Context) (uuid.UUID, error)) *MockStoreReadPipelineIDCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadSIP mocks base method.
+func (m *MockStore) ReadSIP(ctx context.Context, id uuid.UUID) (store.SIP, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadSIP", ctx, id)
+	ret0, _ := ret[0].(store.SIP)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadSIP indicates an expected call of ReadSIP.
+func (mr *MockStoreMockRecorder) ReadSIP(ctx, id any) *MockStoreReadSIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadSIP", reflect.TypeOf((*MockStore)(nil).ReadSIP), ctx, id)
+	return &MockStoreReadSIPCall{Call: call}
+}
+
+// MockStoreReadSIPCall wrap *gomock.Call
+type MockStoreReadSIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadSIPCall) Return(sip store.SIP, err error) *MockStoreReadSIPCall {
+	c.Call = c.Call.Return(sip, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadSIPCall) Do(f func(context.Context, uuid.UUID) (store.SIP, error)) *MockStoreReadSIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadSIPCall) DoAndReturn(f func(context.Context, uuid.UUID) (store.SIP, error)) *MockStoreReadSIPCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -695,6 +853,84 @@ func (c *MockStoreUpdatePackageStatusCall) Do(f func(context.Context, uuid.UUID,
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreUpdatePackageStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, enums.PackageStatus) error) *MockStoreUpdatePackageStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// UpsertDIP mocks base method.
+func (m *MockStore) UpsertDIP(ctx context.Context, id uuid.UUID, path string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertDIP", ctx, id, path)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertDIP indicates an expected call of UpsertDIP.
+func (mr *MockStoreMockRecorder) UpsertDIP(ctx, id, path any) *MockStoreUpsertDIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertDIP", reflect.TypeOf((*MockStore)(nil).UpsertDIP), ctx, id, path)
+	return &MockStoreUpsertDIPCall{Call: call}
+}
+
+// MockStoreUpsertDIPCall wrap *gomock.Call
+type MockStoreUpsertDIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreUpsertDIPCall) Return(created bool, err error) *MockStoreUpsertDIPCall {
+	c.Call = c.Call.Return(created, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreUpsertDIPCall) Do(f func(context.Context, uuid.UUID, string) (bool, error)) *MockStoreUpsertDIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreUpsertDIPCall) DoAndReturn(f func(context.Context, uuid.UUID, string) (bool, error)) *MockStoreUpsertDIPCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// UpsertSIP mocks base method.
+func (m *MockStore) UpsertSIP(ctx context.Context, id uuid.UUID, path string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertSIP", ctx, id, path)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertSIP indicates an expected call of UpsertSIP.
+func (mr *MockStoreMockRecorder) UpsertSIP(ctx, id, path any) *MockStoreUpsertSIPCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertSIP", reflect.TypeOf((*MockStore)(nil).UpsertSIP), ctx, id, path)
+	return &MockStoreUpsertSIPCall{Call: call}
+}
+
+// MockStoreUpsertSIPCall wrap *gomock.Call
+type MockStoreUpsertSIPCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreUpsertSIPCall) Return(created bool, err error) *MockStoreUpsertSIPCall {
+	c.Call = c.Call.Return(created, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreUpsertSIPCall) Do(f func(context.Context, uuid.UUID, string) (bool, error)) *MockStoreUpsertSIPCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreUpsertSIPCall) DoAndReturn(f func(context.Context, uuid.UUID, string) (bool, error)) *MockStoreUpsertSIPCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
