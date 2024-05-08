@@ -33,6 +33,12 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AdminServiceCreatePackageProcedure is the fully-qualified name of the AdminService's
+	// CreatePackage RPC.
+	AdminServiceCreatePackageProcedure = "/archivematica.ccp.admin.v1beta1.AdminService/CreatePackage"
+	// AdminServiceApproveTransferProcedure is the fully-qualified name of the AdminService's
+	// ApproveTransfer RPC.
+	AdminServiceApproveTransferProcedure = "/archivematica.ccp.admin.v1beta1.AdminService/ApproveTransfer"
 	// AdminServiceListActivePackagesProcedure is the fully-qualified name of the AdminService's
 	// ListActivePackages RPC.
 	AdminServiceListActivePackagesProcedure = "/archivematica.ccp.admin.v1beta1.AdminService/ListActivePackages"
@@ -47,6 +53,8 @@ const (
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
 	adminServiceServiceDescriptor                       = v1beta1.File_archivematica_ccp_admin_v1beta1_admin_proto.Services().ByName("AdminService")
+	adminServiceCreatePackageMethodDescriptor           = adminServiceServiceDescriptor.Methods().ByName("CreatePackage")
+	adminServiceApproveTransferMethodDescriptor         = adminServiceServiceDescriptor.Methods().ByName("ApproveTransfer")
 	adminServiceListActivePackagesMethodDescriptor      = adminServiceServiceDescriptor.Methods().ByName("ListActivePackages")
 	adminServiceListAwaitingDecisionsMethodDescriptor   = adminServiceServiceDescriptor.Methods().ByName("ListAwaitingDecisions")
 	adminServiceResolveAwaitingDecisionMethodDescriptor = adminServiceServiceDescriptor.Methods().ByName("ResolveAwaitingDecision")
@@ -54,6 +62,8 @@ var (
 
 // AdminServiceClient is a client for the archivematica.ccp.admin.v1beta1.AdminService service.
 type AdminServiceClient interface {
+	CreatePackage(context.Context, *connect.Request[v1beta1.CreatePackageRequest]) (*connect.Response[v1beta1.CreatePackageResponse], error)
+	ApproveTransfer(context.Context, *connect.Request[v1beta1.ApproveTransferRequest]) (*connect.Response[v1beta1.ApproveTransferResponse], error)
 	ListActivePackages(context.Context, *connect.Request[v1beta1.ListActivePackagesRequest]) (*connect.Response[v1beta1.ListActivePackagesResponse], error)
 	ListAwaitingDecisions(context.Context, *connect.Request[v1beta1.ListAwaitingDecisionsRequest]) (*connect.Response[v1beta1.ListAwaitingDecisionsResponse], error)
 	ResolveAwaitingDecision(context.Context, *connect.Request[v1beta1.ResolveAwaitingDecisionRequest]) (*connect.Response[v1beta1.ResolveAwaitingDecisionResponse], error)
@@ -69,6 +79,18 @@ type AdminServiceClient interface {
 func NewAdminServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AdminServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &adminServiceClient{
+		createPackage: connect.NewClient[v1beta1.CreatePackageRequest, v1beta1.CreatePackageResponse](
+			httpClient,
+			baseURL+AdminServiceCreatePackageProcedure,
+			connect.WithSchema(adminServiceCreatePackageMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		approveTransfer: connect.NewClient[v1beta1.ApproveTransferRequest, v1beta1.ApproveTransferResponse](
+			httpClient,
+			baseURL+AdminServiceApproveTransferProcedure,
+			connect.WithSchema(adminServiceApproveTransferMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		listActivePackages: connect.NewClient[v1beta1.ListActivePackagesRequest, v1beta1.ListActivePackagesResponse](
 			httpClient,
 			baseURL+AdminServiceListActivePackagesProcedure,
@@ -92,9 +114,21 @@ func NewAdminServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // adminServiceClient implements AdminServiceClient.
 type adminServiceClient struct {
+	createPackage           *connect.Client[v1beta1.CreatePackageRequest, v1beta1.CreatePackageResponse]
+	approveTransfer         *connect.Client[v1beta1.ApproveTransferRequest, v1beta1.ApproveTransferResponse]
 	listActivePackages      *connect.Client[v1beta1.ListActivePackagesRequest, v1beta1.ListActivePackagesResponse]
 	listAwaitingDecisions   *connect.Client[v1beta1.ListAwaitingDecisionsRequest, v1beta1.ListAwaitingDecisionsResponse]
 	resolveAwaitingDecision *connect.Client[v1beta1.ResolveAwaitingDecisionRequest, v1beta1.ResolveAwaitingDecisionResponse]
+}
+
+// CreatePackage calls archivematica.ccp.admin.v1beta1.AdminService.CreatePackage.
+func (c *adminServiceClient) CreatePackage(ctx context.Context, req *connect.Request[v1beta1.CreatePackageRequest]) (*connect.Response[v1beta1.CreatePackageResponse], error) {
+	return c.createPackage.CallUnary(ctx, req)
+}
+
+// ApproveTransfer calls archivematica.ccp.admin.v1beta1.AdminService.ApproveTransfer.
+func (c *adminServiceClient) ApproveTransfer(ctx context.Context, req *connect.Request[v1beta1.ApproveTransferRequest]) (*connect.Response[v1beta1.ApproveTransferResponse], error) {
+	return c.approveTransfer.CallUnary(ctx, req)
 }
 
 // ListActivePackages calls archivematica.ccp.admin.v1beta1.AdminService.ListActivePackages.
@@ -116,6 +150,8 @@ func (c *adminServiceClient) ResolveAwaitingDecision(ctx context.Context, req *c
 // AdminServiceHandler is an implementation of the archivematica.ccp.admin.v1beta1.AdminService
 // service.
 type AdminServiceHandler interface {
+	CreatePackage(context.Context, *connect.Request[v1beta1.CreatePackageRequest]) (*connect.Response[v1beta1.CreatePackageResponse], error)
+	ApproveTransfer(context.Context, *connect.Request[v1beta1.ApproveTransferRequest]) (*connect.Response[v1beta1.ApproveTransferResponse], error)
 	ListActivePackages(context.Context, *connect.Request[v1beta1.ListActivePackagesRequest]) (*connect.Response[v1beta1.ListActivePackagesResponse], error)
 	ListAwaitingDecisions(context.Context, *connect.Request[v1beta1.ListAwaitingDecisionsRequest]) (*connect.Response[v1beta1.ListAwaitingDecisionsResponse], error)
 	ResolveAwaitingDecision(context.Context, *connect.Request[v1beta1.ResolveAwaitingDecisionRequest]) (*connect.Response[v1beta1.ResolveAwaitingDecisionResponse], error)
@@ -127,6 +163,18 @@ type AdminServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	adminServiceCreatePackageHandler := connect.NewUnaryHandler(
+		AdminServiceCreatePackageProcedure,
+		svc.CreatePackage,
+		connect.WithSchema(adminServiceCreatePackageMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	adminServiceApproveTransferHandler := connect.NewUnaryHandler(
+		AdminServiceApproveTransferProcedure,
+		svc.ApproveTransfer,
+		connect.WithSchema(adminServiceApproveTransferMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	adminServiceListActivePackagesHandler := connect.NewUnaryHandler(
 		AdminServiceListActivePackagesProcedure,
 		svc.ListActivePackages,
@@ -147,6 +195,10 @@ func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOpti
 	)
 	return "/archivematica.ccp.admin.v1beta1.AdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AdminServiceCreatePackageProcedure:
+			adminServiceCreatePackageHandler.ServeHTTP(w, r)
+		case AdminServiceApproveTransferProcedure:
+			adminServiceApproveTransferHandler.ServeHTTP(w, r)
 		case AdminServiceListActivePackagesProcedure:
 			adminServiceListActivePackagesHandler.ServeHTTP(w, r)
 		case AdminServiceListAwaitingDecisionsProcedure:
@@ -161,6 +213,14 @@ func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOpti
 
 // UnimplementedAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAdminServiceHandler struct{}
+
+func (UnimplementedAdminServiceHandler) CreatePackage(context.Context, *connect.Request[v1beta1.CreatePackageRequest]) (*connect.Response[v1beta1.CreatePackageResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("archivematica.ccp.admin.v1beta1.AdminService.CreatePackage is not implemented"))
+}
+
+func (UnimplementedAdminServiceHandler) ApproveTransfer(context.Context, *connect.Request[v1beta1.ApproveTransferRequest]) (*connect.Response[v1beta1.ApproveTransferResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("archivematica.ccp.admin.v1beta1.AdminService.ApproveTransfer is not implemented"))
+}
 
 func (UnimplementedAdminServiceHandler) ListActivePackages(context.Context, *connect.Request[v1beta1.ListActivePackagesRequest]) (*connect.Response[v1beta1.ListActivePackagesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("archivematica.ccp.admin.v1beta1.AdminService.ListActivePackages is not implemented"))

@@ -1,6 +1,7 @@
 ENUMS = \
 	internal/store/enums/package_status_enum.go \
 	internal/store/enums/package_type_enum.go \
+	internal/store/enums/transfer_type_enum.go \
 
 $(ENUMS): GOENUM_FLAGS=--marshal --nocase --names --ptr --flag --sql
 

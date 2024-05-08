@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
 	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -38,12 +39,15 @@ func New(logger logr.Logger, config Config, ctrl *controller.Controller, store s
 	}
 }
 
+var _ adminv1connect.AdminServiceHandler = (*Server)(nil)
+
 func (s *Server) Run() error {
 	compress1KB := connect.WithCompressMinBytes(1024)
 
 	mux := http.NewServeMux()
 	mux.Handle(adminv1connect.NewAdminServiceHandler(
-		s, compress1KB,
+		s,
+		compress1KB,
 	))
 	mux.Handle(grpchealth.NewHandler(
 		grpchealth.NewStaticChecker(adminv1connect.AdminServiceName),
@@ -84,6 +88,18 @@ func (s *Server) Run() error {
 	}()
 
 	return nil
+}
+
+func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1.CreatePackageRequest]) (*connect.Response[adminv1.CreatePackageResponse], error) {
+	return connect.NewResponse(&adminv1.CreatePackageResponse{
+		Id: uuid.New().String(),
+	}), nil
+}
+
+func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[adminv1.ApproveTransferRequest]) (*connect.Response[adminv1.ApproveTransferResponse], error) {
+	return connect.NewResponse(&adminv1.ApproveTransferResponse{
+		Id: uuid.New().String(),
+	}), nil
 }
 
 func (s *Server) ListActivePackages(ctx context.Context, req *connect.Request[adminv1.ListActivePackagesRequest]) (*connect.Response[adminv1.ListActivePackagesResponse], error) {
