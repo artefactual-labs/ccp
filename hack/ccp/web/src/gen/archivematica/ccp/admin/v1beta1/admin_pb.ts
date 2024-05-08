@@ -4,7 +4,293 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { BoolValue, Message, proto3 } from "@bufbuild/protobuf";
+
+/**
+ * Different types of transfers.
+ *
+ * @generated from enum archivematica.ccp.admin.v1beta1.TransferType
+ */
+export enum TransferType {
+  /**
+   * @generated from enum value: TRANSFER_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_STANDARD = 1;
+   */
+  STANDARD = 1,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_ZIP_FILE = 2;
+   */
+  ZIP_FILE = 2,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_UNZIPPED_BAG = 3;
+   */
+  UNZIPPED_BAG = 3,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_ZIPPED_BAG = 4;
+   */
+  ZIPPED_BAG = 4,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_DSPACE = 5;
+   */
+  DSPACE = 5,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_MAILDIR = 6;
+   */
+  MAILDIR = 6,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_TRIM = 7;
+   */
+  TRIM = 7,
+
+  /**
+   * @generated from enum value: TRANSFER_TYPE_DATAVERSE = 8;
+   */
+  DATAVERSE = 8,
+}
+// Retrieve enum metadata with: proto3.getEnumType(TransferType)
+proto3.util.setEnumType(TransferType, "archivematica.ccp.admin.v1beta1.TransferType", [
+  { no: 0, name: "TRANSFER_TYPE_UNSPECIFIED" },
+  { no: 1, name: "TRANSFER_TYPE_STANDARD" },
+  { no: 2, name: "TRANSFER_TYPE_ZIP_FILE" },
+  { no: 3, name: "TRANSFER_TYPE_UNZIPPED_BAG" },
+  { no: 4, name: "TRANSFER_TYPE_ZIPPED_BAG" },
+  { no: 5, name: "TRANSFER_TYPE_DSPACE" },
+  { no: 6, name: "TRANSFER_TYPE_MAILDIR" },
+  { no: 7, name: "TRANSFER_TYPE_TRIM" },
+  { no: 8, name: "TRANSFER_TYPE_DATAVERSE" },
+]);
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.CreatePackageRequest
+ */
+export class CreatePackageRequest extends Message<CreatePackageRequest> {
+  /**
+   * Name of the transfer.
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * Type of the transfer, default to "standard".
+   *
+   * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 2;
+   */
+  type = TransferType.UNSPECIFIED;
+
+  /**
+   * Identifier of the accession.
+   *
+   * @generated from field: string accession = 3;
+   */
+  accession = "";
+
+  /**
+   * Identifier in the access system.
+   *
+   * @generated from field: string access_system_id = 4;
+   */
+  accessSystemId = "";
+
+  /**
+   * List of <location_uuid>:<relative_path> to be included in the transfer.
+   * Locations should be associated with this pipeline, and relative path should
+   * be relative to the location. The strings should be base64-encoded.
+   *
+   * @generated from field: repeated string path = 5;
+   */
+  path: string[] = [];
+
+  /**
+   * The identifier of the metadata set to be included in this submission.
+   *
+   * @generated from field: string metadata_set_id = 6;
+   */
+  metadataSetId = "";
+
+  /**
+   * An option to auto-approve the package. It is enabled by default.
+   *
+   * @generated from field: google.protobuf.BoolValue auto_approve = 7;
+   */
+  autoApprove?: boolean;
+
+  /**
+   * Name of the processing configuration file to be included.
+   *
+   * @generated from field: string processing_config = 8;
+   */
+  processingConfig = "";
+
+  constructor(data?: PartialMessage<CreatePackageRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.CreatePackageRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
+    { no: 3, name: "accession", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "access_system_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "metadata_set_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "auto_approve", kind: "message", T: BoolValue },
+    { no: 8, name: "processing_config", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePackageRequest {
+    return new CreatePackageRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePackageRequest {
+    return new CreatePackageRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePackageRequest {
+    return new CreatePackageRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined, b: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined): boolean {
+    return proto3.util.equals(CreatePackageRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.CreatePackageResponse
+ */
+export class CreatePackageResponse extends Message<CreatePackageResponse> {
+  /**
+   * Identifier of the package as a string (UUIDv4).
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<CreatePackageResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.CreatePackageResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePackageResponse {
+    return new CreatePackageResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePackageResponse {
+    return new CreatePackageResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePackageResponse {
+    return new CreatePackageResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined, b: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined): boolean {
+    return proto3.util.equals(CreatePackageResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.ApproveTransferRequest
+ */
+export class ApproveTransferRequest extends Message<ApproveTransferRequest> {
+  /**
+   * Directory where the transfer is currently located.
+   *
+   * @generated from field: string directory = 1;
+   */
+  directory = "";
+
+  /**
+   * Type of the transfer, default to "standard".
+   *
+   * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 2;
+   */
+  type = TransferType.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<ApproveTransferRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.ApproveTransferRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "directory", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined, b: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined): boolean {
+    return proto3.util.equals(ApproveTransferRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.ApproveTransferResponse
+ */
+export class ApproveTransferResponse extends Message<ApproveTransferResponse> {
+  /**
+   * Identifier of the package as a string (UUIDv4).
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<ApproveTransferResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.ApproveTransferResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined, b: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined): boolean {
+    return proto3.util.equals(ApproveTransferResponse, a, b);
+  }
+}
 
 /**
  * @generated from message archivematica.ccp.admin.v1beta1.ListActivePackagesRequest
