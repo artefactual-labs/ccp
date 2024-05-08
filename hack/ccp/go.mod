@@ -1,6 +1,6 @@
 module github.com/artefactual/archivematica/hack/ccp
 
-go 1.22.1
+go 1.22.3
 
 require (
 	connectrpc.com/connect v1.16.0

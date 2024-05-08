@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	goVersion           = "1.22.1"
+	goVersion           = "1.22.3"
 	golangciLintVersion = "v1.57.1"
 )
 
