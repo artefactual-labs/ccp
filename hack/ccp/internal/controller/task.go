@@ -88,14 +88,14 @@ func newTaskBackend(logger logr.Logger, job *job, store store.Store, gearman *ge
 	}
 }
 
-func (b *taskBackend) submit(ctx context.Context, pCtx *packageContext, args string, wantsOutput bool, stdoutFilePath, stderrFilePath string) error {
+func (b *taskBackend) submit(ctx context.Context, rm replacementMapping, args string, wantsOutput bool, stdoutFilePath, stderrFilePath string) error {
 	t := &task{
 		ID:             uuid.New(),
 		CreatedAt:      time.Now().UTC(),
 		Args:           args,
 		stdoutFilePath: stdoutFilePath,
 		stderrFilePath: stderrFilePath,
-		pCtx:           pCtx,
+		rm:             rm,
 	}
 
 	if wantsOutput || stdoutFilePath != "" || stderrFilePath != "" {
@@ -192,7 +192,7 @@ func (b *taskBackend) sendBatch(ctx context.Context) (err error) {
 	return nil
 }
 
-// saveTasks
+// saveTasks persists the tasks before they're used by MCPClient.
 func (b *taskBackend) saveTasks(ctx context.Context, batch []*task) error {
 	tt := make([]*store.Task, 0, len(batch))
 	for _, item := range batch {
@@ -204,14 +204,14 @@ func (b *taskBackend) saveTasks(ctx context.Context, batch []*task) error {
 			JobID:     b.job.id,
 		}
 
-		if val, ok := item.pCtx.Get("%fileUUID%"); ok {
-			if id, err := uuid.Parse(val); err != nil {
+		if val, ok := item.rm["%fileUUID%"]; ok {
+			if id, err := uuid.Parse(string(val)); err == nil {
 				task.FileID.UUID = id
 				task.FileID.Valid = true
 			}
 		}
-		if val, ok := item.pCtx.Get("%relativeLocation%"); ok {
-			if path, err := filepath.Abs(val); err == nil {
+		if val, ok := item.rm["%relativeLocation%"]; ok {
+			if path, err := filepath.Abs(string(val)); err == nil {
 				task.Filename = filepath.Base(path)
 			}
 		}
@@ -308,7 +308,7 @@ type task struct {
 	Args        string    `json:"arguments"`
 	WantsOutput bool      `json:"wants_output"`
 
-	pCtx           *packageContext
+	rm             replacementMapping
 	stdoutFilePath string
 	stderrFilePath string
 	exitCode       *int
