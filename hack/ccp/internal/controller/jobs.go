@@ -562,7 +562,7 @@ func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResult
 	stderr := rm.replaceValues(l.config.StderrFile)
 
 	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
-	if err := taskBackend.submit(ctx, l.j.chain.pCtx, args, false, stdout, stderr); err != nil {
+	if err := taskBackend.submit(ctx, rm, args, false, stdout, stderr); err != nil {
 		return nil, err
 	}
 
@@ -660,7 +660,7 @@ func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir str
 		stdout := rm.replaceValues(l.config.StdoutFile)
 		stderr := rm.replaceValues(l.config.StderrFile)
 
-		if err := taskBackend.submit(ctx, l.j.chain.pCtx, args, false, stdout, stderr); err != nil {
+		if err := taskBackend.submit(ctx, rm, args, false, stdout, stderr); err != nil {
 			return nil, err
 		}
 	}

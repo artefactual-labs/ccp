@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/gearmin/gearmintest"
-	"github.com/elliotchance/orderedmap/v2"
 	"github.com/go-logr/logr/testr"
 	"github.com/google/uuid"
 	"github.com/mikespook/gearman-go/worker"
@@ -83,8 +82,8 @@ func TestTaskBackend(t *testing.T) {
 
 	// Submit 1k jobs, i.e. 8 batches.
 	for range 1000 {
-		pCtx := &packageContext{orderedmap.NewOrderedMap[string, string]()}
-		backend.submit(ctx, pCtx, "args", true, tmpDir.Join("stdout.log"), tmpDir.Join("stderr.log"))
+		rm := replacementMapping{}
+		backend.submit(ctx, rm, "args", true, tmpDir.Join("stdout.log"), tmpDir.Join("stderr.log"))
 	}
 
 	res, err := backend.wait(ctx)
