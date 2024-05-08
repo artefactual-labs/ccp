@@ -14,8 +14,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/corsutil"
-	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1"
-	"github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1/adminv1connect"
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
+	adminv1connect "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 )

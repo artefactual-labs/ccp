@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package archivematica.ccp.admin.v1;
+package archivematica.ccp.admin.v1beta1;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
