@@ -16,6 +16,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/python"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
@@ -41,47 +42,75 @@ type Package struct {
 	// Current path, populated by hydrate().
 	path string
 
-	// Whether the package was submitted as a directory.
-	isDir bool
-
-	// Watched directory workflow document.
+	// Watched directory workflow document. Used by the iterator to discover
+	// the starting chain.
 	watchedAt *workflow.WatchedDirectory
 
 	// User decisinon manager
 	decision decision
 }
 
-func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, path, sharedDir string, wd *workflow.WatchedDirectory) (*Package, error) {
+func newPackage(logger logr.Logger, store store.Store, sharedDir string) *Package {
+	return &Package{
+		logger:    logger,
+		store:     store,
+		sharedDir: joinPath(sharedDir, ""),
+	}
+}
+
+// NewPackage creates a new package after a path observed in a watched directory.
+func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, sharedDir, path string, wd *workflow.WatchedDirectory) (*Package, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %v", err)
 	}
+	isDir := fi.IsDir()
 
-	p := &Package{
-		logger:    logger,
-		store:     store,
-		path:      path,
-		isDir:     fi.IsDir(),
-		sharedDir: joinPath(sharedDir, ""),
-		watchedAt: wd,
-	}
+	pkg := newPackage(logger, store, sharedDir)
+	pkg.path = path
+	pkg.watchedAt = wd
 
 	switch {
 	case wd.UnitType == "Transfer":
-		p.unit = &Transfer{pkg: p}
-	case wd.UnitType == "SIP" && p.isDir:
-		p.unit = &SIP{pkg: p}
-	case wd.UnitType == "DIP" && p.isDir:
-		p.unit = &DIP{pkg: p}
+		pkg.unit = &Transfer{pkg: pkg}
+	case wd.UnitType == "SIP" && isDir:
+		pkg.unit = &SIP{pkg: pkg}
+	case wd.UnitType == "DIP" && isDir:
+		pkg.unit = &DIP{pkg: pkg}
 	default:
-		return nil, fmt.Errorf("unexpected type given for file %q (dir: %t)", path, p.isDir)
+		return nil, fmt.Errorf("unexpected type given for file %q (dir: %t)", path, isDir)
 	}
 
-	if err := p.hydrate(ctx, path, wd.Path); err != nil {
+	if err := pkg.hydrate(ctx, path, wd.Path); err != nil {
 		return nil, fmt.Errorf("hydrate: %v", err)
 	}
 
-	return p, nil
+	return pkg, nil
+}
+
+// NewTransferPackage creates a new package after an API request.
+func NewTransferPackage(ctx context.Context, logger logr.Logger, store store.Store, sharedDir string, req *adminv1.CreatePackageRequest) (*Package, error) {
+	pkg := &Package{
+		logger: logger,
+		store:  store,
+	}
+
+	pkg.unit = &Transfer{pkg: pkg}
+
+	tmpDir, err := os.MkdirTemp(filepath.Join(sharedDir, "tmp"), "")
+	if err != nil {
+		return nil, err
+	}
+
+	transferType := Transfers.WithName("standard")
+
+	logger.Info("Here we are.", "tmpdir", tmpDir, "transferType", transferType)
+
+	if err := pkg.hydrate(ctx, "<todo-path>", ""); err != nil {
+		return nil, fmt.Errorf("hydrate: %v", err)
+	}
+
+	return pkg, nil
 }
 
 // Path returns the real (no share dir vars) path to the package.

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -90,10 +91,47 @@ func (s *Server) Run() error {
 	return nil
 }
 
+// validateCreatePackageRequets validates the request.
+//
+// TODO: use https://github.com/bufbuild/protovalidate.
+func validateCreatePackageRequest(msg *adminv1.CreatePackageRequest) error {
+	if msg.Name == "" {
+		return errors.New("name is empty")
+	}
+
+	hasPaths := false
+	for _, item := range msg.Path {
+		if len(item) > 0 {
+			hasPaths = true
+			break
+		}
+	}
+	if !hasPaths {
+		return errors.New("path is empty")
+	}
+
+	if msg.Type == adminv1.TransferType_TRANSFER_TYPE_UNSPECIFIED {
+		return errors.New("type is unspecified")
+	}
+
+	return nil
+}
+
 func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1.CreatePackageRequest]) (*connect.Response[adminv1.CreatePackageResponse], error) {
-	return connect.NewResponse(&adminv1.CreatePackageResponse{
-		Id: uuid.New().String(),
-	}), nil
+	if err := validateCreatePackageRequest(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	resp := &adminv1.CreatePackageResponse{}
+
+	if pkg, err := s.ctrl.Submit(ctx, req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeUnknown, err)
+	} else {
+		s.logger.Info("TODO: return identifier", "pkg", pkg.Name())
+		resp.Id = uuid.New().String()
+	}
+
+	return connect.NewResponse(resp), nil
 }
 
 func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[adminv1.ApproveTransferRequest]) (*connect.Response[adminv1.ApproveTransferResponse], error) {
