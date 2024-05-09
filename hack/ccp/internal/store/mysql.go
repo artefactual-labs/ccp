@@ -55,7 +55,7 @@ func connectToMySQL(logger logr.Logger, dsn string) (*sql.DB, error) {
 
 // mysqlstoreImpl implements the Store interface. While most queries are built
 // using sqlc, there are some cases where more dynamism is required where we
-// are using the goqu SQL builder, e.g. UpdateUnitStatus.
+// are using the goqu SQL builder, e.g. UpdatePackageStatus.
 type mysqlStoreImpl struct {
 	logger  logr.Logger
 	pool    *sql.DB
@@ -159,7 +159,7 @@ func (s *mysqlStoreImpl) CreateTasks(ctx context.Context, tasks []*Task) (err er
 }
 
 func (s *mysqlStoreImpl) UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) (err error) {
-	defer wrap(&err, "UpdateUnitStatus(%s, %s, %s)", id, packageType, status)
+	defer wrap(&err, "UpdatePackageStatus(%s, %s, %s)", id, packageType, status)
 
 	if !packageType.IsValid() {
 		return fmt.Errorf("invalid type: %v", err)
@@ -184,7 +184,7 @@ func (s *mysqlStoreImpl) UpdatePackageStatus(ctx context.Context, id uuid.UUID, 
 	}
 
 	values := goqu.Record{
-		"status": status,
+		"status": int(status),
 	}
 	if status == enums.PackageStatusCompletedSuccessfully {
 		values["completed_at"] = time.Now()

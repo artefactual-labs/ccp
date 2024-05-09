@@ -6,14 +6,18 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
 	"github.com/gohugoio/hugo/watcher"
 
-	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
-func watch(logger logr.Logger, ctrl *controller.Controller, wf *workflow.Document, path string) (*watcher.Batcher, error) {
+type observer interface {
+	Notify(path string) error
+}
+
+func watch(logger logr.Logger, o observer, wf *workflow.Document, path string) (*watcher.Batcher, error) {
 	w, err := watcher.New(500*time.Millisecond, 700*time.Millisecond, false)
 	if err != nil {
 		return nil, err
@@ -45,7 +49,7 @@ func watch(logger logr.Logger, ctrl *controller.Controller, wf *workflow.Documen
 		for {
 			select {
 			case evs := <-w.Events:
-				ctrl.HandleWatchedDirEvents(evs)
+				notify(logger, o, evs)
 			case err := <-w.Errors():
 				if err != nil {
 					logger.V(1).Info("Error while watching.", "err", err)
@@ -56,4 +60,15 @@ func watch(logger logr.Logger, ctrl *controller.Controller, wf *workflow.Documen
 	}()
 
 	return w, nil
+}
+
+func notify(logger logr.Logger, o observer, evs []fsnotify.Event) {
+	for _, ev := range evs {
+		if ev.Op&fsnotify.Create != fsnotify.Create {
+			continue
+		}
+		if err := o.Notify(ev.Name); err != nil {
+			logger.Error(err, "Failed to notify controller with a new event.", "err", err, "path", ev.Name)
+		}
+	}
 }

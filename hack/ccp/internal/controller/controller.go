@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/gearmin"
-	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
 	"golang.org/x/sync/errgroup"
 
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -94,17 +94,46 @@ func (c *Controller) Run() error {
 	return nil
 }
 
-func (c *Controller) HandleWatchedDirEvents(evs []fsnotify.Event) {
-	for _, ev := range evs {
-		if ev.Op&fsnotify.Create == fsnotify.Create {
-			if err := c.handle(ev.Name); err != nil {
-				c.logger.Info("Failed to handle event.", "err", err, "path", ev.Name)
-			}
-		}
+// Submit a new package to the queue.
+func (c *Controller) Submit(ctx context.Context, req *adminv1.CreatePackageRequest) (*Package, error) {
+	// 1. Create Package (Transfer).
+	//    transfer = models.Transfer.objects.create(**kwargs)
+	//    if not processing_configuration_file_exists(processing_config): processing_config = "default"
+	//    transfer.set_processing_configuration(processing_config)
+	//    transfer.update_active_agent(user_id)
+	// 2. Create temporary directory inside sharedDir/tmp.
+	//    tmpdir = mkdtemp(dir=os.path.join(_get_setting("SHARED_DIRECTORY"), "tmp"))
+	// 3. Identify starting point.
+	//    starting_point = PACKAGE_TYPE_STARTING_POINTS.get(type_)
+	// 4. Start creation.
+	//    params = (transfer, name, path, tmpdir, starting_point)
+	//    if auto_approve:
+	//        params = params + (workflow, package_queue)
+	//        result = executor.submit(_start_package_transfer_with_auto_approval, *params)
+	//    else:
+	//        result = executor.submit(_start_package_transfer, *params)
+	// 5. Adjust permissions?
+	//    result.add_done_callback(lambda f: os.chmod(tmpdir, 0o770))
+
+	pkg, err := NewTransferPackage(c.groupCtx, c.logger.WithName("package"), c.store, c.sharedDir, req)
+	if err != nil {
+		return nil, fmt.Errorf("create package: %v", err)
 	}
+
+	c.queue(pkg)
+	c.pick() // Start work right away, we don't want to wait for the next tick.
+
+	return pkg, nil
 }
 
-func (c *Controller) handle(path string) error {
+// Notify the controller of a new with a slice of filesystem events.
+func (c *Controller) Notify(path string) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("notify: %v", err)
+		}
+	}()
+
 	rel, err := filepath.Rel(c.watchedDir, path)
 	if err != nil {
 		return err
@@ -113,36 +142,33 @@ func (c *Controller) handle(path string) error {
 	dir, _ := filepath.Split(rel)
 	dir = trim(dir)
 
-	var match bool
-	for _, wd := range c.wf.WatchedDirectories {
-		if trim(wd.Path) == dir {
-			match = true
-			c.logger.V(2).Info("Identified new package.", "path", path, "type", wd.UnitType)
-			c.queue(path, wd)
-			c.pick()
+	var wd *workflow.WatchedDirectory
+	for _, item := range c.wf.WatchedDirectories {
+		if trim(item.Path) == dir {
+			wd = item
 			break
 		}
 	}
-	if !match {
+	if wd == nil {
 		return fmt.Errorf("unmatched event")
+	}
+
+	c.logger.V(2).Info("Identified new package.", "path", path, "type", wd.UnitType)
+
+	logger := c.logger.WithName("package").WithValues("wd", wd.Path, "path", path)
+	if pkg, err := NewPackage(c.groupCtx, logger, c.store, c.sharedDir, path, wd); err != nil {
+		return err
+	} else {
+		c.queue(pkg)
+		c.pick() // Start work right away, we don't want to wait for the next tick.
 	}
 
 	return nil
 }
 
-func (c *Controller) queue(path string, wd *workflow.WatchedDirectory) {
-	ctx, cancel := context.WithTimeout(c.groupCtx, time.Minute)
-	defer cancel()
-
-	logger := c.logger.WithName("package").WithValues("wd", wd.Path, "path", path)
-	p, err := NewPackage(ctx, logger, c.store, path, c.sharedDir, wd)
-	if err != nil {
-		logger.Error(err, "Failed to create new package.")
-		return
-	}
-
+func (c *Controller) queue(pkg *Package) {
 	c.mu.Lock()
-	c.queuedPackages = append(c.queuedPackages, p)
+	c.queuedPackages = append(c.queuedPackages, pkg)
 	c.mu.Unlock()
 }
 

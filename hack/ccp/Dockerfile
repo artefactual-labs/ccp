@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.4
 
-FROM golang:1.22.2-alpine AS build
+FROM golang:1.22.3-alpine AS build
 ARG VERSION_PATH=github.com/artefactual/archivematica/hack/ccp/internal/version
 ARG VERSION_NUMBER
 ARG VERSION_GIT_COMMIT
