@@ -100,7 +100,7 @@ func TestServerCmd(t *testing.T) {
 		}
 
 		// Submit transfers.
-		for i := 0; i < 1; i++ {
+		for i := range 1 {
 			submitTransfer(t, sharedDir, fmt.Sprintf("Images-%d", i+1), "activeTransfers/standardTransfer")
 		}
 

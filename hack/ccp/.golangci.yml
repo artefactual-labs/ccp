@@ -8,6 +8,9 @@ linters:
     - gci
     - unparam
     - gosec
+    - unused
+    - intrange
+    # - contextcheck
 
 issues:
   exclude-dirs:
