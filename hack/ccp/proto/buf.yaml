@@ -1,5 +1,7 @@
 version: v1
 name: buf.build/artefactual/archivematica
+deps:
+  - buf.build/bufbuild/protovalidate
 lint:
   use:
     - DEFAULT

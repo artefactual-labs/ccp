@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package archivematica.ccp.admin.v1beta1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/wrappers.proto";
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,10 +65,10 @@ service AdminService {
 
 message CreatePackageRequest {
   // Name of the transfer.
-  string name = 1;
+  string name = 1 [(buf.validate.field).string.min_len = 1];
 
   // Type of the transfer, default to "standard".
-  TransferType type = 2;
+  TransferType type = 2 [(buf.validate.field).enum = {defined_only: true}];
 
   // Identifier of the accession.
   string accession = 3;
@@ -78,7 +79,14 @@ message CreatePackageRequest {
   // List of <location_uuid>:<relative_path> to be included in the transfer.
   // Locations should be associated with this pipeline, and relative path should
   // be relative to the location. The strings should be base64-encoded.
-  repeated string path = 5;
+  repeated string path = 5 [(buf.validate.field).repeated = {
+    unique: true,
+    min_items: 1,
+    max_items: 500,
+    items: {
+      string: {min_len: 1},
+    },
+  }];
 
   // The identifier of the metadata set to be included in this submission.
   string metadata_set_id = 6;

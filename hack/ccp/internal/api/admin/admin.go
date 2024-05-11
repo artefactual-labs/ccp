@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"golang.org/x/net/http2"
@@ -29,15 +29,24 @@ type Server struct {
 	store  store.Store
 	server *http.Server
 	ln     net.Listener
+	v      *protovalidate.Validator
 }
 
-func New(logger logr.Logger, config Config, ctrl *controller.Controller, store store.Store) *Server {
-	return &Server{
+func New(logger logr.Logger, config Config, ctrl *controller.Controller, store store.Store) (*Server, error) {
+	srv := &Server{
 		logger: logger,
 		config: config,
 		ctrl:   ctrl,
 		store:  store,
 	}
+
+	if v, err := protovalidate.New(); err != nil {
+		return nil, err
+	} else {
+		srv.v = v
+	}
+
+	return srv, nil
 }
 
 var _ adminv1connect.AdminServiceHandler = (*Server)(nil)
@@ -91,36 +100,13 @@ func (s *Server) Run() error {
 	return nil
 }
 
-// validateCreatePackageRequets validates the request.
-//
-// TODO: use https://github.com/bufbuild/protovalidate.
-func validateCreatePackageRequest(msg *adminv1.CreatePackageRequest) error {
-	if msg.Name == "" {
-		return errors.New("name is empty")
-	}
-
-	hasPaths := false
-	for _, item := range msg.Path {
-		if len(item) > 0 {
-			hasPaths = true
-			break
-		}
-	}
-	if !hasPaths {
-		return errors.New("path is empty")
-	}
-
-	if msg.Type == adminv1.TransferType_TRANSFER_TYPE_UNSPECIFIED {
-		return errors.New("type is unspecified")
-	}
-
-	return nil
-}
-
 func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1.CreatePackageRequest]) (*connect.Response[adminv1.CreatePackageResponse], error) {
-	if err := validateCreatePackageRequest(req.Msg); err != nil {
+	if err := s.v.Validate(req.Msg); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+
+	autoApprove := req.Msg.AutoApprove == nil || req.Msg.AutoApprove.Value
+	s.logger.Info("CreatePackage", "autoApprove", autoApprove)
 
 	resp := &adminv1.CreatePackageResponse{}
 
