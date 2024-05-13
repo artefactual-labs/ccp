@@ -11,9 +11,11 @@ import (
 	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/gohugoio/hugo/watcher"
+	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -106,8 +108,15 @@ func (s *Server) Run() error {
 		s.gearman = gearmin.NewServer(ln)
 	}
 
+	s.logger.V(1).Info("Creating ssclient.")
+	httpClient := retryablehttp.NewClient().StandardClient()
+	ssclient, err := ssclient.NewClient(httpClient, s.store, s.config.ssclient)
+	if err != nil {
+		return fmt.Errorf("error creating ssclient: %v", err)
+	}
+
 	s.logger.V(1).Info("Creating controller.")
-	s.controller = controller.New(s.logger.WithName("controller"), s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
+	s.controller = controller.New(s.logger.WithName("controller"), ssclient, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
 	if err := s.controller.Run(); err != nil {
 		return fmt.Errorf("error creating controller: %v", err)
 	}

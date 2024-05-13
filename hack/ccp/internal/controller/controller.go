@@ -13,6 +13,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -22,6 +23,10 @@ const maxConcurrentPackages = 2
 type Controller struct {
 	logger logr.Logger
 
+	// Archivematica Storage Service API client.
+	ssclient ssclient.Client
+
+	// Application store.
 	store store.Store
 
 	// Embedded job server compatible with Gearman.
@@ -30,8 +35,10 @@ type Controller struct {
 	// wf is the workflow document.
 	wf *workflow.Document
 
+	// Archivematica shared directory.
 	sharedDir string
 
+	// Archivematica watched directory.
 	watchedDir string
 
 	// activePackages is the list of active packages.
@@ -56,9 +63,10 @@ type Controller struct {
 	closeOnce sync.Once
 }
 
-func New(logger logr.Logger, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
+func New(logger logr.Logger, ssclient ssclient.Client, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
 	c := &Controller{
 		logger:         logger,
+		ssclient:       ssclient,
 		store:          store,
 		gearman:        gearman,
 		wf:             wf,

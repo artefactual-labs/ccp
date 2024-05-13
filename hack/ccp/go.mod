@@ -17,14 +17,17 @@ require (
 	github.com/gohugoio/hugo v0.125.7
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.6
+	github.com/microsoft/kiota-abstractions-go v1.6.0
+	github.com/microsoft/kiota-http-go v1.3.3
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/rs/cors v1.11.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.30.0
-	go.artefactual.dev/ssclient v0.1.0
+	go.artefactual.dev/ssclient v0.2.1
 	go.artefactual.dev/tools v0.10.0
+	go.nhat.io/httpmock v0.11.0
 	go.starlark.net v0.0.0-20240411212711-9b43f0afd521
 	go.uber.org/goleak v1.3.0
 	go.uber.org/mock v0.4.0
@@ -45,6 +48,7 @@ require (
 	github.com/bep/godartsass v1.2.0 // indirect
 	github.com/bep/godartsass/v2 v2.0.0 // indirect
 	github.com/bep/golibsass v1.1.1 // indirect
+	github.com/bool64/shared v0.1.5 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cjlapao/common-go v0.0.39 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
@@ -66,12 +70,11 @@ require (
 	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/microsoft/kiota-abstractions-go v1.6.0 // indirect
-	github.com/microsoft/kiota-http-go v1.3.3 // indirect
 	github.com/microsoft/kiota-serialization-form-go v1.0.0 // indirect
 	github.com/microsoft/kiota-serialization-json-go v1.0.7 // indirect
 	github.com/microsoft/kiota-serialization-multipart-go v1.0.0 // indirect
@@ -89,6 +92,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -97,10 +101,15 @@ require (
 	github.com/std-uritemplate/std-uritemplate/go v0.0.55 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/swaggest/assertjson v1.7.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.13 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yudai/gojsondiff v1.0.0 // indirect
+	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	go.nhat.io/matcher/v2 v2.0.0 // indirect
+	go.nhat.io/wait v0.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
