@@ -15,7 +15,7 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
-	fakestore "github.com/artefactual/archivematica/hack/ccp/internal/store/fake"
+	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
@@ -69,7 +69,7 @@ func TestTaskBackend(t *testing.T) {
 		},
 	})
 
-	s := fakestore.NewMockStore(gomock.NewController(t))
+	s := storemock.NewMockStore(gomock.NewController(t))
 	s.EXPECT().CreateTasks(gomock.Any(), gomock.Cond(func(tt any) bool {
 		tasks := tt.([]*store.Task)
 		return len(tasks) <= batchSize // It should never exceed the batch size.

@@ -109,7 +109,8 @@ gen: gen-mocks gen-sqlc gen-enums gen-buf
 
 gen-mocks: # @HELP Generate mocks.
 gen-mocks: $(MOCKGEN)
-	mockgen -typed -source=./internal/store/store.go -destination=./internal/store/fake/mock_store.go -package=fake Store
+	mockgen -typed -source=./internal/store/store.go -destination=./internal/store/storemock/mock_store.go -package=storemock Store
+	mockgen -typed -source=./internal/ssclient/ssclient.go -destination=./internal/ssclient/ssclientmock/mock_ssclient.go -package=ssclientmock Client
 
 gen-sqlc: # @HELP Generate sqlc code.
 gen-sqlc: $(SQLC)

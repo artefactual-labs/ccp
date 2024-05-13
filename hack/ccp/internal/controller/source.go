@@ -24,11 +24,11 @@ import (
 // This method does not rely on the activeTransfer watched directory. It does
 // not prompt the user to accept the transfer because we go directly into the
 // next chain link.
-func StartTransfer(sharedDir, tmpDir, name, path string) error {
+func StartTransfer(ssclient ssclient.Client, sharedDir, tmpDir, name, path string) error {
 	destRel, destAbs, src := determineTransferPaths(sharedDir, tmpDir, name, path)
 	fmt.Println(destRel, destAbs, src)
 
-	copyFromTransferSources(nil)
+	copyFromTransferSources(ssclient, []string{path}, destRel)
 
 	tsrc, tdst := "", ""
 	dst, err := moveToInternalSharedDir(sharedDir, tsrc, tdst)
@@ -147,7 +147,7 @@ func moveToInternalSharedDir(sharedDir, path, dest string) (_ string, err error)
 	}
 }
 
-func copyFromTransferSources(c ssclient.Client) {
+func copyFromTransferSources(c ssclient.Client, paths []string, destRel string) {
 	// - processing_location = storage_service.get_first_location(purpose="CP")
 	// - transfer_sources = storage_service.get_location(purpose="TS")
 	// - _default_transfer_source_location_uuid

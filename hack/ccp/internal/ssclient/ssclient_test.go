@@ -12,14 +12,14 @@ import (
 	"gotest.tools/v3/assert/cmp"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
-	"github.com/artefactual/archivematica/hack/ccp/internal/store/fake"
+	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 )
 
 func TestClient(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		store  func(rec *fake.MockStoreMockRecorder)
+		store  func(rec *storemock.MockStoreMockRecorder)
 		server httpmock.Mocker
 		client func(t *testing.T, c ssclient.Client)
 	}{
@@ -64,7 +64,7 @@ func TestClient(t *testing.T) {
 		//
 
 		"ReadDefaultLocation returns the default AS location": {
-			store: func(rec *fake.MockStoreMockRecorder) {
+			store: func(rec *storemock.MockStoreMockRecorder) {
 				// It looks up the pipeline ID in the store.
 				expectStoreReadPipelineID(rec)
 			},
@@ -118,7 +118,7 @@ func TestClient(t *testing.T) {
 		//
 
 		"ListLocations returns a list of locations": {
-			store: func(rec *fake.MockStoreMockRecorder) {
+			store: func(rec *storemock.MockStoreMockRecorder) {
 				// It looks up the pipeline ID in the store.
 				expectStoreReadPipelineID(rec)
 			},
@@ -189,7 +189,7 @@ func TestClient(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			store := fake.NewMockStore(gomock.NewController(t))
+			store := storemock.NewMockStore(gomock.NewController(t))
 			if tc.store != nil {
 				tc.store(store.EXPECT())
 			}
@@ -210,7 +210,7 @@ func TestClient(t *testing.T) {
 	}
 }
 
-func expectStoreReadPipelineID(rec *fake.MockStoreMockRecorder) {
+func expectStoreReadPipelineID(rec *storemock.MockStoreMockRecorder) {
 	rec.
 		ReadPipelineID(mockutil.Context()).
 		Return(uuid.MustParse("fb2b8866-6f39-4616-b6cd-fa73193a3b05"), nil).
