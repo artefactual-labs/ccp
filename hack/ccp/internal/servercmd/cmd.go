@@ -33,6 +33,9 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	fs.StringVar(&cfg.db.dsn, "db.dsn", "", "Database DSN")
 	fs.StringVar(&cfg.api.admin.Addr, "api.admin.addr", "", "Admin API listen address")
 	fs.StringVar(&cfg.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
+	fs.StringVar(&cfg.ssclient.BaseURL, "ssclient.url", "", "Storage Service API base URL")
+	fs.StringVar(&cfg.ssclient.Username, "ssclient.username", "", "Storage Service API username")
+	fs.StringVar(&cfg.ssclient.Key, "ssclient.key", "", "Storage Service API key")
 
 	rootConfig.RegisterFlags(fs)
 
