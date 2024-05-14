@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 )
@@ -34,7 +35,7 @@ func TestDetermineTransferPaths(t *testing.T) {
 			},
 			want{
 				destRel: "/tmp/tmp.12345",
-				destAbs: "/var/archivematica/sharedDirectory/tmp/tmp.12345",
+				destAbs: "/var/archivematica/sharedDirectory/tmp/tmp.12345/transfer.tar.gz",
 				src:     "/var/source/transfer.tar.gz",
 			},
 		},
@@ -107,4 +108,35 @@ func TestMoveToInternalSharedDir(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, dest, tmpDir.Join("sharedDir", "deposits", filepath.Base(dest)))
 	assert.Assert(t, fs.Equal(dest, fs.Expected(t, fs.WithFile("MARBLES.TGA", "contents"), fs.MatchAnyFileMode)))
+}
+
+func TestLocationPath(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		arg  string
+		id   uuid.UUID
+		path string
+	}{
+		{
+			arg:  "c059a454-dafa-418e-a126-74d0c7219ce6:/tmp",
+			id:   uuid.MustParse("c059a454-dafa-418e-a126-74d0c7219ce6"),
+			path: "/tmp",
+		},
+		{
+			arg:  "/tmp",
+			id:   uuid.Nil,
+			path: "/tmp",
+		},
+		{
+			arg:  "12345:/tmp",
+			id:   uuid.Nil,
+			path: "/tmp",
+		},
+	}
+	for _, tc := range tests {
+		id, path := locationPath(tc.arg)
+		assert.Equal(t, id, tc.id)
+		assert.Equal(t, path, tc.path)
+	}
 }

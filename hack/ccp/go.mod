@@ -25,7 +25,7 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.30.0
-	go.artefactual.dev/ssclient v0.2.1
+	go.artefactual.dev/ssclient v0.2.3
 	go.artefactual.dev/tools v0.10.0
 	go.nhat.io/httpmock v0.11.0
 	go.starlark.net v0.0.0-20240411212711-9b43f0afd521

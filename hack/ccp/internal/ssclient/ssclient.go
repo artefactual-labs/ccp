@@ -2,6 +2,7 @@ package ssclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,6 +21,8 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 )
+
+var ErrLocationNotAvailable = errors.New("location not available")
 
 type Pipeline struct {
 	ID  uuid.UUID
@@ -41,8 +44,13 @@ type Location struct {
 type Client interface {
 	ReadPipeline(ctx context.Context, id uuid.UUID) (*Pipeline, error)
 	ReadDefaultLocation(ctx context.Context, purpose string) (*Location, error)
+	ReadProcessingLocation(ctx context.Context) (*Location, error)
 	ListLocations(ctx context.Context, path, purpose string) ([]*Location, error)
-	CopyFiles(ctx context.Context, l *Location, files []string) error
+
+	// MoveFiles moves files between locations. `files` is a list of pairs
+	// indicating the paths of the source file and its destination (both paths
+	// must be relative to their Location of the files to be moved).
+	MoveFiles(ctx context.Context, src, dst *Location, files [][2]string) error
 }
 
 // clientImpl implements Client.
@@ -86,6 +94,77 @@ func (c *clientImpl) ReadPipeline(ctx context.Context, id uuid.UUID) (_ *Pipelin
 	}
 
 	return p, nil
+}
+
+func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose string) (_ *Location, err error) {
+	derrors.Add(&err, "ReadDefaultLocation(%s)", purpose)
+
+	p, err := c.pipeline(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	headerOptions := kiotahttp.NewHeadersInspectionOptions()
+	headerOptions.InspectResponseHeaders = true
+
+	reqConfig := &api.V2LocationDefaultWithPurposeItemRequestBuilderGetRequestConfiguration{
+		Options: []kiotaabs.RequestOption{headerOptions},
+	}
+	if err := c.client.Api().V2().Location().DefaultEscaped().ByPurpose(purpose).Get(ctx, reqConfig); err != nil {
+		return nil, err
+	}
+
+	uris := headerOptions.ResponseHeaders.Get("Location")
+	if len(uris) < 1 {
+		return nil, ErrLocationNotAvailable
+	}
+	uri := uris[0]
+	if uri == "" {
+		return nil, ErrLocationNotAvailable
+	}
+
+	// Capture the UUID in the URI, e.g. "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/".
+	id := strings.TrimSuffix(strings.TrimPrefix(uri, "/api/v2/location/"), "/")
+
+	res, err := c.client.Api().V2().Location().ByUuid(id).Get(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Confirm that the default location has been made available to this pipeline.
+	var match bool
+	for _, item := range res.GetPipeline() {
+		if item == p.URI {
+			match = true
+			break
+		}
+	}
+	if !match {
+		return nil, ErrLocationNotAvailable
+	}
+
+	ret, err := convertLocation(res)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (c *clientImpl) ReadProcessingLocation(ctx context.Context) (_ *Location, err error) {
+	derrors.Add(&err, "ReadProcessingLocation")
+
+	res, err := c.ListLocations(ctx, "", models.CP_LOCATIONPURPOSE.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res) < 1 {
+		return nil, ErrLocationNotAvailable
+	}
+
+	// We can have many but we'll return the first match.
+	return res[0], nil
 }
 
 func (c *clientImpl) ListLocations(ctx context.Context, path, purpose string) (_ []*Location, err error) {
@@ -137,70 +216,30 @@ func (c *clientImpl) ListLocations(ctx context.Context, path, purpose string) (_
 	return ret, nil
 }
 
-func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose string) (_ *Location, err error) {
-	derrors.Add(&err, "ReadDefaultLocation(%s)", purpose)
+func (c *clientImpl) MoveFiles(ctx context.Context, src, dst *Location, files [][2]string) (err error) {
+	derrors.Add(&err, "MoveFiles()")
 
 	p, err := c.pipeline(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	headerOptions := kiotahttp.NewHeadersInspectionOptions()
-	headerOptions.InspectResponseHeaders = true
-
-	reqConfig := &api.V2LocationDefaultWithPurposeItemRequestBuilderGetRequestConfiguration{
-		Options: []kiotaabs.RequestOption{headerOptions},
-	}
-	if err := c.client.Api().V2().Location().DefaultEscaped().ByPurpose(purpose).Get(ctx, reqConfig); err != nil {
-		return nil, err
-	}
-
-	uris := headerOptions.ResponseHeaders.Get("Location")
-	if len(uris) < 1 {
-		return nil, fmt.Errorf("location not available")
-	}
-	uri := uris[0]
-	if uri == "" {
-		return nil, fmt.Errorf("location not available")
-	}
-
-	// Capture the UUID in the URI, e.g. "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/".
-	id := strings.TrimSuffix(strings.TrimPrefix(uri, "/api/v2/location/"), "/")
-
-	res, err := c.client.Api().V2().Location().ByUuid(id).Get(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Confirm that the default location has been made available to this pipeline.
-	var match bool
-	for _, item := range res.GetPipeline() {
-		if item == p.URI {
-			match = true
-			break
-		}
-	}
-	if !match {
-		return nil, fmt.Errorf("location not available")
-	}
-
-	ret, err := convertLocation(res)
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
-func (c *clientImpl) CopyFiles(ctx context.Context, l *Location, files []string) (err error) {
-	derrors.Add(&err, "CopyFiles()")
-
-	_, err = c.pipeline(ctx)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	body := models.NewMoveRequest()
+	body.SetPipeline(&p.URI)
+	body.SetOriginLocation(&src.URI)
+
+	moves := make([]models.MoveFileable, 0, len(files))
+	for _, f := range files {
+		m := models.NewMoveFile()
+		m.SetSource(&f[0])
+		m.SetDestination(&f[1])
+		moves = append(moves, m)
+	}
+	body.SetFiles(moves)
+
+	_, err = c.client.Api().V2().Location().ByUuid(dst.ID.String()).Post(ctx, body, nil)
+
+	return err
 }
 
 // pipeline returns the details of the current pipeline.

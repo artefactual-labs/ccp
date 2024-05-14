@@ -371,8 +371,8 @@ github.com/yuin/goldmark-emoji v1.0.2 h1:c/RgTShNgHTtc6xdz2KKI74jJr6rWi7FPgnP9GA
 github.com/yuin/goldmark-emoji v1.0.2/go.mod h1:RhP/RWpexdp+KHs7ghKnifRoIs/Bq4nDS7tRbCkOwKY=
 github.com/yusufpapurcu/wmi v1.2.3 h1:E1ctvB7uKFMOJw3fdOW32DwGE9I7t++CRUEMKvFoFiw=
 github.com/yusufpapurcu/wmi v1.2.3/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
-go.artefactual.dev/ssclient v0.2.1 h1:PKS7o8D7Q7XU+g1YpjWtGzD0ZknOj8ZPdh0KV9jI0cY=
-go.artefactual.dev/ssclient v0.2.1/go.mod h1:ImaAHtgGIbKlnrOUzczBMmltNVbhYkKZ7ujUjfBtUj8=
+go.artefactual.dev/ssclient v0.2.3 h1:tVkjQEycs6420Ky++1aZZUBoz94wWS2FoiVzqBNH2gM=
+go.artefactual.dev/ssclient v0.2.3/go.mod h1:ImaAHtgGIbKlnrOUzczBMmltNVbhYkKZ7ujUjfBtUj8=
 go.artefactual.dev/tools v0.10.0 h1:+LeZS5oHupAQBXvLQ4aGIuZyqf7zCpD7s3UpyDl9zn4=
 go.artefactual.dev/tools v0.10.0/go.mod h1:PIy0RtC45gC4sASb4r26g0aCU24kSWIp+mcV1p2gtpY=
 go.nhat.io/httpmock v0.11.0 h1:GSADjr4/sn1HXqnyluPr9PYpSmMh/h3ty0O7lEozD3c=

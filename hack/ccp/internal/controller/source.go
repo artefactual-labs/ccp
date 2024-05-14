@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
@@ -24,11 +27,11 @@ import (
 // This method does not rely on the activeTransfer watched directory. It does
 // not prompt the user to accept the transfer because we go directly into the
 // next chain link.
-func StartTransfer(ssclient ssclient.Client, sharedDir, tmpDir, name, path string) error {
+func StartTransfer(ctx context.Context, ssclient ssclient.Client, sharedDir, tmpDir, name, path string) error {
 	destRel, destAbs, src := determineTransferPaths(sharedDir, tmpDir, name, path)
 	fmt.Println(destRel, destAbs, src)
 
-	copyFromTransferSources(ssclient, []string{path}, destRel)
+	_ = copyFromTransferSources(ctx, ssclient, []string{path}, destRel)
 
 	tsrc, tdst := "", ""
 	dst, err := moveToInternalSharedDir(sharedDir, tsrc, tdst)
@@ -61,12 +64,14 @@ func StartTransferWithWatchedDir() {
 	// update transfer.currentlocation with the new destination
 }
 
-func locationPath(locPath string) (id, path string) {
-	if before, after, found := strings.Cut(locPath, ":"); found {
-		id = before
+func locationPath(locPath string) (id uuid.UUID, path string) {
+	before, after, found := strings.Cut(locPath, ":")
+
+	if found {
+		id, _ = uuid.Parse(before)
 		path = after
 	} else {
-		id = before
+		path = before
 	}
 
 	return id, path
@@ -147,9 +152,71 @@ func moveToInternalSharedDir(sharedDir, path, dest string) (_ string, err error)
 	}
 }
 
-func copyFromTransferSources(c ssclient.Client, paths []string, destRel string) {
-	// - processing_location = storage_service.get_first_location(purpose="CP")
-	// - transfer_sources = storage_service.get_location(purpose="TS")
-	// - _default_transfer_source_location_uuid
-	// - storage_service.copy_files(location, processing_location, files)
+func copyFromTransferSources(ctx context.Context, c ssclient.Client, paths []string, destRel string) (err error) {
+	derrors.Add(&err, "copyFromTransferSources()")
+
+	// We'll use the default transfer source location when a request does not
+	// indicate its source.
+	defaultTransferSource, err := c.ReadDefaultLocation(ctx, "TS")
+	if err != nil {
+		return err
+	}
+
+	// Look up the destination, which is our pipeline processing location.
+	currentlyProcessing, err := c.ReadProcessingLocation(ctx)
+	if err != nil {
+		return err
+	}
+
+	// filesByLocID is a list of all the copy operations that we'll be making,
+	// indexed by the identifier of the transfer source location.
+	transferSources, err := c.ListLocations(ctx, "", "TS")
+	if err != nil {
+		return err
+	}
+	type sourceFiles struct {
+		transferSource *ssclient.Location
+		files          [][2]string // src, dst
+	}
+	filesByLocID := map[uuid.UUID]sourceFiles{}
+	for _, loc := range transferSources {
+		filesByLocID[loc.ID] = sourceFiles{
+			transferSource: loc,
+			files:          [][2]string{},
+		}
+	}
+
+	for _, item := range paths {
+		locID, path := locationPath(item)
+		if locID == uuid.Nil {
+			locID = defaultTransferSource.ID
+		}
+		ops, ok := filesByLocID[locID]
+		if !ok {
+			return fmt.Errorf("location %s is not associated with this pipeline", locID)
+		}
+
+		source := strings.Replace(path, ops.transferSource.Path, "", 1)
+		source = strings.TrimPrefix(source, "/")
+
+		var lastSegment string
+		if strings.HasSuffix(source, "/") {
+			lastSegment = joinPath(filepath.Base(strings.TrimSuffix(source, "/")), "")
+		} else {
+			lastSegment = filepath.Base(source)
+		}
+
+		destination := filepath.Join(currentlyProcessing.Path, destRel, lastSegment)
+		destination = strings.Replace(destination, "%sharedPath%", "", 1)
+
+		ops.files = append(ops.files, [2]string{source, destination})
+	}
+
+	for _, sf := range filesByLocID {
+		if copyErr := c.MoveFiles(ctx, sf.transferSource, currentlyProcessing, sf.files); err != nil {
+			err = errors.Join(err, copyErr)
+		}
+	}
+
+	return err
 }
