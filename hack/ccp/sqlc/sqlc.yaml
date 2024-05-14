@@ -4,10 +4,10 @@ cloud:
   project: "01HECEDJYX2P7ZW9DJ34T9AB0Y"
 
 plugins:
-- name: golang
-  wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-go_1.3.0.wasm
-    sha256: e8206081686f95b461daf91a307e108a761526c6768d6f3eca9781b0726b7ec8
+  - name: golang
+    wasm:
+      url: https://downloads.sqlc.dev/plugin/sqlc-gen-go_1.3.0.wasm
+      sha256: e8206081686f95b461daf91a307e108a761526c6768d6f3eca9781b0726b7ec8
 
 sql:
   - schema: mysql/schema.sql
@@ -16,42 +16,51 @@ sql:
     database:
       managed: true
     codegen:
-    - plugin: golang
-      out: ../internal/store/sqlcmysql
-      options:
-        package: sqlcmysql
-        emit_interface: false
-        emit_prepared_queries: true
-        emit_empty_slices: true
-        emit_result_struct_pointers: true
-        emit_params_struct_pointers: true
-        rename:
-          "pk": "ID"
-          "uuid": "UUID"
-          "jobuuid": "ID"
-          "jobtype": "Type"
-          "sipuuid": "SIPID"
-          "createdtime": "CreatedAt"
-          "updatedtime": "UpdatedAt"
-          "microservicechainlink": "LinkID"
-          # table todo
-          # left: name of table, lowercase, also singualrized otherwise it doesn't match
+      - plugin: golang
+        out: ../internal/store/sqlcmysql
+        options:
+          package: sqlcmysql
+          emit_interface: false
+          emit_prepared_queries: true
+          emit_empty_slices: true
+          emit_result_struct_pointers: true
+          emit_params_struct_pointers: true
+          rename:
+            "pk": "ID"
+            "uuid": "UUID"
+            "jobuuid": "ID"
+            "jobtype": "Type"
+            "sipuuid": "SIPID"
+            "createdtime": "CreatedAt"
+            "updatedtime": "UpdatedAt"
+            "microservicechainlink": "LinkID"
+            # table todo
+            # left: name of table, lowercase, also singualrized otherwise it doesn't match
 
-
-        # In overrides, `column` must refer to the table and column name in the
-        # database schema, but matching is only possible in lowercase.
-        overrides:
-          - column: "*.*uuid"
-            go_type: &t_uuid
-              import: "github.com/google/uuid"
-              package: "uuid"
-              type: "UUID"
-              pointer: false
-          - column: "unitvariables.pk"
-            go_type: *t_uuid
-          - column: "unitvariables.microservicechainlink"
-            go_type: &t_nulluuid
-              import: "github.com/google/uuid"
-              package: "uuid"
-              type: "NullUUID"
-              pointer: false
+          # In overrides, `column` must refer to the table and column name in the
+          # database schema, but matching is only possible in lowercase.
+          overrides:
+            - column: "unitvariables.microservicechainlink"
+              go_type:
+                import: "github.com/google/uuid"
+                package: "uuid"
+                type: "NullUUID"
+                pointer: false
+            - column: "transfers.transfermetadatasetrowuuid"
+              go_type:
+                import: "github.com/google/uuid"
+                package: "uuid"
+                type: "NullUUID"
+                pointer: false
+            - column: "*.*uuid"
+              go_type:
+                import: "github.com/google/uuid"
+                package: "uuid"
+                type: "UUID"
+                pointer: false
+            - column: "unitvariables.pk"
+              go_type:
+                import: "github.com/google/uuid"
+                package: "uuid"
+                type: "UUID"
+                pointer: false

@@ -109,8 +109,9 @@ func (s *Server) Run() error {
 	}
 
 	s.logger.V(1).Info("Creating ssclient.")
-	httpClient := retryablehttp.NewClient().StandardClient()
-	ssclient, err := ssclient.NewClient(httpClient, s.store, s.config.ssclient)
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.Logger = nil
+	ssclient, err := ssclient.NewClient(retryableClient.StandardClient(), s.store, s.config.ssclient)
 	if err != nil {
 		return fmt.Errorf("error creating ssclient: %v", err)
 	}

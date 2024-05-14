@@ -18,6 +18,7 @@ import (
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/python"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -42,9 +43,8 @@ type Package struct {
 	// Current path, populated by hydrate().
 	path string
 
-	// Watched directory workflow document. Used by the iterator to discover
-	// the starting chain.
-	watchedAt *workflow.WatchedDirectory
+	// Identifier of the chain where the iterator must start processing.
+	startAt uuid.UUID
 
 	// User decisinon manager
 	decision decision
@@ -68,7 +68,7 @@ func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, shar
 
 	pkg := newPackage(logger, store, sharedDir)
 	pkg.path = path
-	pkg.watchedAt = wd
+	pkg.startAt = wd.ChainID
 
 	switch {
 	case wd.UnitType == "Transfer":
@@ -89,28 +89,117 @@ func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, shar
 }
 
 // NewTransferPackage creates a new package after an API request.
-func NewTransferPackage(ctx context.Context, logger logr.Logger, store store.Store, sharedDir string, req *adminv1.CreatePackageRequest) (*Package, error) {
-	pkg := &Package{
-		logger: logger,
-		store:  store,
+//
+//  1. Create Package (Transfer).
+//     transfer = models.Transfer.objects.create(**kwargs)
+//     if not processing_configuration_file_exists(processing_config): processing_config = "default"
+//     transfer.set_processing_configuration(processing_config)
+//     transfer.update_active_agent(user_id)
+//
+//  2. Create temporary directory inside sharedDir/tmp. [DONE]
+//     tmpdir = mkdtemp(dir=os.path.join(_get_setting("SHARED_DIRECTORY"), "tmp"))
+//
+//  3. Identify starting point. [DONE]
+//     starting_point = PACKAGE_TYPE_STARTING_POINTS.get(type_)
+//
+//  4. Start creation.
+//     params = (transfer, name, path, tmpdir, starting_point)
+//     if auto_approve:
+//     params = params + (workflow, package_queue)
+//     result = executor.submit(_start_package_transfer_with_auto_approval, *params)
+//     else:
+//     result = executor.submit(_start_package_transfer, *params)
+//
+//  5. Adjust permissions?
+//     result.add_done_callback(lambda f: os.chmod(tmpdir, 0o770))
+func NewTransferPackage(
+	ctx context.Context,
+	logger logr.Logger,
+	store store.Store,
+	ssclient ssclient.Client,
+	sharedDir string,
+	req *adminv1.CreatePackageRequest,
+	queue func(pkg *Package),
+) (*Package, error) {
+	// TODO: implement transfer submissions without auto-approval (see: copyTransferIntoActiveTransfers).
+	autoApprove := req.AutoApprove == nil || req.AutoApprove.Value
+	if !autoApprove {
+		return nil, errors.New("submissions with auto-approve disabled are not supported yet")
 	}
 
+	pkg := newPackage(logger, store, sharedDir)
+	pkg.id = uuid.New()
 	pkg.unit = &Transfer{pkg: pkg}
+	pkg.startAt = Transfers.WithType(req.Type).Chain
 
-	tmpDir, err := os.MkdirTemp(filepath.Join(sharedDir, "tmp"), "")
+	var msID uuid.UUID
+	if req.MetadataSetId != nil {
+		msID, _ = uuid.Parse(req.MetadataSetId.Value)
+	}
+
+	err := store.CreateTransfer(ctx, pkg.id, req.Accession, req.AccessSystemId, msID)
 	if err != nil {
 		return nil, err
 	}
 
-	transferType := Transfers.WithName("standard")
-
-	logger.Info("Here we are.", "tmpdir", tmpDir, "transferType", transferType)
-
-	if err := pkg.hydrate(ctx, "<todo-path>", ""); err != nil {
-		return nil, fmt.Errorf("hydrate: %v", err)
+	if req.ProcessingConfig == "" {
+		req.ProcessingConfig = "default"
+	}
+	if err := pkg.saveValue(ctx, "processingConfiguration", req.ProcessingConfig); err != nil {
+		return nil, err
 	}
 
+	if err := pkg.updateActiveAgent(ctx, "TODO"); err != nil {
+		return nil, err
+	}
+
+	// TODO: copy of transfer needs to happen asynchronously because we can't
+	// block the user request. This should however be done within workflow for
+	// better tracking.
+	//
+	// Perhaps for now we can have a pool to cap the total amount of work that
+	// we are willing to do at any given time, i.e. to be nice with Storage.
+	go func() (err error) {
+		logger := logger
+
+		defer func() {
+			if err != nil {
+				logger.Info("Opsie!", "err", err)
+			} else {
+				logger.Info("Done!")
+			}
+		}()
+
+		// Create temporary directory.
+		tmpDir, err := os.MkdirTemp(filepath.Join(sharedDir, "tmp"), "")
+		if err != nil {
+			return err
+		}
+		_ = os.Chmod(tmpDir, os.FileMode(0o770))
+		logger = logger.WithValues("tmpDir", tmpDir)
+
+		// Copy into new location.
+		path, err := copyTransfer(ctx, ssclient, sharedDir, tmpDir, req.Name, req.Path[0])
+		if err != nil {
+			return fmt.Errorf("copy transfer: %v", err)
+		}
+		pkg.UpdatePath(path)
+		logger = logger.WithValues("path", path)
+		if err := store.UpdateTransferLocation(ctx, pkg.id, path); err != nil {
+			logger.Info("Unable to update the transfer location.", "id", pkg.id, "path", path, "err", err)
+		}
+
+		queue(pkg) // Start work.
+
+		return nil
+	}() // nolint:errcheck
+
 	return pkg, nil
+}
+
+// ID returns the identifier of the package.
+func (p *Package) ID() uuid.UUID {
+	return p.id
 }
 
 // Path returns the real (no share dir vars) path to the package.
@@ -313,6 +402,10 @@ func (p *Package) markAsProcessing(ctx context.Context) error {
 
 func (p *Package) markAsDone(ctx context.Context) error {
 	return p.store.UpdatePackageStatus(ctx, p.id, p.packageType(), enums.PackageStatusDone)
+}
+
+func (p *Package) updateActiveAgent(ctx context.Context, userID string) error {
+	return nil // TODO: we have not implemented auth yet!
 }
 
 // unit represents logic that is specific to a particular type of package, e.g. Transfer.

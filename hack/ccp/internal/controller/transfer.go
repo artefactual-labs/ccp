@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 type TransferType struct {
@@ -27,6 +28,10 @@ type TransferType struct {
 
 	// Decision is the approved chain.
 	Decision uuid.UUID
+}
+
+func (t TransferType) WatchedDirDoc(wf *workflow.Document) *workflow.WatchedDirectory {
+	return nil
 }
 
 type TransferTypes []TransferType

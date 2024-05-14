@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { BoolValue, Message, proto3 } from "@bufbuild/protobuf";
+import { BoolValue, Message, proto3, StringValue } from "@bufbuild/protobuf";
 
 /**
  * Different types of transfers.
@@ -114,9 +114,9 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
   /**
    * The identifier of the metadata set to be included in this submission.
    *
-   * @generated from field: string metadata_set_id = 6;
+   * @generated from field: google.protobuf.StringValue metadata_set_id = 6;
    */
-  metadataSetId = "";
+  metadataSetId?: string;
 
   /**
    * An option to auto-approve the package. It is enabled by default.
@@ -145,7 +145,7 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
     { no: 3, name: "accession", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "access_system_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "metadata_set_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "metadata_set_id", kind: "message", T: StringValue },
     { no: 7, name: "auto_approve", kind: "message", T: BoolValue },
     { no: 8, name: "processing_config", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);

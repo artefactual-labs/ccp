@@ -157,6 +157,44 @@ func (c *MockStoreCreateTasksCall) DoAndReturn(f func(context.Context, []*store.
 	return c
 }
 
+// CreateTransfer mocks base method.
+func (m *MockStore) CreateTransfer(ctx context.Context, id uuid.UUID, accessionID, accessSystemID string, metadataSetID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTransfer", ctx, id, accessionID, accessSystemID, metadataSetID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateTransfer indicates an expected call of CreateTransfer.
+func (mr *MockStoreMockRecorder) CreateTransfer(ctx, id, accessionID, accessSystemID, metadataSetID any) *MockStoreCreateTransferCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransfer", reflect.TypeOf((*MockStore)(nil).CreateTransfer), ctx, id, accessionID, accessSystemID, metadataSetID)
+	return &MockStoreCreateTransferCall{Call: call}
+}
+
+// MockStoreCreateTransferCall wrap *gomock.Call
+type MockStoreCreateTransferCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreCreateTransferCall) Return(err error) *MockStoreCreateTransferCall {
+	c.Call = c.Call.Return(err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreCreateTransferCall) Do(f func(context.Context, uuid.UUID, string, string, uuid.UUID) error) *MockStoreCreateTransferCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreCreateTransferCall) DoAndReturn(f func(context.Context, uuid.UUID, string, string, uuid.UUID) error) *MockStoreCreateTransferCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // CreateUnitVar mocks base method.
 func (m *MockStore) CreateUnitVar(ctx context.Context, id uuid.UUID, packageType enums.PackageType, name, value string, linkID uuid.UUID, update bool) error {
 	m.ctrl.T.Helper()
@@ -853,6 +891,44 @@ func (c *MockStoreUpdatePackageStatusCall) Do(f func(context.Context, uuid.UUID,
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreUpdatePackageStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, enums.PackageStatus) error) *MockStoreUpdatePackageStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// UpdateTransferLocation mocks base method.
+func (m *MockStore) UpdateTransferLocation(ctx context.Context, id uuid.UUID, path string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTransferLocation", ctx, id, path)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTransferLocation indicates an expected call of UpdateTransferLocation.
+func (mr *MockStoreMockRecorder) UpdateTransferLocation(ctx, id, path any) *MockStoreUpdateTransferLocationCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTransferLocation", reflect.TypeOf((*MockStore)(nil).UpdateTransferLocation), ctx, id, path)
+	return &MockStoreUpdateTransferLocationCall{Call: call}
+}
+
+// MockStoreUpdateTransferLocationCall wrap *gomock.Call
+type MockStoreUpdateTransferLocationCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreUpdateTransferLocationCall) Return(arg0 error) *MockStoreUpdateTransferLocationCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreUpdateTransferLocationCall) Do(f func(context.Context, uuid.UUID, string) error) *MockStoreUpdateTransferLocationCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreUpdateTransferLocationCall) DoAndReturn(f func(context.Context, uuid.UUID, string) error) *MockStoreUpdateTransferLocationCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

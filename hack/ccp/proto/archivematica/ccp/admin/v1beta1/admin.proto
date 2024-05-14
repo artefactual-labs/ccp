@@ -88,8 +88,9 @@ message CreatePackageRequest {
     },
   }];
 
-  // The identifier of the metadata set to be included in this submission.
-  string metadata_set_id = 6;
+  // The identifier (UUIDv4) of the metadata set to be included in this
+  // submission.
+  google.protobuf.StringValue metadata_set_id = 6 [(buf.validate.field).string.uuid = true];
 
   // An option to auto-approve the package. It is enabled by default.
   google.protobuf.BoolValue auto_approve = 7;

@@ -22,15 +22,43 @@ func uuidFromPath(path string) uuid.UUID {
 }
 
 // joinPath is like filepath.Join but appends the ending separator when the last
-// element provided is an empty string.
+// element provided is an empty string or ends with a slash.
 func joinPath(elem ...string) string {
-	if len(elem) == 0 {
+	const sep = string(os.PathSeparator)
+	ln := len(elem)
+	if ln == 0 {
 		return ""
 	}
 	ret := filepath.Join(elem...)
-	if elem[len(elem)-1] == "" {
-		ret += string(os.PathSeparator)
+	last := elem[ln-1]
+	if last == "" || strings.HasSuffix(last, sep) {
+		ret += sep
 	}
 
 	return ret
+}
+
+// locationPath extracts the location identifier and path from a locationPath.
+// It returs the nil value of uuid.UUID (uuid.Nil) when the identifier is not
+// part of the path.
+func locationPath(locationPath string) (id uuid.UUID, path string) {
+	before, after, found := strings.Cut(locationPath, ":")
+
+	if found {
+		id, _ = uuid.Parse(before)
+		path = after
+	} else {
+		path = before
+	}
+
+	return id, path
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }

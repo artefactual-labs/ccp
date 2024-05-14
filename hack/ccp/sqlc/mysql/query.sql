@@ -13,7 +13,8 @@ UPDATE Jobs SET currentStep = ? WHERE jobUUID = ?;
 --
 
 -- name: CreateTransfer :exec
-INSERT INTO Transfers (transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at) VALUES (?, ?, '', '', '', '', '', '', '', 0, NULL, 0, 0, NULL);
+INSERT INTO Transfers (transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at)
+VALUES (?, ?, '', ?, '', '', '', '', ?, 0, ?, 0, 0, NULL);
 
 -- name: ReadTransferLocation :one
 SELECT transferUUID, currentLocation FROM Transfers WHERE transferUUID = ?;

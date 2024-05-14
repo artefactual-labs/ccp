@@ -6,6 +6,7 @@ import (
 	"go.artefactual.dev/tools/ref"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 )
 
 // TODO: why is kiota using ptrs for mandatory fields?
@@ -41,10 +42,7 @@ func convertLocation(m models.Locationable) (_ *Location, err error) {
 	r.Path = ref.DerefZero(m.GetPath())
 	r.RelativePath = ref.DerefZero(m.GetRelativePath())
 	r.Pipelines = m.GetPipeline()
-
-	if ps := m.GetPurpose(); ps != nil {
-		r.Purpose = ps.String()
-	}
+	r.Purpose = enums.LocationPurpose(ref.DerefDefault(m.GetPurpose(), -1))
 
 	return r, nil
 }

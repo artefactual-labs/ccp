@@ -60,6 +60,10 @@ func TestJoinPath(t *testing.T) {
 			want: "a/b/c",
 		},
 		{
+			elem: []string{"a", "b/"},
+			want: "a/b/",
+		},
+		{
 			elem: nil,
 			want: "",
 		},
@@ -70,5 +74,36 @@ func TestJoinPath(t *testing.T) {
 
 			assert.Equal(t, joinPath(tt.elem...), tt.want)
 		})
+	}
+}
+
+func TestLocationPath(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		arg  string
+		id   uuid.UUID
+		path string
+	}{
+		{
+			arg:  "c059a454-dafa-418e-a126-74d0c7219ce6:/tmp",
+			id:   uuid.MustParse("c059a454-dafa-418e-a126-74d0c7219ce6"),
+			path: "/tmp",
+		},
+		{
+			arg:  "/tmp",
+			id:   uuid.Nil,
+			path: "/tmp",
+		},
+		{
+			arg:  "12345:/tmp",
+			id:   uuid.Nil,
+			path: "/tmp",
+		},
+	}
+	for _, tc := range tests {
+		id, path := locationPath(tc.arg)
+		assert.Equal(t, id, tc.id)
+		assert.Equal(t, path, tc.path)
 	}
 }

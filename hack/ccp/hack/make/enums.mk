@@ -1,4 +1,5 @@
 ENUMS = \
+	internal/ssclient/enums/location_purpose_enum.go \
 	internal/store/enums/package_status_enum.go \
 	internal/store/enums/package_type_enum.go \
 	internal/store/enums/transfer_type_enum.go \

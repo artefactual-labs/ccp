@@ -11,7 +11,7 @@ import (
 func eval(literal string) (starlark.Value, error) {
 	thread := &starlark.Thread{Name: "main"}
 
-	fileOptions := syntax.FileOptions{
+	fileOptions := &syntax.FileOptions{
 		Set:               false,
 		While:             false,
 		TopLevelControl:   false,
@@ -25,7 +25,7 @@ func eval(literal string) (starlark.Value, error) {
 		return nil, fmt.Errorf("parse expression: %v", err)
 	}
 
-	val, err := starlark.EvalExpr(thread, expr, nil)
+	val, err := starlark.EvalExprOptions(fileOptions, thread, expr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("eval expression: %v", err)
 	}

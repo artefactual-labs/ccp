@@ -102,34 +102,21 @@ func (c *Controller) Run() error {
 	return nil
 }
 
-// Submit a new package to the queue.
+// Submit a transfer request.
 func (c *Controller) Submit(ctx context.Context, req *adminv1.CreatePackageRequest) (*Package, error) {
-	// 1. Create Package (Transfer).
-	//    transfer = models.Transfer.objects.create(**kwargs)
-	//    if not processing_configuration_file_exists(processing_config): processing_config = "default"
-	//    transfer.set_processing_configuration(processing_config)
-	//    transfer.update_active_agent(user_id)
-	// 2. Create temporary directory inside sharedDir/tmp.
-	//    tmpdir = mkdtemp(dir=os.path.join(_get_setting("SHARED_DIRECTORY"), "tmp"))
-	// 3. Identify starting point.
-	//    starting_point = PACKAGE_TYPE_STARTING_POINTS.get(type_)
-	// 4. Start creation.
-	//    params = (transfer, name, path, tmpdir, starting_point)
-	//    if auto_approve:
-	//        params = params + (workflow, package_queue)
-	//        result = executor.submit(_start_package_transfer_with_auto_approval, *params)
-	//    else:
-	//        result = executor.submit(_start_package_transfer, *params)
-	// 5. Adjust permissions?
-	//    result.add_done_callback(lambda f: os.chmod(tmpdir, 0o770))
+	// TODO: have NewTransferPackage return a function we can schedule here.
+	var once sync.Once
+	queue := func(pkg *Package) {
+		once.Do(func() {
+			c.queue(pkg)
+			c.pick() // Start work right away, we don't want to wait for the next tick.
+		})
+	}
 
-	pkg, err := NewTransferPackage(c.groupCtx, c.logger.WithName("package"), c.store, c.sharedDir, req)
+	pkg, err := NewTransferPackage(c.groupCtx, c.logger.WithName("package"), c.store, c.ssclient, c.sharedDir, req, queue)
 	if err != nil {
 		return nil, fmt.Errorf("create package: %v", err)
 	}
-
-	c.queue(pkg)
-	c.pick() // Start work right away, we don't want to wait for the next tick.
 
 	return pkg, nil
 }

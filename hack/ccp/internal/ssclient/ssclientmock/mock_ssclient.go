@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	ssclient "github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
+	enums "github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,46 +42,8 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// CopyFiles mocks base method.
-func (m *MockClient) CopyFiles(ctx context.Context, l *ssclient.Location, files []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CopyFiles", ctx, l, files)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CopyFiles indicates an expected call of CopyFiles.
-func (mr *MockClientMockRecorder) CopyFiles(ctx, l, files any) *MockClientCopyFilesCall {
-	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyFiles", reflect.TypeOf((*MockClient)(nil).CopyFiles), ctx, l, files)
-	return &MockClientCopyFilesCall{Call: call}
-}
-
-// MockClientCopyFilesCall wrap *gomock.Call
-type MockClientCopyFilesCall struct {
-	*gomock.Call
-}
-
-// Return rewrite *gomock.Call.Return
-func (c *MockClientCopyFilesCall) Return(arg0 error) *MockClientCopyFilesCall {
-	c.Call = c.Call.Return(arg0)
-	return c
-}
-
-// Do rewrite *gomock.Call.Do
-func (c *MockClientCopyFilesCall) Do(f func(context.Context, *ssclient.Location, []string) error) *MockClientCopyFilesCall {
-	c.Call = c.Call.Do(f)
-	return c
-}
-
-// DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientCopyFilesCall) DoAndReturn(f func(context.Context, *ssclient.Location, []string) error) *MockClientCopyFilesCall {
-	c.Call = c.Call.DoAndReturn(f)
-	return c
-}
-
 // ListLocations mocks base method.
-func (m *MockClient) ListLocations(ctx context.Context, path, purpose string) ([]*ssclient.Location, error) {
+func (m *MockClient) ListLocations(ctx context.Context, path string, purpose enums.LocationPurpose) ([]*ssclient.Location, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListLocations", ctx, path, purpose)
 	ret0, _ := ret[0].([]*ssclient.Location)
@@ -107,19 +70,57 @@ func (c *MockClientListLocationsCall) Return(arg0 []*ssclient.Location, arg1 err
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientListLocationsCall) Do(f func(context.Context, string, string) ([]*ssclient.Location, error)) *MockClientListLocationsCall {
+func (c *MockClientListLocationsCall) Do(f func(context.Context, string, enums.LocationPurpose) ([]*ssclient.Location, error)) *MockClientListLocationsCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientListLocationsCall) DoAndReturn(f func(context.Context, string, string) ([]*ssclient.Location, error)) *MockClientListLocationsCall {
+func (c *MockClientListLocationsCall) DoAndReturn(f func(context.Context, string, enums.LocationPurpose) ([]*ssclient.Location, error)) *MockClientListLocationsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MoveFiles mocks base method.
+func (m *MockClient) MoveFiles(ctx context.Context, src, dst *ssclient.Location, files [][2]string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MoveFiles", ctx, src, dst, files)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MoveFiles indicates an expected call of MoveFiles.
+func (mr *MockClientMockRecorder) MoveFiles(ctx, src, dst, files any) *MockClientMoveFilesCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveFiles", reflect.TypeOf((*MockClient)(nil).MoveFiles), ctx, src, dst, files)
+	return &MockClientMoveFilesCall{Call: call}
+}
+
+// MockClientMoveFilesCall wrap *gomock.Call
+type MockClientMoveFilesCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockClientMoveFilesCall) Return(arg0 error) *MockClientMoveFilesCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockClientMoveFilesCall) Do(f func(context.Context, *ssclient.Location, *ssclient.Location, [][2]string) error) *MockClientMoveFilesCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockClientMoveFilesCall) DoAndReturn(f func(context.Context, *ssclient.Location, *ssclient.Location, [][2]string) error) *MockClientMoveFilesCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
 // ReadDefaultLocation mocks base method.
-func (m *MockClient) ReadDefaultLocation(ctx context.Context, purpose string) (*ssclient.Location, error) {
+func (m *MockClient) ReadDefaultLocation(ctx context.Context, purpose enums.LocationPurpose) (*ssclient.Location, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadDefaultLocation", ctx, purpose)
 	ret0, _ := ret[0].(*ssclient.Location)
@@ -146,13 +147,13 @@ func (c *MockClientReadDefaultLocationCall) Return(arg0 *ssclient.Location, arg1
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientReadDefaultLocationCall) Do(f func(context.Context, string) (*ssclient.Location, error)) *MockClientReadDefaultLocationCall {
+func (c *MockClientReadDefaultLocationCall) Do(f func(context.Context, enums.LocationPurpose) (*ssclient.Location, error)) *MockClientReadDefaultLocationCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientReadDefaultLocationCall) DoAndReturn(f func(context.Context, string) (*ssclient.Location, error)) *MockClientReadDefaultLocationCall {
+func (c *MockClientReadDefaultLocationCall) DoAndReturn(f func(context.Context, enums.LocationPurpose) (*ssclient.Location, error)) *MockClientReadDefaultLocationCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -192,6 +193,45 @@ func (c *MockClientReadPipelineCall) Do(f func(context.Context, uuid.UUID) (*ssc
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockClientReadPipelineCall) DoAndReturn(f func(context.Context, uuid.UUID) (*ssclient.Pipeline, error)) *MockClientReadPipelineCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadProcessingLocation mocks base method.
+func (m *MockClient) ReadProcessingLocation(ctx context.Context) (*ssclient.Location, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadProcessingLocation", ctx)
+	ret0, _ := ret[0].(*ssclient.Location)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadProcessingLocation indicates an expected call of ReadProcessingLocation.
+func (mr *MockClientMockRecorder) ReadProcessingLocation(ctx any) *MockClientReadProcessingLocationCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProcessingLocation", reflect.TypeOf((*MockClient)(nil).ReadProcessingLocation), ctx)
+	return &MockClientReadProcessingLocationCall{Call: call}
+}
+
+// MockClientReadProcessingLocationCall wrap *gomock.Call
+type MockClientReadProcessingLocationCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockClientReadProcessingLocationCall) Return(arg0 *ssclient.Location, arg1 error) *MockClientReadProcessingLocationCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockClientReadProcessingLocationCall) Do(f func(context.Context) (*ssclient.Location, error)) *MockClientReadProcessingLocationCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockClientReadProcessingLocationCall) DoAndReturn(f func(context.Context) (*ssclient.Location, error)) *MockClientReadProcessingLocationCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

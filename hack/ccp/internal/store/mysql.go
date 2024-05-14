@@ -214,6 +214,24 @@ func (s *mysqlStoreImpl) ReadTransferLocation(ctx context.Context, id uuid.UUID)
 	return ret.Currentlocation, nil
 }
 
+func (s *mysqlStoreImpl) CreateTransfer(ctx context.Context, id uuid.UUID, accessionID, accessSystemID string, metadataSetID uuid.UUID) (err error) {
+	defer wrap(&err, "CreateTransfer(%s, %s, %s, %d)", id, accessionID, accessSystemID, metadataSetID)
+
+	params := &sqlc.CreateTransferParams{
+		Transferuuid:   id,
+		Accessionid:    accessionID,
+		AccessSystemID: accessSystemID,
+	}
+	if metadataSetID != uuid.Nil {
+		params.Transfermetadatasetrowuuid = uuid.NullUUID{
+			UUID:  metadataSetID,
+			Valid: true,
+		}
+	}
+
+	return s.queries.CreateTransfer(ctx, params)
+}
+
 func (s *mysqlStoreImpl) UpsertTransfer(ctx context.Context, id uuid.UUID, path string) (_ bool, err error) {
 	defer wrap(&err, "UpsertTransfer(%s, %s)", id, path)
 
@@ -290,6 +308,15 @@ func (s *mysqlStoreImpl) EnsureTransfer(ctx context.Context, path string) (_ uui
 	}
 
 	return id, false, nil // Transfer found!
+}
+
+func (s *mysqlStoreImpl) UpdateTransferLocation(ctx context.Context, id uuid.UUID, path string) (err error) {
+	defer wrap(&err, "UpdateTransferLocation(%s, %s)", id, path)
+
+	return s.queries.UpdateTransferLocation(ctx, &sqlc.UpdateTransferLocationParams{
+		Transferuuid:    id,
+		Currentlocation: path,
+	})
 }
 
 func (s *mysqlStoreImpl) ReadSIP(ctx context.Context, id uuid.UUID) (_ SIP, err error) {

@@ -1,24 +1,24 @@
 package ssclient
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	kiotaabs "github.com/microsoft/kiota-abstractions-go"
-	kiotahttp "github.com/microsoft/kiota-http-go"
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 	ssclientlib "go.artefactual.dev/ssclient"
-	"go.artefactual.dev/ssclient/kiota"
 	"go.artefactual.dev/ssclient/kiota/api"
 	"go.artefactual.dev/ssclient/kiota/models"
 	"go.artefactual.dev/tools/ref"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 )
 
@@ -32,7 +32,7 @@ type Pipeline struct {
 type Location struct {
 	ID           uuid.UUID
 	URI          string
-	Purpose      string
+	Purpose      enums.LocationPurpose
 	Path         string
 	RelativePath string
 	Pipelines    []string
@@ -43,9 +43,9 @@ type Location struct {
 // to page results and populate the default location.
 type Client interface {
 	ReadPipeline(ctx context.Context, id uuid.UUID) (*Pipeline, error)
-	ReadDefaultLocation(ctx context.Context, purpose string) (*Location, error)
+	ReadDefaultLocation(ctx context.Context, purpose enums.LocationPurpose) (*Location, error)
 	ReadProcessingLocation(ctx context.Context) (*Location, error)
-	ListLocations(ctx context.Context, path, purpose string) ([]*Location, error)
+	ListLocations(ctx context.Context, path string, purpose enums.LocationPurpose) ([]*Location, error)
 
 	// MoveFiles moves files between locations. `files` is a list of pairs
 	// indicating the paths of the source file and its destination (both paths
@@ -55,8 +55,9 @@ type Client interface {
 
 // clientImpl implements Client.
 type clientImpl struct {
-	client *kiota.Client
+	client *api.V2RequestBuilder
 	store  store.Store
+	config *Config
 
 	// Cached pipeline with the last retrieval timestamp and protected.
 	p  *Pipeline
@@ -67,23 +68,20 @@ type clientImpl struct {
 var _ Client = (*clientImpl)(nil)
 
 func NewClient(httpClient *http.Client, store store.Store, config Config) (*clientImpl, error) {
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
 	k, err := ssclientlib.New(httpClient, config.BaseURL, config.Username, config.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	c := &clientImpl{client: k, store: store}
+	c := &clientImpl{client: k.Api().V2(), store: store, config: &config}
 
 	return c, nil
 }
 
 func (c *clientImpl) ReadPipeline(ctx context.Context, id uuid.UUID) (_ *Pipeline, err error) {
-	derrors.Add(&err, "ReadPipeline(%s)", id)
+	defer derrors.Add(&err, "ReadPipeline(%s)", id)
 
-	m, err := c.client.Api().V2().Pipeline().ByUuid(id.String()).Get(ctx, nil)
+	m, err := c.client.Pipeline().ByUuid(id.String()).Get(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,37 +94,25 @@ func (c *clientImpl) ReadPipeline(ctx context.Context, id uuid.UUID) (_ *Pipelin
 	return p, nil
 }
 
-func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose string) (_ *Location, err error) {
-	derrors.Add(&err, "ReadDefaultLocation(%s)", purpose)
+func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose enums.LocationPurpose) (_ *Location, err error) {
+	defer derrors.Add(&err, "ReadDefaultLocation(%s)", purpose)
 
 	p, err := c.pipeline(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	headerOptions := kiotahttp.NewHeadersInspectionOptions()
-	headerOptions.InspectResponseHeaders = true
+	// We're asking for a models.Locationable using ByUuuid while rewriting the
+	// URL template to hit the Default Location API instead. ssclient-go follows
+	// the redirects automatically, so we don't have to.
+	//
+	// I originally tried to inspect the Location header but DefaultEscaped()
+	// is returning the location itself anyways. I tried to pass options to the
+	// redirect handler but it's ignoring me.
+	req := c.client.Location().ByUuid(uuid.Nil.String())
+	req.UrlTemplate = fmt.Sprintf("{+baseurl}/api/v2/location/default/%s/", purpose.String())
 
-	reqConfig := &api.V2LocationDefaultWithPurposeItemRequestBuilderGetRequestConfiguration{
-		Options: []kiotaabs.RequestOption{headerOptions},
-	}
-	if err := c.client.Api().V2().Location().DefaultEscaped().ByPurpose(purpose).Get(ctx, reqConfig); err != nil {
-		return nil, err
-	}
-
-	uris := headerOptions.ResponseHeaders.Get("Location")
-	if len(uris) < 1 {
-		return nil, ErrLocationNotAvailable
-	}
-	uri := uris[0]
-	if uri == "" {
-		return nil, ErrLocationNotAvailable
-	}
-
-	// Capture the UUID in the URI, e.g. "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/".
-	id := strings.TrimSuffix(strings.TrimPrefix(uri, "/api/v2/location/"), "/")
-
-	res, err := c.client.Api().V2().Location().ByUuid(id).Get(ctx, nil)
+	res, err := req.Get(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +138,9 @@ func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose string) (_
 }
 
 func (c *clientImpl) ReadProcessingLocation(ctx context.Context) (_ *Location, err error) {
-	derrors.Add(&err, "ReadProcessingLocation")
+	defer derrors.Add(&err, "ReadProcessingLocation")
 
-	res, err := c.ListLocations(ctx, "", models.CP_LOCATIONPURPOSE.String())
+	res, err := c.ListLocations(ctx, "", enums.LocationPurposeCP)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +153,8 @@ func (c *clientImpl) ReadProcessingLocation(ctx context.Context) (_ *Location, e
 	return res[0], nil
 }
 
-func (c *clientImpl) ListLocations(ctx context.Context, path, purpose string) (_ []*Location, err error) {
-	derrors.Add(&err, "ListLocations(%s, %s)", path, purpose)
+func (c *clientImpl) ListLocations(ctx context.Context, path string, purpose enums.LocationPurpose) (_ []*Location, err error) {
+	defer derrors.Add(&err, "ListLocations(%s, %s)", path, purpose)
 
 	p, err := c.pipeline(ctx)
 	if err != nil {
@@ -186,19 +172,10 @@ func (c *clientImpl) ListLocations(ctx context.Context, path, purpose string) (_
 		reqConfig.QueryParameters.Relative_path = &path
 	}
 
-	if purpose != "" {
-		ps, err := models.ParseLocationPurpose(purpose)
-		if err != nil {
-			return nil, err
-		}
-		if mps, ok := ps.(*models.LocationPurpose); ok {
-			reqConfig.QueryParameters.PurposeAsLocationPurpose = mps
-		} else {
-			return nil, fmt.Errorf("invalid purpose value: %v", ps)
-		}
-	}
+	ps := models.LocationPurpose(int(purpose))
+	reqConfig.QueryParameters.PurposeAsLocationPurpose = &ps
 
-	list, err := c.client.Api().V2().Location().Get(ctx, reqConfig)
+	list, err := c.client.Location().Get(ctx, reqConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +194,7 @@ func (c *clientImpl) ListLocations(ctx context.Context, path, purpose string) (_
 }
 
 func (c *clientImpl) MoveFiles(ctx context.Context, src, dst *Location, files [][2]string) (err error) {
-	derrors.Add(&err, "MoveFiles()")
+	defer derrors.Add(&err, "MoveFiles()")
 
 	p, err := c.pipeline(ctx)
 	if err != nil {
@@ -237,7 +214,25 @@ func (c *clientImpl) MoveFiles(ctx context.Context, src, dst *Location, files []
 	}
 	body.SetFiles(moves)
 
-	_, err = c.client.Api().V2().Location().ByUuid(dst.ID.String()).Post(ctx, body, nil)
+	// TODO: why is this not working?
+	// _, err = c.client.Location().ByUuid(dst.ID.String()).Post(context.Background(), body, nil)
+
+	payload, err := serialization.SerializeToJson(body)
+	if err != nil {
+		return err
+	}
+	httpClient := retryablehttp.NewClient().StandardClient()
+	url := fmt.Sprintf("%s/api/v2/location/%s/", c.config.BaseURL, dst.ID.String())
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("ApiKey %s:%s", c.config.Username, c.config.Key))
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("request not ok: status code %d", resp.StatusCode)
+	}
 
 	return err
 }

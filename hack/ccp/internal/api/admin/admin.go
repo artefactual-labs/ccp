@@ -105,19 +105,14 @@ func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	autoApprove := req.Msg.AutoApprove == nil || req.Msg.AutoApprove.Value
-	s.logger.Info("CreatePackage", "autoApprove", autoApprove)
-
-	resp := &adminv1.CreatePackageResponse{}
-
-	if pkg, err := s.ctrl.Submit(ctx, req.Msg); err != nil {
+	pkg, err := s.ctrl.Submit(ctx, req.Msg)
+	if err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, err)
-	} else {
-		s.logger.Info("TODO: return identifier", "pkg", pkg.Name())
-		resp.Id = uuid.New().String()
 	}
 
-	return connect.NewResponse(resp), nil
+	return connect.NewResponse(&adminv1.CreatePackageResponse{
+		Id: pkg.ID().String(),
+	}), nil
 }
 
 func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[adminv1.ApproveTransferRequest]) (*connect.Response[adminv1.ApproveTransferResponse], error) {

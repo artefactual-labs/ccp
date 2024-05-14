@@ -75,7 +75,7 @@ func NewIterator(logger logr.Logger, gearman *gearmin.Server, wf *workflow.Docum
 		gearman: gearman,
 		wf:      wf,
 		p:       p,
-		startAt: p.watchedAt.ChainID,
+		startAt: p.startAt,
 		waitCh:  make(chan waitSignal, 10),
 	}
 

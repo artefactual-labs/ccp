@@ -12,6 +12,7 @@ import (
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 )
 
 // This file contains functions that relate to the process of retrieving
@@ -19,7 +20,7 @@ import (
 // Archivematica Storage Service. This is built after what we have in the
 // `server.packages` Python module.
 
-// StartTransfer starts a transfer.
+// copyTransfer copies the contents of a transfer into the processing directory.
 //
 // The transfer is deposited into the internal processing directory and the
 // workflow is triggered manually.
@@ -27,27 +28,25 @@ import (
 // This method does not rely on the activeTransfer watched directory. It does
 // not prompt the user to accept the transfer because we go directly into the
 // next chain link.
-func StartTransfer(ctx context.Context, ssclient ssclient.Client, sharedDir, tmpDir, name, path string) error {
-	destRel, destAbs, src := determineTransferPaths(sharedDir, tmpDir, name, path)
-	fmt.Println(destRel, destAbs, src)
+func copyTransfer(ctx context.Context, ssclient ssclient.Client, sharedDir, tmpDir, name, path string) (string, error) {
+	destRel, destAbs, _ := determineTransferPaths(sharedDir, tmpDir, name, path)
 
-	_ = copyFromTransferSources(ctx, ssclient, []string{path}, destRel)
-
-	tsrc, tdst := "", ""
-	dst, err := moveToInternalSharedDir(sharedDir, tsrc, tdst)
-	if err != nil {
-		return err
+	if err := copyFromTransferSources(ctx, ssclient, sharedDir, []string{path}, destRel); err != nil {
+		return "", err
 	}
 
-	fmt.Println("The transfer is now in the internal processing directory!", dst)
+	final, err := moveToInternalSharedDir(
+		destAbs,
+		filepath.Join(joinPath(sharedDir, "currentlyProcessing")),
+	)
+	if err != nil {
+		return "", err
+	}
 
-	// TODO: update transfer.currentlocation in the database.
-	// TODO: schedule job chain.
-
-	return nil
+	return final, err
 }
 
-// StartTransferWithWatchedDir starts a transfer using watched directories.
+// copyTransferIntoActiveTransfers starts a transfer using watched directories.
 //
 // This means copying the transfer into one of the standard watched dirs.
 // MCPServer will continue the processing and prompt the user once the
@@ -56,25 +55,12 @@ func StartTransfer(ctx context.Context, ssclient ssclient.Client, sharedDir, tmp
 //
 // With this method of starting a transfer, the workflow requires user approval.
 // This allows for adding metadata to the transfer before accepting it.
-func StartTransferWithWatchedDir() {
+func copyTransferIntoActiveTransfers() { // nolint: unused
 	panic("not implemented")
 	// _determine_transfer_paths
 	// _copy_from_transfer_sources
 	// _move_to_internal_shared_dir
 	// update transfer.currentlocation with the new destination
-}
-
-func locationPath(locPath string) (id uuid.UUID, path string) {
-	before, after, found := strings.Cut(locPath, ":")
-
-	if found {
-		id, _ = uuid.Parse(before)
-		path = after
-	} else {
-		path = before
-	}
-
-	return id, path
 }
 
 // determineTransferPaths
@@ -110,28 +96,28 @@ func determineTransferPaths(sharedDir, tmpDir, name, path string) (string, strin
 }
 
 // moveToInternalSharedDir moves a transfer into an internal directory.
-func moveToInternalSharedDir(sharedDir, path, dest string) (_ string, err error) {
-	defer derrors.Add(&err, "moveToInternalSharedDir(%s, %s, %s)", sharedDir, path, dest)
+func moveToInternalSharedDir(src, dst string) (_ string, err error) {
+	defer derrors.Add(&err, "moveToInternalSharedDir(%s, %s)", src, dst)
 
 	// Validate path.
-	if path == "" {
+	if src == "" {
 		return "", errors.New("no path provided")
 	}
-	if strings.Contains(path, "..") {
+	if strings.Contains(src, "..") {
 		return "", errors.New("illegal path")
 	}
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(src); os.IsNotExist(err) {
 		return "", errors.New("path does not exist")
 	}
 
 	var (
 		attempt   = 0
-		suggested = filepath.Join(dest, filepath.Base(path))
+		suggested = filepath.Join(dst, filepath.Base(src))
 		newPath   = suggested
 	)
 	for {
 		if _, err := os.Stat(newPath); os.IsNotExist(err) {
-			if err := os.Rename(path, newPath); os.IsExist(err) {
+			if err := os.Rename(src, newPath); os.IsExist(err) {
 				goto incr // Magic!
 			} else if err != nil {
 				return "", err
@@ -146,18 +132,18 @@ func moveToInternalSharedDir(sharedDir, path, dest string) (_ string, err error)
 			return "", fmt.Errorf("reached max. number of attempts: %d", attempt)
 		}
 
-		ext := filepath.Ext(dest)
+		ext := filepath.Ext(dst)
 		base := strings.TrimSuffix(suggested, ext)
 		newPath = fmt.Sprintf("%s_%d%s", base, attempt, ext)
 	}
 }
 
-func copyFromTransferSources(ctx context.Context, c ssclient.Client, paths []string, destRel string) (err error) {
+func copyFromTransferSources(ctx context.Context, c ssclient.Client, sharedDir string, paths []string, destRel string) (err error) {
 	derrors.Add(&err, "copyFromTransferSources()")
 
 	// We'll use the default transfer source location when a request does not
 	// indicate its source.
-	defaultTransferSource, err := c.ReadDefaultLocation(ctx, "TS")
+	defaultTransferSource, err := c.ReadDefaultLocation(ctx, enums.LocationPurposeTS)
 	if err != nil {
 		return err
 	}
@@ -170,7 +156,7 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, paths []str
 
 	// filesByLocID is a list of all the copy operations that we'll be making,
 	// indexed by the identifier of the transfer source location.
-	transferSources, err := c.ListLocations(ctx, "", "TS")
+	transferSources, err := c.ListLocations(ctx, "", enums.LocationPurposeTS)
 	if err != nil {
 		return err
 	}
@@ -178,9 +164,9 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, paths []str
 		transferSource *ssclient.Location
 		files          [][2]string // src, dst
 	}
-	filesByLocID := map[uuid.UUID]sourceFiles{}
+	filesByLocID := map[uuid.UUID]*sourceFiles{}
 	for _, loc := range transferSources {
-		filesByLocID[loc.ID] = sourceFiles{
+		filesByLocID[loc.ID] = &sourceFiles{
 			transferSource: loc,
 			files:          [][2]string{},
 		}
@@ -196,24 +182,34 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, paths []str
 			return fmt.Errorf("location %s is not associated with this pipeline", locID)
 		}
 
+		dir := isDir(filepath.Join(sharedDir, "tmp", strings.TrimPrefix("/", destRel)))
+
+		// Source relative to the transfer source path.
 		source := strings.Replace(path, ops.transferSource.Path, "", 1)
 		source = strings.TrimPrefix(source, "/")
 
+		// # Use the last segment of the path for the destination - basename for
+		// # a file, or the last folder if not. Keep the trailing / for folders.
+		//
+		// TODO: this is broken.
 		var lastSegment string
-		if strings.HasSuffix(source, "/") {
-			lastSegment = joinPath(filepath.Base(strings.TrimSuffix(source, "/")), "")
+		if dir {
+			lastSegment = joinPath(filepath.Base(filepath.Dir(source)), "")
 		} else {
 			lastSegment = filepath.Base(source)
 		}
-
-		destination := filepath.Join(currentlyProcessing.Path, destRel, lastSegment)
+		destination := joinPath(currentlyProcessing.Path, destRel, lastSegment)
 		destination = strings.Replace(destination, "%sharedPath%", "", 1)
 
+		// {
+		//   "archivematica/archivematica-sampledata/SampleTransfers/Images/pictures"
+		//   "/var/archivematica/sharedDirectory/tmp/3598350318/Prueba/Images/"
+		// }
 		ops.files = append(ops.files, [2]string{source, destination})
 	}
 
 	for _, sf := range filesByLocID {
-		if copyErr := c.MoveFiles(ctx, sf.transferSource, currentlyProcessing, sf.files); err != nil {
+		if copyErr := c.MoveFiles(ctx, sf.transferSource, currentlyProcessing, sf.files); copyErr != nil {
 			err = errors.Join(err, copyErr)
 		}
 	}

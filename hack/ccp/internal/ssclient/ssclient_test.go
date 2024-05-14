@@ -13,6 +13,7 @@ import (
 	"gotest.tools/v3/assert/cmp"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
+	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 )
 
@@ -56,7 +57,7 @@ func TestClient(t *testing.T) {
 
 				_, err := c.ReadPipeline(ctx, uuid.Nil)
 
-				assert.Assert(t, cmp.ErrorIs(err, context.Canceled))
+				assert.Assert(t, cmp.ErrorContains(err, "context canceled"))
 			},
 		},
 
@@ -79,34 +80,31 @@ func TestClient(t *testing.T) {
 					})
 
 				// It looks up the default location for the given purpose.
-				s.ExpectGet("/api/v2/location/default/AS").
-					ReturnHeader("Location", "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/")
-
-				// It looks up the location to confirm that is available to this pipeline.
-				s.ExpectGet("/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0").
+				// The redirect is followed, we're returning the Location instead.
+				s.ExpectGet("/api/v2/location/default/AS/").
 					ReturnHeader("Content-Type", "application/json").
 					Return(`{
-  						"description": "Store AIP in standard Archivematica Directory",
-  						"enabled": true,
-  						"path": "/var/archivematica/sharedDirectory/www/AIPsStore",
-  						"pipeline": ["/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"],
-  						"purpose": "AS",
-  						"quota": null,
-  						"relative_path": "var/archivematica/sharedDirectory/www/AIPsStore",
-  						"resource_uri": "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/",
-  						"space": "/api/v2/space/b4785c92-74c5-44d0-8d48-7f776fa55da7/",
-  						"used": 0,
-  						"uuid": "be68cfa8-d32a-44ba-a140-2ec5d6b903e0"
-					}`)
+						"description": "Store AIP in standard Archivematica Directory",
+						"enabled": true,
+						"path": "/var/archivematica/sharedDirectory/www/AIPsStore",
+						"pipeline": ["/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"],
+						"purpose": "AS",
+						"quota": null,
+						"relative_path": "var/archivematica/sharedDirectory/www/AIPsStore",
+						"resource_uri": "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/",
+						"space": "/api/v2/space/b4785c92-74c5-44d0-8d48-7f776fa55da7/",
+						"used": 0,
+						"uuid": "be68cfa8-d32a-44ba-a140-2ec5d6b903e0"
+			  		}`)
 			}),
 			client: func(t *testing.T, c ssclient.Client) {
-				ret, err := c.ReadDefaultLocation(context.Background(), "AS")
+				ret, err := c.ReadDefaultLocation(context.Background(), enums.LocationPurposeAS)
 
 				assert.NilError(t, err)
 				assert.DeepEqual(t, ret, &ssclient.Location{
 					ID:           uuid.MustParse("be68cfa8-d32a-44ba-a140-2ec5d6b903e0"),
 					URI:          "/api/v2/location/be68cfa8-d32a-44ba-a140-2ec5d6b903e0/",
-					Purpose:      "AS",
+					Purpose:      enums.LocationPurposeAS,
 					Path:         "/var/archivematica/sharedDirectory/www/AIPsStore",
 					RelativePath: "var/archivematica/sharedDirectory/www/AIPsStore",
 					Pipelines:    []string{"/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"},
@@ -167,7 +165,7 @@ func TestClient(t *testing.T) {
 				assert.DeepEqual(t, ret, &ssclient.Location{
 					ID:           uuid.MustParse("df192133-3b13-4292-a219-50887d285cb3"),
 					URI:          "/api/v2/location/df192133-3b13-4292-a219-50887d285cb3/",
-					Purpose:      "CP",
+					Purpose:      enums.LocationPurposeCP,
 					Path:         "/var/archivematica/sharedDirectory",
 					RelativePath: "var/archivematica/sharedDirectory/",
 					Pipelines:    []string{"/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"},
@@ -222,14 +220,14 @@ func TestClient(t *testing.T) {
 					}`)
 			}),
 			client: func(t *testing.T, c ssclient.Client) {
-				ret, err := c.ListLocations(context.Background(), "", "DS")
+				ret, err := c.ListLocations(context.Background(), "", enums.LocationPurposeDS)
 
 				assert.NilError(t, err)
 				assert.DeepEqual(t, ret, []*ssclient.Location{
 					{
 						ID:           uuid.MustParse("18d6c0c4-afcd-4ee5-a9b0-19158cb199af"),
 						URI:          "/api/v2/location/18d6c0c4-afcd-4ee5-a9b0-19158cb199af/",
-						Purpose:      "DS",
+						Purpose:      enums.LocationPurposeDS,
 						Path:         "/var/archivematica/sharedDirectory/www/DIPsStore",
 						RelativePath: "var/archivematica/sharedDirectory/www/DIPsStore",
 						Pipelines:    []string{"/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"},

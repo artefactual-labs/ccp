@@ -37,6 +37,9 @@ type Store interface {
 	// ReadTransferLocation returns the current path of a Transfer.
 	ReadTransferLocation(ctx context.Context, id uuid.UUID) (loc string, err error)
 
+	// CreateTransfer creates a new transfer not downloaded yet (without path).
+	CreateTransfer(ctx context.Context, id uuid.UUID, accessionID, accessSystemID string, metadataSetID uuid.UUID) (err error)
+
 	// UpsertTransfer checks for a Transfer using the specified UUID. It updates
 	// the current location if the Transfer exists, or it creates a new Transfer
 	// with the provided UUID and location if it does not exist.
@@ -45,6 +48,9 @@ type Store interface {
 	// EnsureTransfer checks if a Transfer exists at the given location; creates
 	// a new Transfer with a new UUID otherwise.
 	EnsureTransfer(ctx context.Context, path string) (id uuid.UUID, created bool, err error)
+
+	// UpdateTransferLocation updates the current location of a given transfer.
+	UpdateTransferLocation(ctx context.Context, id uuid.UUID, path string) error
 
 	// ReadSIP returns a SIP given its identifier.
 	ReadSIP(ctx context.Context, id uuid.UUID) (sip SIP, err error)

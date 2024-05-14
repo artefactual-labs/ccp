@@ -606,7 +606,7 @@ type Transfer struct {
 	Description                string
 	Notes                      string
 	Hidden                     bool
-	Transfermetadatasetrowuuid uuid.UUID
+	Transfermetadatasetrowuuid uuid.NullUUID
 	Diruuids                   bool
 	AccessSystemID             string
 	CompletedAt                sql.NullTime
