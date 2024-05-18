@@ -62,7 +62,9 @@ type iterator struct {
 
 	p *Package
 
-	startAt uuid.UUID
+	startAtChainID uuid.UUID
+
+	startAtLinkID uuid.UUID
 
 	chain *chain
 
@@ -71,12 +73,13 @@ type iterator struct {
 
 func NewIterator(logger logr.Logger, gearman *gearmin.Server, wf *workflow.Document, p *Package) *iterator {
 	iter := &iterator{
-		logger:  logger,
-		gearman: gearman,
-		wf:      wf,
-		p:       p,
-		startAt: p.startAt,
-		waitCh:  make(chan waitSignal, 10),
+		logger:         logger,
+		gearman:        gearman,
+		wf:             wf,
+		p:              p,
+		startAtChainID: p.startAtChainID,
+		startAtLinkID:  p.startAtLinkID,
+		waitCh:         make(chan waitSignal, 10),
 	}
 
 	return iter
@@ -93,7 +96,12 @@ func (i *iterator) Process(ctx context.Context) (err error) {
 		}
 	}()
 
-	next := i.startAt
+	next := i.startAtChainID
+
+	// The package indicates that we should start from a specific chain link
+	// within the chain. Needed by transfer submission with auto-approval
+	// enabled, otherwise uuid.Nil.
+	bypassLink := i.startAtLinkID
 
 	for {
 		if err := ctx.Err(); err != nil {
@@ -109,7 +117,12 @@ func (i *iterator) Process(ctx context.Context) (err error) {
 			} else {
 				i.chain.pCtx = pCtx
 			}
-			next = ch.LinkID
+			if bypassLink != uuid.Nil {
+				next = bypassLink     // Bypass in place.
+				bypassLink = uuid.Nil // Do this only once.
+			} else {
+				next = ch.LinkID
+			}
 			continue
 		}
 
