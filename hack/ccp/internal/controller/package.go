@@ -44,7 +44,10 @@ type Package struct {
 	path string
 
 	// Identifier of the chain where the iterator must start processing.
-	startAt uuid.UUID
+	startAtChainID uuid.UUID
+
+	// Identifier of the link where the iterator must start processing.
+	startAtLinkID uuid.UUID
 
 	// User decisinon manager
 	decision decision
@@ -68,7 +71,7 @@ func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, shar
 
 	pkg := newPackage(logger, store, sharedDir)
 	pkg.path = path
-	pkg.startAt = wd.ChainID
+	pkg.startAtChainID = wd.ChainID
 
 	switch {
 	case wd.UnitType == "Transfer":
@@ -130,7 +133,10 @@ func NewTransferPackage(
 	pkg := newPackage(logger, store, sharedDir)
 	pkg.id = uuid.New()
 	pkg.unit = &Transfer{pkg: pkg}
-	pkg.startAt = Transfers.WithType(req.Type).Chain
+
+	transferType := Transfers.WithType(req.Type)
+	pkg.startAtChainID = transferType.BypassChainID
+	pkg.startAtLinkID = transferType.BypassLinkID
 
 	var msID uuid.UUID
 	if req.MetadataSetId != nil {
