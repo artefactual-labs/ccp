@@ -28,7 +28,7 @@ func getEnv(name, fallback string) string {
 
 func getEnvRequired(name string) string {
 	v := getEnv(name, "")
-	if v == "" {
+	if v == "" && enabled {
 		log.Fatalf("Required env %s_%s is empty.", prefix, name)
 	}
 	return v

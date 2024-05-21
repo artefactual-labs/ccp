@@ -18,14 +18,13 @@ require (
 	github.com/gohugoio/hugo v0.126.1
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.6
-	github.com/microsoft/kiota-abstractions-go v1.6.0
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/rs/cors v1.11.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/testcontainers/testcontainers-go v0.31.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.31.0
-	go.artefactual.dev/ssclient v0.3.0
+	go.artefactual.dev/ssclient v0.4.0
 	go.artefactual.dev/tools v0.12.0
 	go.nhat.io/httpmock v0.11.0
 	go.starlark.net v0.0.0-20240510163022-f457c4c2b267
@@ -74,6 +73,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/microsoft/kiota-abstractions-go v1.6.0 // indirect
 	github.com/microsoft/kiota-http-go v1.4.1 // indirect
 	github.com/microsoft/kiota-serialization-form-go v1.0.0 // indirect
 	github.com/microsoft/kiota-serialization-json-go v1.0.7 // indirect

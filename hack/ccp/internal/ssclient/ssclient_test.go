@@ -31,11 +31,11 @@ func TestClient(t *testing.T) {
 
 		"ReadPipeline reads a pipeline": {
 			server: httpmock.New(func(s *httpmock.Server) {
-				s.ExpectGet("/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d").
+				s.ExpectGet("/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d/").
 					ReturnHeader("Content-Type", "application/json").
 					ReturnJSON(map[string]any{
 						"uuid":         "8faae541-6124-471f-ade5-a6fe2099929d",
-						"resource_uri": "/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d",
+						"resource_uri": "/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d/",
 					})
 			}),
 			client: func(t *testing.T, c ssclient.Client) {
@@ -46,7 +46,7 @@ func TestClient(t *testing.T) {
 				assert.NilError(t, err)
 				assert.DeepEqual(t, ret, &ssclient.Pipeline{
 					ID:  id,
-					URI: "/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d",
+					URI: "/api/v2/pipeline/8faae541-6124-471f-ade5-a6fe2099929d/",
 				})
 			},
 		},
@@ -72,7 +72,7 @@ func TestClient(t *testing.T) {
 			},
 			server: httpmock.New(func(s *httpmock.Server) {
 				// It looks up the pipeline details.
-				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05").
+				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/").
 					ReturnHeader("Content-Type", "application/json").
 					ReturnJSON(map[string]any{
 						"uuid":         "fb2b8866-6f39-4616-b6cd-fa73193a3b05",
@@ -123,14 +123,14 @@ func TestClient(t *testing.T) {
 			},
 			server: httpmock.New(func(s *httpmock.Server) {
 				// It looks up the pipeline details.
-				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05").
+				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/").
 					ReturnHeader("Content-Type", "application/json").
 					ReturnJSON(map[string]any{
 						"uuid":         "fb2b8866-6f39-4616-b6cd-fa73193a3b05",
 						"resource_uri": "/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/",
 					})
 
-				s.ExpectGet("/api/v2/location?limit=100&pipeline__uuid=fb2b8866-6f39-4616-b6cd-fa73193a3b05&purpose=CP").
+				s.ExpectGet("/api/v2/location/?limit=100&pipeline__uuid=fb2b8866-6f39-4616-b6cd-fa73193a3b05&purpose=CP").
 					ReturnHeader("Content-Type", "application/json").
 					Return(`{
 						"meta": {
@@ -184,7 +184,7 @@ func TestClient(t *testing.T) {
 			},
 			server: httpmock.New(func(s *httpmock.Server) {
 				// It looks up the pipeline details.
-				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05").
+				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/").
 					ReturnHeader("Content-Type", "application/json").
 					ReturnJSON(map[string]any{
 						"uuid":         "fb2b8866-6f39-4616-b6cd-fa73193a3b05",
@@ -192,7 +192,7 @@ func TestClient(t *testing.T) {
 					})
 
 				// It looks up the location list endpoint.
-				s.ExpectGet("/api/v2/location?limit=100&pipeline__uuid=fb2b8866-6f39-4616-b6cd-fa73193a3b05&purpose=DS").
+				s.ExpectGet("/api/v2/location/?limit=100&pipeline__uuid=fb2b8866-6f39-4616-b6cd-fa73193a3b05&purpose=DS").
 					ReturnHeader("Content-Type", "application/json").
 					Return(`{
 						"meta": {
@@ -247,7 +247,7 @@ func TestClient(t *testing.T) {
 			},
 			server: httpmock.New(func(s *httpmock.Server) {
 				// It looks up the pipeline details.
-				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05").
+				s.ExpectGet("/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/").
 					ReturnHeader("Content-Type", "application/json").
 					ReturnJSON(map[string]any{
 						"uuid":         "fb2b8866-6f39-4616-b6cd-fa73193a3b05",
