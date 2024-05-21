@@ -3,17 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
 
-	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
-	"github.com/artefactual/archivematica/hack/ccp/internal/servercmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/version"
 )
 
 func main() {
-	out := os.Stderr
+	ctx := context.Background()
+	if err := Run(ctx, os.Stdout, os.Args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
+}
+
+func Run(ctx context.Context, out io.Writer, args []string) error {
 	rootCommand, rootConfig := rootcmd.New()
 
 	rootCommand.Subcommands = []*ffcli.Command{
@@ -21,12 +29,9 @@ func main() {
 		version.New(out),
 	}
 
-	if err := rootCommand.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "error during Parse: %v\n", err)
-		os.Exit(1)
+	if err := rootCommand.Parse(args); err != nil {
+		return fmt.Errorf("error during Parse: %v", err)
 	}
 
-	if err := rootCommand.Run(context.Background()); err != nil {
-		os.Exit(1)
-	}
+	return rootCommand.Run(ctx)
 }

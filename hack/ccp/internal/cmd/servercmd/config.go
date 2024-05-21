@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
-	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 )
 

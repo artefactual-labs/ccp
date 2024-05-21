@@ -9,6 +9,7 @@ require (
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/artefactual-labs/gearmin v0.0.0-20240507145739-e15b2dbf710c
 	github.com/bufbuild/protovalidate-go v0.6.2
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/elliotchance/orderedmap/v2 v2.2.0
 	github.com/fsnotify/fsnotify v1.7.0
@@ -48,7 +49,6 @@ require (
 	github.com/bep/godartsass/v2 v2.0.0 // indirect
 	github.com/bep/golibsass v1.1.1 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
-	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cjlapao/common-go v0.0.39 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/containerd/containerd v1.7.15 // indirect

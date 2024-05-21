@@ -13,6 +13,7 @@ import (
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	sqlc "github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
 )
@@ -230,6 +231,45 @@ func (s *mysqlStoreImpl) CreateTransfer(ctx context.Context, id uuid.UUID, acces
 	}
 
 	return s.queries.CreateTransfer(ctx, params)
+}
+
+func (s *mysqlStoreImpl) ReadTransfer(ctx context.Context, id uuid.UUID) (_ Transfer, err error) {
+	defer wrap(&err, "ReadTransfer(%s)", id)
+
+	transfer := Transfer{}
+
+	row, err := s.queries.ReadTransfer(ctx, id)
+	if err == sql.ErrNoRows {
+		return transfer, ErrNotFound
+	}
+	if err != nil {
+		return transfer, err
+	}
+
+	transfer.ID = row.Transferuuid
+	transfer.Name = row.Description
+	transfer.CurrentPath = row.Currentlocation
+
+	// TODO: convert types.
+	switch row.Type {
+	case "standard":
+		transfer.Type = adminv1.TransferType_TRANSFER_TYPE_STANDARD
+	}
+
+	switch row.Status {
+	case uint16(enums.PackageStatusUnknown):
+		transfer.Status = adminv1.PackageStatus_PACKAGE_STATUS_UNSPECIFIED
+	case uint16(enums.PackageStatusProcessing):
+		transfer.Status = adminv1.PackageStatus_PACKAGE_STATUS_PROCESSING
+	case uint16(enums.PackageStatusDone):
+		transfer.Status = adminv1.PackageStatus_PACKAGE_STATUS_DONE
+	case uint16(enums.PackageStatusCompletedSuccessfully):
+		transfer.Status = adminv1.PackageStatus_PACKAGE_STATUS_COMPLETED_SUCCESSFULLY
+	case uint16(enums.PackageStatusFailed):
+		transfer.Status = adminv1.PackageStatus_PACKAGE_STATUS_FAILED
+	}
+
+	return transfer, nil
 }
 
 func (s *mysqlStoreImpl) UpsertTransfer(ctx context.Context, id uuid.UUID, path string) (_ bool, err error) {

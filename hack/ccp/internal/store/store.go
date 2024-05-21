@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	sqlc "github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
 )
@@ -38,7 +39,10 @@ type Store interface {
 	ReadTransferLocation(ctx context.Context, id uuid.UUID) (loc string, err error)
 
 	// CreateTransfer creates a new transfer not downloaded yet (without path).
-	CreateTransfer(ctx context.Context, id uuid.UUID, accessionID, accessSystemID string, metadataSetID uuid.UUID) (err error)
+	CreateTransfer(ctx context.Context, id uuid.UUID, accessionID, accessSystemID string, metadataSetID uuid.UUID) error
+
+	// ReadTransfer returns a Transfer given its identifier.
+	ReadTransfer(ctx context.Context, id uuid.UUID) (transfer Transfer, err error)
 
 	// UpsertTransfer checks for a Transfer using the specified UUID. It updates
 	// the current location if the Transfer exists, or it creates a new Transfer
@@ -131,6 +135,14 @@ type UnitVar struct {
 	Name   string
 	Value  *string
 	LinkID *uuid.UUID
+}
+
+type Transfer struct {
+	ID          uuid.UUID
+	Name        string
+	CurrentPath string
+	Type        adminv1.TransferType
+	Status      adminv1.PackageStatus
 }
 
 type SIP struct {

@@ -329,6 +329,49 @@ func (q *Queries) ReadSIPWithLocation(ctx context.Context, currentpath sql.NullS
 	return sipuuid, err
 }
 
+const readTransfer = `-- name: ReadTransfer :one
+SELECT transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at FROM Transfers WHERE transferUUID = ?
+`
+
+type ReadTransferRow struct {
+	Transferuuid               uuid.UUID
+	Currentlocation            string
+	Type                       string
+	Accessionid                string
+	Sourceofacquisition        string
+	Typeoftransfer             string
+	Description                string
+	Notes                      string
+	AccessSystemID             string
+	Hidden                     bool
+	Transfermetadatasetrowuuid uuid.NullUUID
+	Diruuids                   bool
+	Status                     uint16
+	CompletedAt                sql.NullTime
+}
+
+func (q *Queries) ReadTransfer(ctx context.Context, transferuuid uuid.UUID) (*ReadTransferRow, error) {
+	row := q.queryRow(ctx, q.readTransferStmt, readTransfer, transferuuid)
+	var i ReadTransferRow
+	err := row.Scan(
+		&i.Transferuuid,
+		&i.Currentlocation,
+		&i.Type,
+		&i.Accessionid,
+		&i.Sourceofacquisition,
+		&i.Typeoftransfer,
+		&i.Description,
+		&i.Notes,
+		&i.AccessSystemID,
+		&i.Hidden,
+		&i.Transfermetadatasetrowuuid,
+		&i.Diruuids,
+		&i.Status,
+		&i.CompletedAt,
+	)
+	return &i, err
+}
+
 const readTransferLocation = `-- name: ReadTransferLocation :one
 SELECT transferUUID, currentLocation FROM Transfers WHERE transferUUID = ?
 `
