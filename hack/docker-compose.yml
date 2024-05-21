@@ -65,7 +65,7 @@ services:
       - "CCP_DB_DRIVER=mysql"
       - "CCP_DB_DSN=root:12345@tcp(mysql:3306)/MCP"
       - "CCP_API_ADMIN_LISTEN=:8000"
-      - "CCP_SSCLIENT_URL=http://archivematica-storage-service:8000"
+      - "CCP_SSCLIENT_URL=http://nginx:8000"
       - "CCP_SSCLIENT_USERNAME=test"
       - "CCP_SSCLIENT_KEY=test"
     volumes:
