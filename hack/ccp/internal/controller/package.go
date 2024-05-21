@@ -187,6 +187,7 @@ func NewTransferPackage(
 		// Copy into new location.
 		path, err := copyTransfer(ctx, ssclient, sharedDir, tmpDir, req.Name, req.Path[0])
 		if err != nil {
+			logger.Info("SHIT", "err", err)
 			return fmt.Errorf("copy transfer: %v", err)
 		}
 		pkg.UpdatePath(path)
@@ -194,6 +195,8 @@ func NewTransferPackage(
 		if err := store.UpdateTransferLocation(ctx, pkg.id, path); err != nil {
 			logger.Info("Unable to update the transfer location.", "id", pkg.id, "path", path, "err", err)
 		}
+
+		logger.V(2).Info("Transfer ready for processing.")
 
 		queue(pkg) // Start work.
 

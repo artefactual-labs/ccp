@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ApproveTransferRequest, ApproveTransferResponse, CreatePackageRequest, CreatePackageResponse, ListActivePackagesRequest, ListActivePackagesResponse, ListAwaitingDecisionsRequest, ListAwaitingDecisionsResponse, ResolveAwaitingDecisionRequest, ResolveAwaitingDecisionResponse } from "./admin_pb.js";
+import { ApproveTransferRequest, ApproveTransferResponse, CreatePackageRequest, CreatePackageResponse, ListActivePackagesRequest, ListActivePackagesResponse, ListAwaitingDecisionsRequest, ListAwaitingDecisionsResponse, ReadPackageRequest, ReadPackageResponse, ResolveAwaitingDecisionRequest, ResolveAwaitingDecisionResponse } from "./admin_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,6 +19,15 @@ export const AdminService = {
       name: "CreatePackage",
       I: CreatePackageRequest,
       O: CreatePackageResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ReadPackage
+     */
+    readPackage: {
+      name: "ReadPackage",
+      I: ReadPackageRequest,
+      O: ReadPackageResponse,
       kind: MethodKind.Unary,
     },
     /**

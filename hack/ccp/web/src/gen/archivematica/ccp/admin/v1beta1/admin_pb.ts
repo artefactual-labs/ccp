@@ -71,6 +71,44 @@ proto3.util.setEnumType(TransferType, "archivematica.ccp.admin.v1beta1.TransferT
 ]);
 
 /**
+ * @generated from enum archivematica.ccp.admin.v1beta1.PackageStatus
+ */
+export enum PackageStatus {
+  /**
+   * @generated from enum value: PACKAGE_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PACKAGE_STATUS_PROCESSING = 1;
+   */
+  PROCESSING = 1,
+
+  /**
+   * @generated from enum value: PACKAGE_STATUS_DONE = 2;
+   */
+  DONE = 2,
+
+  /**
+   * @generated from enum value: PACKAGE_STATUS_COMPLETED_SUCCESSFULLY = 3;
+   */
+  COMPLETED_SUCCESSFULLY = 3,
+
+  /**
+   * @generated from enum value: PACKAGE_STATUS_FAILED = 4;
+   */
+  FAILED = 4,
+}
+// Retrieve enum metadata with: proto3.getEnumType(PackageStatus)
+proto3.util.setEnumType(PackageStatus, "archivematica.ccp.admin.v1beta1.PackageStatus", [
+  { no: 0, name: "PACKAGE_STATUS_UNSPECIFIED" },
+  { no: 1, name: "PACKAGE_STATUS_PROCESSING" },
+  { no: 2, name: "PACKAGE_STATUS_DONE" },
+  { no: 3, name: "PACKAGE_STATUS_COMPLETED_SUCCESSFULLY" },
+  { no: 4, name: "PACKAGE_STATUS_FAILED" },
+]);
+
+/**
  * @generated from message archivematica.ccp.admin.v1beta1.CreatePackageRequest
  */
 export class CreatePackageRequest extends Message<CreatePackageRequest> {
@@ -112,7 +150,8 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
   path: string[] = [];
 
   /**
-   * The identifier of the metadata set to be included in this submission.
+   * The identifier (UUIDv4) of the metadata set to be included in this
+   * submission.
    *
    * @generated from field: google.protobuf.StringValue metadata_set_id = 6;
    */
@@ -203,6 +242,82 @@ export class CreatePackageResponse extends Message<CreatePackageResponse> {
 
   static equals(a: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined, b: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined): boolean {
     return proto3.util.equals(CreatePackageResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.ReadPackageRequest
+ */
+export class ReadPackageRequest extends Message<ReadPackageRequest> {
+  /**
+   * Identifier of the package as a string (UUIDv4).
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<ReadPackageRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.ReadPackageRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReadPackageRequest {
+    return new ReadPackageRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReadPackageRequest {
+    return new ReadPackageRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReadPackageRequest {
+    return new ReadPackageRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined, b: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined): boolean {
+    return proto3.util.equals(ReadPackageRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.ReadPackageResponse
+ */
+export class ReadPackageResponse extends Message<ReadPackageResponse> {
+  /**
+   * @generated from field: archivematica.ccp.admin.v1beta1.Package pkg = 1;
+   */
+  pkg?: Package;
+
+  constructor(data?: PartialMessage<ReadPackageResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.ReadPackageResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pkg", kind: "message", T: Package },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReadPackageResponse {
+    return new ReadPackageResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReadPackageResponse {
+    return new ReadPackageResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReadPackageResponse {
+    return new ReadPackageResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined, b: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined): boolean {
+    return proto3.util.equals(ReadPackageResponse, a, b);
   }
 }
 
@@ -487,6 +602,69 @@ export class ResolveAwaitingDecisionResponse extends Message<ResolveAwaitingDeci
 
   static equals(a: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined, b: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined): boolean {
     return proto3.util.equals(ResolveAwaitingDecisionResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message archivematica.ccp.admin.v1beta1.Package
+ */
+export class Package extends Message<Package> {
+  /**
+   * Identifier of the package as a string (UUIDv4).
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * Name of the transfer.
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Type of the transfer.
+   *
+   * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 3;
+   */
+  type = TransferType.UNSPECIFIED;
+
+  /**
+   * Status of the package.
+   *
+   * @generated from field: archivematica.ccp.admin.v1beta1.PackageStatus status = 4;
+   */
+  status = PackageStatus.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<Package>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "archivematica.ccp.admin.v1beta1.Package";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
+    { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(PackageStatus) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Package {
+    return new Package().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Package {
+    return new Package().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Package {
+    return new Package().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Package | PlainMessage<Package> | undefined, b: Package | PlainMessage<Package> | undefined): boolean {
+    return proto3.util.equals(Package, a, b);
   }
 }
 

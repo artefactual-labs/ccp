@@ -54,6 +54,8 @@ import "google/protobuf/wrappers.proto";
 service AdminService {
   rpc CreatePackage(CreatePackageRequest) returns (CreatePackageResponse) {}
 
+  rpc ReadPackage(ReadPackageRequest) returns (ReadPackageResponse) {}
+
   rpc ApproveTransfer(ApproveTransferRequest) returns (ApproveTransferResponse) {}
 
   rpc ListActivePackages(ListActivePackagesRequest) returns (ListActivePackagesResponse) {}
@@ -68,7 +70,7 @@ message CreatePackageRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
 
   // Type of the transfer, default to "standard".
-  TransferType type = 2 [(buf.validate.field).enum = {defined_only: true}];
+  TransferType type = 2;
 
   // Identifier of the accession.
   string accession = 3;
@@ -102,6 +104,15 @@ message CreatePackageRequest {
 message CreatePackageResponse {
   // Identifier of the package as a string (UUIDv4).
   string id = 1;
+}
+
+message ReadPackageRequest {
+  // Identifier of the package as a string (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ReadPackageResponse {
+  Package pkg = 1;
 }
 
 message ApproveTransferRequest {
@@ -144,4 +155,26 @@ enum TransferType {
   TRANSFER_TYPE_MAILDIR = 6;
   TRANSFER_TYPE_TRIM = 7;
   TRANSFER_TYPE_DATAVERSE = 8;
+}
+
+enum PackageStatus {
+  PACKAGE_STATUS_UNSPECIFIED = 0;
+  PACKAGE_STATUS_PROCESSING = 1;
+  PACKAGE_STATUS_DONE = 2;
+  PACKAGE_STATUS_COMPLETED_SUCCESSFULLY = 3;
+  PACKAGE_STATUS_FAILED = 4;
+}
+
+message Package {
+  // Identifier of the package as a string (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Name of the transfer.
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Type of the transfer.
+  TransferType type = 3;
+
+  // Status of the package.
+  PackageStatus status = 4;
 }

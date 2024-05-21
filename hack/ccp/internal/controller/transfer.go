@@ -55,6 +55,10 @@ func (t TransferTypes) WithName(name string) *TransferType {
 }
 
 func (t TransferTypes) WithType(tt adminv1.TransferType) *TransferType {
+	if tt == adminv1.TransferType_TRANSFER_TYPE_UNSPECIFIED {
+		tt = adminv1.TransferType_TRANSFER_TYPE_STANDARD
+	}
+
 	for _, item := range t {
 		if item.Type == tt {
 			return &item

@@ -178,8 +178,8 @@ type MockStoreCreateTransferCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockStoreCreateTransferCall) Return(err error) *MockStoreCreateTransferCall {
-	c.Call = c.Call.Return(err)
+func (c *MockStoreCreateTransferCall) Return(arg0 error) *MockStoreCreateTransferCall {
+	c.Call = c.Call.Return(arg0)
 	return c
 }
 
@@ -583,6 +583,45 @@ func (c *MockStoreReadStorageServiceConfigCall) Do(f func(context.Context) (stor
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreReadStorageServiceConfigCall) DoAndReturn(f func(context.Context) (store.StorageServiceConfig, error)) *MockStoreReadStorageServiceConfigCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadTransfer mocks base method.
+func (m *MockStore) ReadTransfer(ctx context.Context, id uuid.UUID) (store.Transfer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadTransfer", ctx, id)
+	ret0, _ := ret[0].(store.Transfer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadTransfer indicates an expected call of ReadTransfer.
+func (mr *MockStoreMockRecorder) ReadTransfer(ctx, id any) *MockStoreReadTransferCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadTransfer", reflect.TypeOf((*MockStore)(nil).ReadTransfer), ctx, id)
+	return &MockStoreReadTransferCall{Call: call}
+}
+
+// MockStoreReadTransferCall wrap *gomock.Call
+type MockStoreReadTransferCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadTransferCall) Return(transfer store.Transfer, err error) *MockStoreReadTransferCall {
+	c.Call = c.Call.Return(transfer, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadTransferCall) Do(f func(context.Context, uuid.UUID) (store.Transfer, error)) *MockStoreReadTransferCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadTransferCall) DoAndReturn(f func(context.Context, uuid.UUID) (store.Transfer, error)) *MockStoreReadTransferCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

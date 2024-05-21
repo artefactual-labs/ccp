@@ -10,11 +10,13 @@ import (
 
 	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
+	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
@@ -47,8 +49,8 @@ type Controller struct {
 	// queuedPackages is the list of queued packages, FIFO style.
 	queuedPackages []*Package
 
-	// sync.Mutex protects the internal Package slices.
-	mu sync.Mutex
+	// sync.RWMutex protects the internal Package slices.
+	mu sync.RWMutex
 
 	// group is a collection of goroutines used for processing packages.
 	group *errgroup.Group
@@ -217,14 +219,36 @@ func (c *Controller) deactivate(p *Package) {
 	}
 }
 
-// Active lists all active packages.
-func (c *Controller) Active() []string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+type PackageStatus struct {
+	ID     uuid.UUID
+	Status enums.PackageStatus
+}
 
-	ret := make([]string, len(c.activePackages))
-	for i, item := range c.activePackages {
-		ret[i] = item.String()
+// Package returns the status of an active package given its identifier.
+func (c *Controller) Package(id uuid.UUID) *PackageStatus {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	for _, pkg := range c.activePackages {
+		if id == pkg.id {
+			return &PackageStatus{
+				ID:     id,
+				Status: enums.PackageStatusProcessing,
+			}
+		}
+	}
+
+	return nil
+}
+
+// Active lists all active packages.
+func (c *Controller) Active() []uuid.UUID {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	ret := make([]uuid.UUID, 0, len(c.activePackages))
+	for _, pkg := range c.activePackages {
+		ret = append(ret, pkg.ID())
 	}
 
 	return ret

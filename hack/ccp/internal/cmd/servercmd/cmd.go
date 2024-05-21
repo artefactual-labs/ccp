@@ -15,7 +15,7 @@ import (
 	"github.com/peterbourgon/ff/v3/fftoml"
 	"go.artefactual.dev/tools/log"
 
-	"github.com/artefactual/archivematica/hack/ccp/internal/rootcmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/version"
 )
 

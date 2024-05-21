@@ -16,6 +16,9 @@ UPDATE Jobs SET currentStep = ? WHERE jobUUID = ?;
 INSERT INTO Transfers (transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at)
 VALUES (?, ?, '', ?, '', '', '', '', ?, 0, ?, 0, 0, NULL);
 
+-- name: ReadTransfer :one
+SELECT transferUUID, currentLocation, type, accessionID, sourceOfAcquisition, typeOfTransfer, description, notes, access_system_id, hidden, transferMetadataSetRowUUID, dirUUIDs, status, completed_at FROM Transfers WHERE transferUUID = ?;
+
 -- name: ReadTransferLocation :one
 SELECT transferUUID, currentLocation FROM Transfers WHERE transferUUID = ?;
 

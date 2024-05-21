@@ -22,6 +22,7 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 )
 
+// Server implements the Admin API.
 type Server struct {
 	logger logr.Logger
 	config Config
@@ -107,11 +108,37 @@ func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1
 
 	pkg, err := s.ctrl.Submit(ctx, req.Msg)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnknown, err)
+		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}
 
 	return connect.NewResponse(&adminv1.CreatePackageResponse{
 		Id: pkg.ID().String(),
+	}), nil
+}
+
+func (s *Server) ReadPackage(ctx context.Context, req *connect.Request[adminv1.ReadPackageRequest]) (*connect.Response[adminv1.ReadPackageResponse], error) {
+	if err := s.v.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	id := uuid.MustParse(req.Msg.Id)
+
+	t, err := s.store.ReadTransfer(ctx, id)
+	if err == store.ErrNotFound {
+		return nil, connect.NewError(connect.CodeNotFound, nil)
+	}
+	if err != nil {
+		s.logger.Error(err, "Failed to read transfer.", "id", id)
+		return nil, connect.NewError(connect.CodeUnknown, nil)
+	}
+
+	return connect.NewResponse(&adminv1.ReadPackageResponse{
+		Pkg: &adminv1.Package{
+			Id:     req.Msg.Id,
+			Name:   t.Name,
+			Type:   t.Type,
+			Status: t.Status,
+		},
 	}), nil
 }
 
@@ -122,8 +149,14 @@ func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[admin
 }
 
 func (s *Server) ListActivePackages(ctx context.Context, req *connect.Request[adminv1.ListActivePackagesRequest]) (*connect.Response[adminv1.ListActivePackagesResponse], error) {
+	active := s.ctrl.Active()
+	ret := make([]string, 0, len(active))
+	for _, item := range active {
+		ret = append(ret, item.String())
+	}
+
 	return connect.NewResponse(&adminv1.ListActivePackagesResponse{
-		Value: s.ctrl.Active(),
+		Value: ret,
 	}), nil
 }
 

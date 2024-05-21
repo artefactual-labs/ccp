@@ -72,6 +72,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.readSIPWithLocationStmt, err = db.PrepareContext(ctx, readSIPWithLocation); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadSIPWithLocation: %w", err)
 	}
+	if q.readTransferStmt, err = db.PrepareContext(ctx, readTransfer); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadTransfer: %w", err)
+	}
 	if q.readTransferLocationStmt, err = db.PrepareContext(ctx, readTransferLocation); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadTransferLocation: %w", err)
 	}
@@ -187,6 +190,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing readSIPWithLocationStmt: %w", cerr)
 		}
 	}
+	if q.readTransferStmt != nil {
+		if cerr := q.readTransferStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readTransferStmt: %w", cerr)
+		}
+	}
 	if q.readTransferLocationStmt != nil {
 		if cerr := q.readTransferLocationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing readTransferLocationStmt: %w", cerr)
@@ -292,6 +300,7 @@ type Queries struct {
 	readSIPStmt                           *sql.Stmt
 	readSIPLocationStmt                   *sql.Stmt
 	readSIPWithLocationStmt               *sql.Stmt
+	readTransferStmt                      *sql.Stmt
 	readTransferLocationStmt              *sql.Stmt
 	readTransferWithLocationStmt          *sql.Stmt
 	readUnitVarStmt                       *sql.Stmt
@@ -324,6 +333,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		readSIPStmt:                           q.readSIPStmt,
 		readSIPLocationStmt:                   q.readSIPLocationStmt,
 		readSIPWithLocationStmt:               q.readSIPWithLocationStmt,
+		readTransferStmt:                      q.readTransferStmt,
 		readTransferLocationStmt:              q.readTransferLocationStmt,
 		readTransferWithLocationStmt:          q.readTransferWithLocationStmt,
 		readUnitVarStmt:                       q.readUnitVarStmt,
