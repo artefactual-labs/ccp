@@ -1,7 +1,6 @@
 package ssclient
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,8 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/microsoft/kiota-abstractions-go/serialization"
 	ssclientlib "go.artefactual.dev/ssclient"
 	"go.artefactual.dev/ssclient/kiota/api"
 	"go.artefactual.dev/ssclient/kiota/models"
@@ -214,25 +211,7 @@ func (c *clientImpl) MoveFiles(ctx context.Context, src, dst *Location, files []
 	}
 	body.SetFiles(moves)
 
-	// TODO: why is this not working?
-	// _, err = c.client.Location().ByUuid(dst.ID.String()).Post(context.Background(), body, nil)
-
-	payload, err := serialization.SerializeToJson(body)
-	if err != nil {
-		return err
-	}
-	httpClient := retryablehttp.NewClient().StandardClient()
-	url := fmt.Sprintf("%s/api/v2/location/%s/", c.config.BaseURL, dst.ID.String())
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("ApiKey %s:%s", c.config.Username, c.config.Key))
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("request not ok: status code %d", resp.StatusCode)
-	}
+	_, err = c.client.Location().ByUuid(dst.ID.String()).Post(context.Background(), body, nil)
 
 	return err
 }

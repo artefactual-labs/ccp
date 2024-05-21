@@ -34,6 +34,9 @@ func joinPath(elem ...string) string {
 	if last == "" || strings.HasSuffix(last, sep) {
 		ret += sep
 	}
+	if last == "." {
+		ret += "/."
+	}
 
 	return ret
 }

@@ -39,9 +39,6 @@ func copyTransfer(ctx context.Context, ssclient ssclient.Client, sharedDir, tmpD
 		destAbs,
 		filepath.Join(joinPath(sharedDir, "currentlyProcessing")),
 	)
-	if err != nil {
-		return "", err
-	}
 
 	return final, err
 }
@@ -85,7 +82,7 @@ func determineTransferPaths(sharedDir, tmpDir, name, path string) (string, strin
 		_, p := locationPath(path)
 		destAbs = filepath.Join(tmpDir, filepath.Base(p))
 	} else {
-		path = joinPath(path, "") // Copy contents of dir but not dir.
+		path = joinPath(path, ".") // Copy contents of dir but not dir.
 		destAbs = filepath.Join(tmpDir, name)
 		transferDir = destAbs
 	}
@@ -104,10 +101,10 @@ func moveToInternalSharedDir(src, dst string) (_ string, err error) {
 		return "", errors.New("no path provided")
 	}
 	if strings.Contains(src, "..") {
-		return "", errors.New("illegal path")
+		return "", fmt.Errorf("illegal path: %q", src)
 	}
 	if _, err := os.Stat(src); os.IsNotExist(err) {
-		return "", errors.New("path does not exist")
+		return "", fmt.Errorf("path does not exist: %q", src)
 	}
 
 	var (
@@ -183,6 +180,7 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, sharedDir s
 		}
 
 		dir := isDir(filepath.Join(sharedDir, "tmp", strings.TrimPrefix("/", destRel)))
+		fmt.Println(dir, sharedDir)
 
 		// Source relative to the transfer source path.
 		source := strings.Replace(path, ops.transferSource.Path, "", 1)
@@ -192,19 +190,29 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, sharedDir s
 		// # a file, or the last folder if not. Keep the trailing / for folders.
 		//
 		// TODO: this is broken.
-		var lastSegment string
-		if dir {
-			lastSegment = joinPath(filepath.Base(filepath.Dir(source)), "")
-		} else {
-			lastSegment = filepath.Base(source)
-		}
-		destination := joinPath(currentlyProcessing.Path, destRel, lastSegment)
+		/*
+			var lastSegment string
+			if dir {
+				lastSegment = joinPath(filepath.Base(filepath.Dir(source)), "")
+			} else {
+				lastSegment = filepath.Base(source)
+			}
+		*/
+
+		destination := joinPath(currentlyProcessing.Path, destRel, "") + "."
 		destination = strings.Replace(destination, "%sharedPath%", "", 1)
 
-		// {
-		//   "archivematica/archivematica-sampledata/SampleTransfers/Images/pictures"
-		//   "/var/archivematica/sharedDirectory/tmp/3598350318/Prueba/Images/"
-		// }
+		// What SS expects must look like this:
+		//
+		//	[{
+		//		'source': 'archivematica/transfer/.',
+		//		'destination': '/var/archivematica/sharedDirectory/tmp/tmp9an4_1zv/20240521104109/.'
+		//	}]
+		//
+		//	[{
+		//		'source': 'archivematica/archivematica-sampledata/SampleTransfers/Images/pictures/.',
+		//		'destination': '/var/archivematica/sharedDirectory/tmp/tmpzwq0mg0r/20240521104254/.'
+		//	}]
 		ops.files = append(ops.files, [2]string{source, destination})
 	}
 

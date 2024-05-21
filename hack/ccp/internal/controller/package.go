@@ -187,7 +187,6 @@ func NewTransferPackage(
 		// Copy into new location.
 		path, err := copyTransfer(ctx, ssclient, sharedDir, tmpDir, req.Name, req.Path[0])
 		if err != nil {
-			logger.Info("SHIT", "err", err)
 			return fmt.Errorf("copy transfer: %v", err)
 		}
 		pkg.UpdatePath(path)

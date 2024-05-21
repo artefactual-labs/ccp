@@ -60,8 +60,20 @@ func TestJoinPath(t *testing.T) {
 			want: "a/b/c",
 		},
 		{
-			elem: []string{"a", "b/"},
-			want: "a/b/",
+			elem: []string{"a", "b", "c/"},
+			want: "a/b/c/",
+		},
+		{
+			elem: []string{"a", "b", "c", "/"},
+			want: "a/b/c/",
+		},
+		{
+			elem: []string{"a", "b", "c", ""},
+			want: "a/b/c/",
+		},
+		{
+			elem: []string{"a", "b", "c", "."},
+			want: "a/b/c/.",
 		},
 		{
 			elem: nil,
