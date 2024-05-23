@@ -13,7 +13,10 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
-var errWait = errors.New("wait")
+var (
+	errWait = errors.New("wait")
+	errEnd  = errors.New("terminator")
+)
 
 // A chain is used for passing information between jobs.
 //
@@ -89,12 +92,6 @@ func (i *iterator) Process(ctx context.Context) (err error) {
 	if err := i.p.markAsProcessing(ctx); err != nil {
 		return err
 	}
-	defer func() {
-		// TODO: can we be more specific? E.g. failed or completed.
-		if markErr := i.p.markAsDone(ctx); err != nil {
-			err = errors.Join(err, markErr)
-		}
-	}()
 
 	next := i.startAtChainID
 
@@ -131,9 +128,22 @@ func (i *iterator) Process(ctx context.Context) (err error) {
 		}
 
 		n, err := i.runJob(ctx, next)
-		if err == io.EOF {
+
+		// End of chain.
+		if errors.Is(err, io.EOF) {
+			// TODO: can we have this iterator span across chains?
 			return nil
 		}
+
+		// End of processing.
+		if errors.Is(err, errEnd) {
+			if markErr := i.p.markAsDone(ctx); err != nil {
+				return markErr
+			}
+			return nil
+		}
+
+		// Prompt.
 		if errors.Is(err, errWait) {
 			choice, waitErr := i.wait(ctx) // puts the loop on hold.
 			if waitErr != nil {
@@ -142,7 +152,9 @@ func (i *iterator) Process(ctx context.Context) (err error) {
 			next = choice
 			continue
 		}
+
 		if err != nil {
+			// TODO: mark as failed?
 			return fmt.Errorf("run job: %v", err)
 		}
 		next = n
@@ -169,15 +181,15 @@ func (i *iterator) runJob(ctx context.Context, id uuid.UUID) (uuid.UUID, error) 
 	}
 
 	next, err := s.exec(ctx)
-	if err != nil {
-		if err == io.EOF {
+	if errors.Is(err, io.EOF) {
+		if wl.End {
+			return uuid.Nil, errEnd
+		} else {
 			return uuid.Nil, err
 		}
-		return uuid.Nil, fmt.Errorf("link %s with manager %s (%s) couldn't be executed: %v", id, wl.Manager, wl.Description, err)
 	}
-
-	if wl.End {
-		return uuid.Nil, io.EOF
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("link %s with manager %s (%s) couldn't be executed: %v", id, wl.Manager, wl.Description, err)
 	}
 
 	// Workflow needs to be reactivated by another watched directory.

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -276,10 +277,11 @@ func (c *Controller) Decisions() []string {
 
 func (c *Controller) Close() error {
 	var err error
-
 	c.closeOnce.Do(func() {
 		c.groupCancel()
-		err = c.group.Wait()
+		if waitErr := c.group.Wait(); errors.Is(waitErr, context.Canceled) {
+			err = waitErr
+		}
 	})
 
 	return err

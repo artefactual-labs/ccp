@@ -7,9 +7,10 @@ require (
 	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
-	github.com/artefactual-labs/gearmin v0.0.0-20240507145739-e15b2dbf710c
+	github.com/artefactual-labs/gearmin v0.0.0-20240525053553-51122ec3bbfd
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/docker/docker v25.0.5+incompatible
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/elliotchance/orderedmap/v2 v2.2.0
 	github.com/fsnotify/fsnotify v1.7.0
@@ -19,6 +20,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.6
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
+	github.com/otiai10/copy v1.14.0
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/rs/cors v1.11.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
@@ -55,7 +57,6 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/docker v25.0.5+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
