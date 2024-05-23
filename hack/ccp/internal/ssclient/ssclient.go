@@ -99,7 +99,7 @@ func (c *clientImpl) ReadDefaultLocation(ctx context.Context, purpose enums.Loca
 		return nil, err
 	}
 
-	// We're asking for a models.Locationable using ByUuuid while rewriting the
+	// We're asking for a models.Locationable using ByUuid while rewriting the
 	// URL template to hit the Default Location API instead. ssclient-go follows
 	// the redirects automatically, so we don't have to.
 	//

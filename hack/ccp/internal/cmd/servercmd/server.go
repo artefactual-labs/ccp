@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"path/filepath"
 	"time"
 
@@ -110,7 +111,7 @@ func (s *Server) Run() error {
 
 	s.logger.V(1).Info("Creating ssclient.")
 	retryableClient := retryablehttp.NewClient()
-	retryableClient.Logger = nil
+	retryableClient.Logger = httpClientLogger{s.logger.WithName("ssclient").V(2)}
 	ssclient, err := ssclient.NewClient(retryableClient.StandardClient(), s.store, s.config.ssclient)
 	if err != nil {
 		return fmt.Errorf("error creating ssclient: %v", err)
@@ -166,4 +167,21 @@ func (s *Server) Close() error {
 	s.gearman.Stop()
 
 	return errs
+}
+
+type httpClientLogger struct {
+	logr.Logger
+}
+
+func (l httpClientLogger) Printf(msg string, keysAndValues ...any) {
+	method, path := "", ""
+	if len(keysAndValues) >= 2 {
+		if v, ok := keysAndValues[0].(string); ok {
+			method = v
+		}
+		if v, ok := keysAndValues[1].(*url.URL); ok {
+			path = v.Path
+		}
+	}
+	l.Info("ssclient", "method", method, "path", path, "client", "github.com/hashicorp/go-retryablehttp")
 }

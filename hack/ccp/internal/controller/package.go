@@ -170,7 +170,7 @@ func NewTransferPackage(
 
 		defer func() {
 			if err != nil {
-				logger.Info("Opsie!", "err", err)
+				logger.Info("Oopsie!", "err", err)
 			} else {
 				logger.Info("Done!")
 			}
@@ -731,6 +731,7 @@ func dirBasename(path string) string {
 // baseReplacements returns replacements needed by all unit types.
 func baseReplacements(p *Package) replacementMapping {
 	path := p.Path()
+
 	return map[string]replacement{
 		"%SIPUUID%":              replacement(p.id.String()),
 		"%SIPName%":              replacement(p.Name()),
@@ -875,7 +876,23 @@ func (rm replacementMapping) replaceValues(input string) string {
 	}
 
 	for k, v := range rm {
-		input = strings.ReplaceAll(input, k, v.escape())
+		escaped := v.escape()
+
+		// Unfortunately MCPClient expects paths to sit under "/var/archivematica/sharedDirectory".
+		// If CCP is using a different basepath, we have to replace it otherwise MCPClient won't find it.
+		sep := string(filepath.Separator)
+		if strings.HasPrefix(escaped, sep) {
+			tailed := strings.HasSuffix(escaped, sep)
+			parts := strings.Split(escaped, sep)
+			if len(parts) > 3 && parts[1] == "tmp" && strings.HasPrefix(parts[2], "ccp-sharedDir") {
+				escaped = joinPath("/var/archivematica/sharedDirectory", filepath.Join(parts[3:]...))
+				if tailed {
+					escaped += sep
+				}
+			}
+		}
+
+		input = strings.ReplaceAll(input, k, escaped)
 	}
 
 	return input
