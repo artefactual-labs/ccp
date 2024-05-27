@@ -7,14 +7,14 @@ require (
 	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
-	github.com/artefactual-labs/gearmin v0.0.0-20240525053553-51122ec3bbfd
+	github.com/artefactual-labs/gearmin v0.1.0
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/docker/docker v25.0.5+incompatible
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/elliotchance/orderedmap/v2 v2.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gohugoio/hugo v0.126.1
 	github.com/google/uuid v1.6.0
@@ -27,7 +27,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.31.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.31.0
 	go.artefactual.dev/ssclient v0.4.0
-	go.artefactual.dev/tools v0.12.0
+	go.artefactual.dev/tools v0.14.0
 	go.nhat.io/httpmock v0.11.0
 	go.starlark.net v0.0.0-20240510163022-f457c4c2b267
 	go.uber.org/goleak v1.3.0
