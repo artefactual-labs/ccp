@@ -38,7 +38,7 @@ const envPrefix = "CCP_INTEGRATION"
 
 var (
 	enableIntegration           = getEnvBool("ENABLED", "no")
-	enableCCPLogging            = getEnvBool("ENABLE_CCP_LOGGING", "yes")
+	enableLogging               = getEnvBool("ENABLE_LOGGING", "yes")
 	enableTestContainersLogging = getEnvBool("ENABLE_TESTCONTAINERS_LOGGING", "no")
 )
 
@@ -278,7 +278,7 @@ func (e *env) runCCP() {
 	}
 
 	var stdout io.Writer
-	if enableCCPLogging {
+	if enableLogging {
 		stdout = os.Stdout
 	} else {
 		stdout = bytes.NewBuffer([]byte{})
