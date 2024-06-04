@@ -65,3 +65,7 @@ func isDir(path string) bool {
 
 	return info.IsDir()
 }
+
+func trim(path string) string {
+	return strings.Trim(path, string(filepath.Separator))
+}

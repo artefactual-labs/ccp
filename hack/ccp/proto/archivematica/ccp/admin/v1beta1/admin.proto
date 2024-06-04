@@ -103,7 +103,7 @@ message CreatePackageRequest {
 
 message CreatePackageResponse {
   // Identifier of the package as a string (UUIDv4).
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message ReadPackageRequest {
@@ -113,6 +113,10 @@ message ReadPackageRequest {
 
 message ReadPackageResponse {
   Package pkg = 1;
+
+  // A decision that needs to be resolved. Must be set in the package status is
+  // PACKAGE_STATUS_AWAITING_DECISION.
+  optional Decision decision = 2;
 }
 
 message ApproveTransferRequest {
@@ -125,22 +129,30 @@ message ApproveTransferRequest {
 
 message ApproveTransferResponse {
   // Identifier of the package as a string (UUIDv4).
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message ListActivePackagesRequest {}
 
 message ListActivePackagesResponse {
+  // List of active packages, referred by their identifiers.
   repeated string value = 1;
 }
 
 message ListAwaitingDecisionsRequest {}
 
 message ListAwaitingDecisionsResponse {
+  // List of packages awaiting decisions, referred by their identifiers.
   repeated string value = 1;
 }
 
-message ResolveAwaitingDecisionRequest {}
+message ResolveAwaitingDecisionRequest {
+  // Identifier of the package as a string (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // The choice to be used to resolve the decision.
+  Choice choice = 2;
+}
 
 message ResolveAwaitingDecisionResponse {}
 
@@ -163,6 +175,9 @@ enum PackageStatus {
   PACKAGE_STATUS_DONE = 2;
   PACKAGE_STATUS_COMPLETED_SUCCESSFULLY = 3;
   PACKAGE_STATUS_FAILED = 4;
+
+  // This is not found in the database but we can infer it at runtime.
+  PACKAGE_STATUS_AWAITING_DECISION = 5;
 }
 
 message Package {
@@ -177,4 +192,18 @@ message Package {
 
   // Status of the package.
   PackageStatus status = 4;
+}
+
+message Decision {
+  // Name of the decision (prompt).
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Choices available.
+  repeated Choice choice = 2 [(buf.validate.field).repeated = {min_items: 1}];
+}
+
+message Choice {
+  int32 id = 1 [(buf.validate.field).int32 = {gte: 0}];
+
+  string label = 2 [(buf.validate.field).string.min_len = 1];
 }

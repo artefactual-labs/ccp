@@ -132,14 +132,21 @@ func (s *Server) ReadPackage(ctx context.Context, req *connect.Request[adminv1.R
 		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}
 
-	return connect.NewResponse(&adminv1.ReadPackageResponse{
+	resp := &adminv1.ReadPackageResponse{
 		Pkg: &adminv1.Package{
 			Id:     req.Msg.Id,
 			Name:   t.Name,
 			Type:   t.Type,
 			Status: t.Status,
 		},
-	}), nil
+	}
+
+	if decision, ok := s.ctrl.Decision(id); ok {
+		resp.Pkg.Status = adminv1.PackageStatus_PACKAGE_STATUS_AWAITING_DECISION
+		resp.Decision = decision
+	}
+
+	return connect.NewResponse(resp), nil
 }
 
 func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[adminv1.ApproveTransferRequest]) (*connect.Response[adminv1.ApproveTransferResponse], error) {
@@ -167,6 +174,18 @@ func (s *Server) ListAwaitingDecisions(ctx context.Context, req *connect.Request
 }
 
 func (s *Server) ResolveAwaitingDecision(ctx context.Context, req *connect.Request[adminv1.ResolveAwaitingDecisionRequest]) (*connect.Response[adminv1.ResolveAwaitingDecisionResponse], error) {
+	if err := s.v.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	id := uuid.MustParse(req.Msg.Id)
+
+	err := s.ctrl.ResolveDecision(id, int(req.Msg.Choice.Id))
+	if err != nil {
+		s.logger.Error(err, "Failed to resolve awaiting decision.", "id", id)
+		return nil, connect.NewError(connect.CodeUnknown, nil)
+	}
+
 	return connect.NewResponse(&adminv1.ResolveAwaitingDecisionResponse{}), nil
 }
 

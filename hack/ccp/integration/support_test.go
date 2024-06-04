@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -29,9 +30,11 @@ import (
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual/archivematica/hack/ccp/integration/storage"
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	adminv1connect "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 const envPrefix = "CCP_INTEGRATION"
@@ -40,6 +43,7 @@ var (
 	enableIntegration           = getEnvBool("ENABLED", "no")
 	enableLogging               = getEnvBool("ENABLE_LOGGING", "yes")
 	enableTestContainersLogging = getEnvBool("ENABLE_TESTCONTAINERS_LOGGING", "no")
+	enableMCPClientLogging      = getEnvBool("ENABLE_MCPCLIENT_LOGGING", "no")
 )
 
 func TestMain(m *testing.M) {
@@ -144,6 +148,10 @@ func (e *env) runMySQL() {
 	e.t.Log("Running MySQL server...")
 
 	container, err := mysql.RunContainer(e.ctx,
+		mysql.WithDatabase("MCP"),
+		mysql.WithUsername("root"),
+		mysql.WithPassword("12345"),
+		mysql.WithScripts("data/mcp.sql.bz2"),
 		testcontainers.WithImage("mysql:8.4.0"),
 		testcontainers.CustomizeRequestOption(func(req *testcontainers.GenericContainerRequest) error {
 			req.LogConsumerCfg = &testcontainers.LogConsumerConfig{
@@ -152,10 +160,6 @@ func (e *env) runMySQL() {
 			}
 			return nil
 		}),
-		mysql.WithDatabase("MCP"),
-		mysql.WithUsername("root"),
-		mysql.WithPassword("12345"),
-		mysql.WithScripts("data/mcp.sql.bz2"),
 	)
 	assert.NilError(e.t, err, "Failed to start container.")
 	e.t.Cleanup(func() {
@@ -241,7 +245,7 @@ func (e *env) runMCPClient() {
 	assert.NilError(e.t, err)
 
 	e.t.Cleanup(func() {
-		if e.t.Failed() {
+		if e.t.Failed() && enableMCPClientLogging {
 			e.logContainerOutput(container)
 		}
 
@@ -301,6 +305,9 @@ func (e *env) runCCP() {
 	e.t.Cleanup(func() {
 		cancel()
 		err := <-done
+		if errors.Is(err, context.Canceled) {
+			return
+		}
 		assert.NilError(e.t, err)
 	})
 
@@ -310,15 +317,36 @@ func (e *env) runCCP() {
 	e.ccpClient = adminv1connect.NewAdminServiceClient(&http.Client{}, baseURL)
 }
 
-// createTransfer creates a sample transfer in the transfer source directory.
-func (e *env) createTransfer() string {
+// createTransfer creates a sample transfer in the transfer source directory
+// using the standard automated processing configuration.
+func (e *env) createTransfer(config workflow.ProcessingConfig, processingConfigTransformations ...string) string {
 	tmpDir, err := os.MkdirTemp(e.transferSourceDir, "transfer-*")
 	assert.NilError(e.t, err)
 
 	writeFile(e.t, filepath.Join(tmpDir, "f1.txt"), "")
 	writeFile(e.t, filepath.Join(tmpDir, "f2.txt"), "")
 
-	err = os.Link("../hack/processingMCP.xml", filepath.Join(tmpDir, "processingMCP.xml"))
+	choices := config.Choices
+	for i := 0; i < len(processingConfigTransformations); i = i + 2 {
+		src, dst := processingConfigTransformations[i], processingConfigTransformations[i+1]
+		var remPos *int
+		for i, item := range choices {
+			if item.AppliesTo == src {
+				if dst == "" {
+					remPos = &i
+				} else {
+					item.GoToChain = dst
+					choices[i] = item
+				}
+				break
+			}
+		}
+		if remPos != nil {
+			slices.Delete(choices, *remPos, *remPos+1)
+		}
+	}
+
+	err = workflow.SaveConfigFile(filepath.Join(tmpDir, "processingMCP.xml"), choices)
 	assert.NilError(e.t, err)
 
 	e.t.Logf("Created transfer: %s", tmpDir)
@@ -435,4 +463,23 @@ func (c *logConsumer) Accept(l testcontainers.Log) {
 		content = strings.TrimSuffix(content, "\n")
 		c.t.Logf("[%s] %s", c.container, content)
 	}
+}
+
+// resolve a decision.
+func resolve(t *testing.T, ctx context.Context, client adminv1connect.AdminServiceClient, pkg *adminv1.Package, decision *adminv1.Decision, choiceLabel string) {
+	var choice *adminv1.Choice
+	for _, c := range decision.Choice {
+		if c.Label == choiceLabel {
+			choice = c
+		}
+	}
+	assert.Assert(t, choice != nil, "choice %s not found", choiceLabel)
+
+	_, err := client.ResolveAwaitingDecision(ctx, &connect.Request[adminv1.ResolveAwaitingDecisionRequest]{
+		Msg: &adminv1.ResolveAwaitingDecisionRequest{
+			Id:     pkg.Id,
+			Choice: choice,
+		},
+	})
+	assert.NilError(t, err)
 }

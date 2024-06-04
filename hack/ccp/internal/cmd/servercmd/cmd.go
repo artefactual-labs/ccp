@@ -2,6 +2,7 @@ package servercmd
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"io"
 	"os"
@@ -88,7 +89,9 @@ func (c *Config) Exec(ctx context.Context, args []string) error {
 	<-ctx.Done()
 
 	if err := s.Close(); err != nil {
-		logger.Error(err, "Failed to close server gracefully.")
+		if !errors.Is(err, context.Canceled) {
+			logger.Error(err, "Failed to close server gracefully.")
+		}
 		return err
 	}
 

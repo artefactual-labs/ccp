@@ -202,7 +202,7 @@ type LinkMicroServiceChainChoice struct {
 }
 
 type ConfigReplacement struct {
-	ID          string            `json:"id"`
+	ID          uuid.UUID         `json:"id"`
 	Description I18nField         `json:"description"`
 	Items       map[string]string `json:"items"`
 }

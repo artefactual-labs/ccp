@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +17,6 @@ import (
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
-	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
@@ -50,6 +49,9 @@ type Controller struct {
 	// queuedPackages is the list of queued packages, FIFO style.
 	queuedPackages []*Package
 
+	// awaitingPackages is the list of packages awaiting a decision.
+	awaitingPackages map[uuid.UUID]*decision
+
 	// sync.RWMutex protects the internal Package slices.
 	mu sync.RWMutex
 
@@ -68,15 +70,16 @@ type Controller struct {
 
 func New(logger logr.Logger, ssclient ssclient.Client, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
 	c := &Controller{
-		logger:         logger,
-		ssclient:       ssclient,
-		store:          store,
-		gearman:        gearman,
-		wf:             wf,
-		sharedDir:      sharedDir,
-		watchedDir:     watchedDir,
-		activePackages: []*Package{},
-		queuedPackages: []*Package{},
+		logger:           logger,
+		ssclient:         ssclient,
+		store:            store,
+		gearman:          gearman,
+		wf:               wf,
+		sharedDir:        sharedDir,
+		watchedDir:       watchedDir,
+		activePackages:   []*Package{},
+		queuedPackages:   []*Package{},
+		awaitingPackages: map[uuid.UUID]*decision{},
 	}
 
 	c.groupCtx, c.groupCancel = context.WithCancel(context.Background())
@@ -179,31 +182,39 @@ func (c *Controller) pick() {
 		return
 	}
 
-	var current *Package
+	var pkg *Package
 	if len(c.queuedPackages) > 0 {
-		current = c.queuedPackages[0]
-		c.activePackages = append(c.activePackages, current)
+		pkg = c.queuedPackages[0]
+		c.activePackages = append(c.activePackages, pkg)
 		c.queuedPackages = c.queuedPackages[1:]
 	}
 
-	if current == nil {
+	if pkg == nil {
 		return
 	}
 
 	c.group.Go(func() error {
-		logger := c.logger.V(2).WithValues("package", current)
-
-		defer c.deactivate(current)
-
+		logger := c.logger.V(2).WithValues("package", pkg)
 		logger.Info("Processing started.")
-		err := NewIterator(logger, c.gearman, c.wf, current).Process(c.groupCtx) // Block.
-		if err != nil {
-			logger.Info("Processing failed.", "err", err)
-		} else {
-			logger.Info("Processing completed successfully")
-		}
+		defer c.deactivate(pkg)
 
-		return err
+		iter := newJobIterator(c.groupCtx, logger, c.gearman, c.wf, pkg)
+		for {
+			err := iter.next() // Runs the next job.
+
+			if errors.Is(err, errEnd) || errors.Is(err, io.EOF) {
+				return nil
+			} else if ew, ok := isErrWait(err); ok {
+				if err := c.await(iter, pkg, ew.decision); err != nil {
+					return err
+				} else {
+					continue
+				}
+			} else if err != nil {
+				logger.Error(err, "Processing failed.")
+				return err
+			}
+		}
 	})
 }
 
@@ -220,26 +231,100 @@ func (c *Controller) deactivate(p *Package) {
 	}
 }
 
-type PackageStatus struct {
-	ID     uuid.UUID
-	Status enums.PackageStatus
+// await blocks until the awaiting package is resolved.
+func (c *Controller) await(iter *jobIterator, pkg *Package, decision *decision) error {
+	_ = c.queueToAwait(pkg, decision)
+	defer c.dequeueFromAwait(pkg)
+
+	next, err := decision.await(c.groupCtx)
+	c.logger.Info("Resolution of awaiting package completed.", "next", next, "err", err)
+	if err != nil {
+		return err
+	}
+
+	iter.nextLink = next
+
+	return nil
 }
 
-// Package returns the status of an active package given its identifier.
-func (c *Controller) Package(id uuid.UUID) *PackageStatus {
+// queueToAwait moves an active package to the awaiting list.
+func (c *Controller) queueToAwait(pkg *Package, decision *decision) error {
+	pkgID := pkg.id
+
+	// Confirm that the package is in the active queue.
+	c.mu.RLock()
+	var index int
+	var found bool
+	for i, active := range c.activePackages {
+		if active.id == pkgID {
+			index = i
+			found = true
+			break
+		}
+	}
+	c.mu.RUnlock()
+	if !found {
+		return errors.New("package not found in the active list")
+	}
+
+	// Move to the awaiting list.
+	c.mu.Lock()
+	c.activePackages = append(c.activePackages[:index], c.activePackages[index+1:]...)
+	c.awaitingPackages[pkgID] = decision
+	c.mu.Unlock()
+
+	return nil
+}
+
+func (c *Controller) dequeueFromAwait(pkg *Package) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	_, ok := c.awaitingPackages[pkg.id]
+	if !ok {
+		return
+	}
+
+	delete(c.awaitingPackages, pkg.id)
+	c.activePackages = append(c.activePackages, pkg)
+}
+
+func (c *Controller) IsPackageActive(id uuid.UUID) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	for _, pkg := range c.activePackages {
-		if id == pkg.id {
-			return &PackageStatus{
-				ID:     id,
-				Status: enums.PackageStatusProcessing,
-			}
+	for _, item := range c.activePackages {
+		if item.id == id {
+			return true
 		}
 	}
 
-	return nil
+	return false
+}
+
+// Decision returns the decision of a Package given its identifier.
+func (c *Controller) Decision(id uuid.UUID) (*adminv1.Decision, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	decision, ok := c.awaitingPackages[id]
+	if !ok {
+		return nil, false
+	}
+
+	ret := &adminv1.Decision{
+		Name:   decision.name,
+		Choice: make([]*adminv1.Choice, 0, len(decision.choices)),
+	}
+	for i, item := range decision.choices {
+		choice := &adminv1.Choice{
+			Id:    int32(i),
+			Label: item.label,
+		}
+		ret.Choice = append(ret.Choice, choice)
+	}
+
+	return ret, true
 }
 
 // Active lists all active packages.
@@ -257,22 +342,31 @@ func (c *Controller) Active() []uuid.UUID {
 
 // Decisions lists awaiting decisions for all active packages.
 func (c *Controller) Decisions() []string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	ret := []string{}
+	// TODO: use c.awaitingDecisionsByPackage.
 
-	for _, item := range c.activePackages {
-		opts := item.Decision()
-		ln := len(opts)
-		if ln == 0 {
-			continue
+	return []string{}
+}
+
+func (c *Controller) ResolveDecision(pkgID uuid.UUID, pos int) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var match *decision
+	for id, decision := range c.awaitingPackages {
+		if id == pkgID {
+			match = decision
+			break
 		}
-		ret = append(ret, fmt.Sprintf("package %s has an awaiting decision with %d options available", item, ln))
-
 	}
 
-	return ret
+	if match == nil {
+		return errors.New("package is not awaiting")
+	}
+
+	return match.resolve(pos)
 }
 
 func (c *Controller) Close() error {
@@ -285,8 +379,4 @@ func (c *Controller) Close() error {
 	})
 
 	return err
-}
-
-func trim(path string) string {
-	return strings.Trim(path, string(filepath.Separator))
 }
