@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-BUF_VERSION ?= 1.31.0
+BUF_VERSION ?= 1.32.2
 
 BUF := $(CACHE_VERSIONS)/buf/$(BUF_VERSION)
 $(BUF):

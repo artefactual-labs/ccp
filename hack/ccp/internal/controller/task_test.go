@@ -53,7 +53,7 @@ func workerHandler(t *testing.T, job worker.Job) ([]byte, error) {
 func TestTaskBackend(t *testing.T) {
 	t.Parallel()
 
-	t.Skip("Needs to be fixed: https://github.com/artefactual-labs/gearmin/issues/3.")
+	t.Skip("Fails interminttently in (github.com/mikespook/gearman-go).")
 
 	batchSize = 128
 	fnName := "do"

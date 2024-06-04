@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	"github.com/elliotchance/orderedmap/v2"
 	"github.com/go-logr/logr"
@@ -48,9 +46,6 @@ type Package struct {
 
 	// Identifier of the link where the iterator must start processing.
 	startAtLinkID uuid.UUID
-
-	// User decisinon manager
-	decision decision
 }
 
 func newPackage(logger logr.Logger, store store.Store, sharedDir string) *Package {
@@ -256,18 +251,18 @@ func (p *Package) parseProcessingConfig() ([]workflow.Choice, error) {
 
 // PreconfiguredChoice looks up a pre-configured choice in the processing
 // configuration file that is part of the package.
-func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
+func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (string, error) {
 	// TODO: auto-approval should only happen if requested by the user, but
 	// this is convenient during initial development.
 	if chainID := Transfers.Decide(linkID); chainID != uuid.Nil {
-		return chainID, nil
+		return chainID.String(), nil
 	}
 
 	choices, err := p.parseProcessingConfig()
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	} else if len(choices) == 0 {
-		return uuid.Nil, nil
+		return "", nil
 	}
 
 	var chainID uuid.UUID
@@ -281,7 +276,7 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
 	// Resort to automated config.
 	// TODO: allow user to choose the system processing config to use.
 	if chainID == uuid.Nil {
-		for _, choice := range workflow.AutomatedConfig.Choices.Choices {
+		for _, choice := range workflow.AutomatedConfig.Choices {
 			if choice.LinkID() == linkID {
 				chainID = choice.ChainID()
 				break
@@ -289,31 +284,7 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (uuid.UUID, error) {
 		}
 	}
 
-	return chainID, nil
-}
-
-// Decide resolves an awaiting decision.
-func (p *Package) Decide(opt option) error {
-	return p.decision.resolve(opt)
-}
-
-// AwaitDecision builds a new decision and waits for its resolution.
-func (p *Package) AwaitDecision(ctx context.Context, opts []option) (option, error) {
-	p.decision.build(opts...)
-
-	for {
-		select {
-		case d := <-p.decision.recv:
-			return d, nil
-		case <-ctx.Done():
-			return option(""), ctx.Err()
-		}
-	}
-}
-
-// Decision provides the current awaiting decision.
-func (p *Package) Decision() []option {
-	return p.decision.decision()
+	return chainID.String(), nil
 }
 
 // Files iterates over all files associated with the package or that should be
@@ -410,6 +381,10 @@ func (p *Package) markAsProcessing(ctx context.Context) error {
 
 func (p *Package) markAsDone(ctx context.Context) error {
 	return p.store.UpdatePackageStatus(ctx, p.id, p.packageType(), enums.PackageStatusDone)
+}
+
+func (p *Package) markAsFailed(ctx context.Context) error {
+	return p.store.UpdatePackageStatus(ctx, p.id, p.packageType(), enums.PackageStatusFailed)
 }
 
 func (p *Package) updateActiveAgent(ctx context.Context, userID string) error {
@@ -660,67 +635,6 @@ func (u *DIP) packageType() enums.PackageType {
 
 func (u *DIP) jobUnitType() string {
 	return "unitDIP"
-}
-
-type decision struct {
-	opts     []option
-	recv     chan option
-	unsolved atomic.Bool
-	sync.Mutex
-}
-
-func (pd *decision) build(opts ...option) {
-	pd.Lock()
-	pd.opts = opts
-	pd.recv = make(chan option) // is this ok?
-	pd.Unlock()
-
-	pd.unsolved.Store(true)
-}
-
-func (pd *decision) resolve(opt option) error {
-	if !pd.unsolved.Load() {
-		return errors.New("decision is not pending resolution")
-	}
-
-	select {
-	case pd.recv <- opt:
-		pd.unsolved.Store(false)
-	default:
-		return errors.New("resolve can't proceed because nobody is listening")
-	}
-
-	return nil
-}
-
-func (pd *decision) decision() []option {
-	if !pd.unsolved.Load() {
-		return nil
-	}
-
-	var opts []option
-	if pd.unsolved.Load() {
-		pd.Lock()
-		opts = make([]option, len(pd.opts))
-		copy(opts, pd.opts)
-		pd.Unlock()
-	}
-
-	return opts
-}
-
-// option is a single selectable decision choice.
-//
-// In most cases, an option is the UUID of a workflow item, but there is one
-// exception: "Store DIP location", containing a location path.
-type option string
-
-func (do option) uuid() uuid.UUID {
-	id, err := uuid.Parse(string(do))
-	if err != nil {
-		return uuid.Nil
-	}
-	return id
 }
 
 func dirBasename(path string) string {

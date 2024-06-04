@@ -6,6 +6,7 @@ linters:
     - misspell
     - gofumpt
     - gci
+    - importas
     - unparam
     - gosec
     - unused
@@ -39,3 +40,11 @@ linters-settings:
     confidence: low
     excludes:
       - G601 # does not apply to go1.22+
+  importas:
+    no-unaliased: true
+    no-extra-aliases: false
+    alias:
+      - pkg: github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1
+        alias: adminv1
+      - pkg: github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect
+        alias: adminv1connect
