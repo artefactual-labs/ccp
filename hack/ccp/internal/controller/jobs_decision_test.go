@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"testing"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
@@ -20,6 +22,16 @@ func TestNextChainDecisionJob(t *testing.T) {
 
 	t.Run("Honours preconfigured choices", func(t *testing.T) {
 		t.Parallel()
+
+		job, store := createJob(t, "56eebd45-5600-4768-a8c2-ec0114555a3d")
+		createAutomatedProcessingConfig(t, job.pkg.path)
+
+		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+
+		id, err := job.exec(context.Background())
+		assert.Equal(t, id, uuid.MustParse("e9eaef1e-c2e0-4e3b-b942-bfb537162795"))
+		assert.NilError(t, err)
 	})
 
 	t.Run("Creates a decision", func(t *testing.T) {
@@ -59,4 +71,13 @@ func assertErrWait(t *testing.T, err error, name string, choices []choice) *deci
 	assert.DeepEqual(t, ew.decision.choices, choices, cmpopts.EquateComparable(choice{}))
 
 	return ew.decision
+}
+
+func createAutomatedProcessingConfig(t *testing.T, path string) {
+	t.Helper()
+
+	path = filepath.Join(path, "processingMCP.xml")
+
+	err := workflow.SaveConfigFile(path, workflow.AutomatedConfig.Choices)
+	assert.NilError(t, err)
 }

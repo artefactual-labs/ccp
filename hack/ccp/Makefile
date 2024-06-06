@@ -41,7 +41,9 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual/archivematica/hack/ccp/internal/api/gen/% \
 	github.com/artefactual/archivematica/hack/ccp/internal/%/enums \
-	github.com/artefactual/archivematica/hack/ccp/internal/%/fake
+	github.com/artefactual/archivematica/hack/ccp/internal/ssclient/ssclientmock \
+	github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql \
+	github.com/artefactual/archivematica/hack/ccp/internal/store/storemock
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))

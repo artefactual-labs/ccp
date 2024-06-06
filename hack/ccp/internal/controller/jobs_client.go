@@ -38,10 +38,6 @@ func newDirectoryClientScriptJob(j *job) (*directoryClientScriptJob, error) {
 }
 
 func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
-
 	taskResult, err := l.submitTasks(ctx)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
@@ -113,10 +109,6 @@ func newFilesClientScriptJob(j *job) (*filesClientScriptJob, error) {
 }
 
 func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
-
 	filterSubDir, err := l.filterSubDir(ctx)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("look up filterSubDir: %v", err)
@@ -242,10 +234,6 @@ type outputClientScriptChoice struct {
 }
 
 func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
-
 	taskResult, err := l.submitTasks(ctx)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)

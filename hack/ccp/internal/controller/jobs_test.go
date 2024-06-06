@@ -20,16 +20,18 @@ import (
 func createJob(t *testing.T, linkID string) (*job, *storemock.MockStore) {
 	t.Helper()
 
+	tmpDir := fs.NewDir(t, "ccp", fs.WithDir("sharedDir/tmp/pkg"))
+
 	gearmin := gearmintest.Server(t, map[string]gearmintest.Handler{"hello": func(job worker.Job) ([]byte, error) { return []byte("hi!"), nil }})
 	wf, _ := workflow.Default()
 	ln := wf.Links[uuid.MustParse(linkID)]
-	tmpDir := fs.NewDir(t, "", fs.WithDir("sharedDir"))
 	store := storemock.NewMockStore(gomock.NewController(t))
 	chain := &chain{}
 
 	pkg := newPackage(logr.Discard(), store, tmpDir.Join("sharedDir"))
 	pkg.id = uuid.New()
 	pkg.unit = &noUnit{}
+	pkg.path = tmpDir.Join("sharedDir/tmp/pkg")
 
 	job, err := newJob(logr.Discard(), chain, pkg, gearmin, ln, wf)
 	assert.NilError(t, err)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -36,17 +37,7 @@ func newSetUnitVarLinkJob(j *job) (*setUnitVarLinkJob, error) {
 }
 
 func (l *setUnitVarLinkJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
-	defer func() {
-		if err == nil {
-			if markErr := l.j.markComplete(ctx); markErr != nil {
-				err = markErr
-			}
-		}
-	}()
-
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
+	derrors.Add(&err, "setUnitVarLinkJob")
 
 	if err := l.j.pkg.saveLinkID(ctx, l.config.Variable, l.config.LinkID); err != nil {
 		return uuid.Nil, err
@@ -80,17 +71,7 @@ func newGetUnitVarLinkJob(j *job) (*getUnitVarLinkJob, error) {
 }
 
 func (l *getUnitVarLinkJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
-	defer func() {
-		if err == nil {
-			if markErr := l.j.markComplete(ctx); markErr != nil {
-				err = markErr
-			}
-		}
-	}()
-
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
+	derrors.Add(&err, "getUnitVarLinkJob")
 
 	linkID, err := l.j.pkg.store.ReadUnitLinkID(ctx, l.j.pkg.id, l.j.pkg.packageType(), l.config.Variable)
 	if errors.Is(err, store.ErrNotFound) {

@@ -18,6 +18,7 @@ import (
 // It is implemented by outputDecisionJob, updateContextDecisionJob, and
 // nextChainDecisionJob. The decide method is executed by the controller to
 // propagate the resolution so a job can react to it, e.g. update the context.
+// Implementors must mark the job as complete using the markComplete method.
 type jobDecider interface {
 	decide(ctx context.Context, c choice) error
 }
@@ -42,11 +43,7 @@ func isErrWait(err error) (*errWait, bool) {
 
 // createAwait returns an errWait with all the details needed for the controller to
 // coordinate the decision and its resolution.
-func createAwait(ctx context.Context, j *job, choices []choice) (_ uuid.UUID, err error) {
-	if err := j.markAwaitingDecision(ctx); err != nil {
-		return uuid.Nil, err
-	}
-
+func createAwait(j *job, choices []choice) (_ uuid.UUID, err error) {
 	jd, ok := j.jobRunner.(jobDecider)
 	if !ok {
 		return uuid.Nil, errors.New("impossible to await this job because it's not a decider")
@@ -171,10 +168,6 @@ func newOutputDecisionJob(j *job) (*outputDecisionJob, error) {
 func (l *outputDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
 	derrors.Add(&err, "outputDecisionJob")
 
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
-
 	var c *choice
 	locURI, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID)
 	if err != nil {
@@ -195,7 +188,7 @@ func (l *outputDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
 		panic("not implemented")
 	}
 
-	return createAwait(ctx, l.j, l.j.chain.choices)
+	return createAwait(l.j, l.j.chain.choices)
 }
 
 func (l *outputDecisionJob) decide(ctx context.Context, c choice) error {
@@ -204,7 +197,7 @@ func (l *outputDecisionJob) decide(ctx context.Context, c choice) error {
 	// string (e.g. %AIPsStore%).
 	l.j.chain.context.Set(l.config.Execute, c.value[1])
 
-	return nil
+	return l.j.markComplete(ctx)
 }
 
 // nextChainDecisionJob.
@@ -238,15 +231,6 @@ func newNextChainDecisionJob(j *job) (*nextChainDecisionJob, error) {
 
 func (l *nextChainDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
 	derrors.Add(&err, "nextChainDecisionJob")
-	defer func() {
-		if e := l.j.markComplete(ctx); e != nil {
-			err = e
-		}
-	}()
-
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
 
 	// Use a preconfigured choice if it validates.
 	chainID, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID)
@@ -268,9 +252,6 @@ func (l *nextChainDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error
 		if !matched {
 			return uuid.Nil, fmt.Errorf("choice %s is not one of the available choices", chainID)
 		}
-		if err := l.j.markComplete(ctx); err != nil {
-			return uuid.Nil, err
-		}
 		return cid, nil
 	}
 
@@ -290,7 +271,7 @@ func (l *nextChainDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error
 		c.nextLink = item
 	}
 
-	return createAwait(ctx, l.j, choices)
+	return createAwait(l.j, choices)
 }
 
 func (l *nextChainDecisionJob) decide(ctx context.Context, c choice) error { //nolint: unparam
@@ -359,20 +340,12 @@ func newUpdateContextDecisionJob(j *job) (*updateContextDecisionJob, error) {
 func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, err error) {
 	derrors.Add(&err, "nextChainDecisionJob")
 	defer func() {
-		if e := l.j.markComplete(ctx); e != nil {
-			err = e
-			return
-		}
 		if id := l.j.wl.ExitCodes[0].LinkID; id == nil || *id == uuid.Nil {
 			err = fmt.Errorf("updateContextDecisionJob: linkID undefined")
 		} else {
 			linkID = *id
 		}
 	}()
-
-	if err := l.j.save(ctx); err != nil {
-		return uuid.Nil, err
-	}
 
 	// Load new context from the database (DashboardSettings).
 	// We have two chain links in workflow with no replacements configured:
@@ -408,7 +381,7 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, 
 		}
 	}
 
-	return createAwait(ctx, l.j, choices)
+	return createAwait(l.j, choices)
 }
 
 // loadDatabaseContext loads the context dictionary from the database.

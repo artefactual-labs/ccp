@@ -41,6 +41,9 @@ type job struct {
 
 	// jobRunner is what makes a job executable.
 	jobRunner
+
+	// finalStatusRecorded remembers if updateStatusFromExitCode was used.
+	finalStatusRecorded bool
 }
 
 // jobRunner is the interface that all jobs must implement.
@@ -100,6 +103,28 @@ func newJob(logger logr.Logger, chain *chain, pkg *Package, gearman *gearmin.Ser
 	return j, err
 }
 
+func (j *job) exec(ctx context.Context) (id uuid.UUID, err error) {
+	defer derrors.Wrap(&err, "exec")
+
+	if err := j.save(ctx); err != nil {
+		return uuid.Nil, err
+	}
+
+	id, err = j.jobRunner.exec(ctx)
+
+	if _, ok := isErrWait(err); ok {
+		if markErr := j.markAwaitingDecision(ctx); markErr != nil {
+			err = markErr
+		}
+	} else if err == nil {
+		if markErr := j.markComplete(ctx); markErr != nil {
+			err = markErr
+		}
+	}
+
+	return id, err
+}
+
 // save the job in the store.
 func (j *job) save(ctx context.Context) (err error) {
 	defer derrors.Add(&err, "save")
@@ -139,6 +164,11 @@ func (j *job) markAwaitingDecision(ctx context.Context) error {
 
 // markComplete is used by decision jobs to persist the completion status.
 func (j *job) markComplete(ctx context.Context) error {
+	// Certain jobs may have already used updateStatusFromExitCode.
+	if j.finalStatusRecorded {
+		return nil
+	}
+
 	err := j.pkg.store.UpdateJobStatus(ctx, j.id, "STATUS_COMPLETED_SUCCESSFULLY")
 	if err != nil {
 		return fmt.Errorf("mark complete: %v", err)
@@ -159,6 +189,8 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	if err != nil {
 		return fmt.Errorf("update job status from exit code: %v", err)
 	}
+
+	j.finalStatusRecorded = true
 
 	return nil
 }
