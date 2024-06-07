@@ -26,7 +26,7 @@ func createJob(t *testing.T, linkID string) (*job, *storemock.MockStore) {
 	wf, _ := workflow.Default()
 	ln := wf.Links[uuid.MustParse(linkID)]
 	store := storemock.NewMockStore(gomock.NewController(t))
-	chain := &chain{}
+	chain := newChain(nil)
 
 	pkg := newPackage(logr.Discard(), store, tmpDir.Join("sharedDir"))
 	pkg.id = uuid.New()

@@ -168,24 +168,27 @@ func newOutputDecisionJob(j *job) (*outputDecisionJob, error) {
 func (l *outputDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
 	derrors.Add(&err, "outputDecisionJob")
 
+	nextLink := exitCodeLinkID(l.j.wl, 0)
+
 	var c *choice
 	locURI, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID)
 	if err != nil {
 		return uuid.Nil, err
 	} else if locURI != "" {
 		for _, item := range l.j.chain.choices {
-			v := item.value
-			if locURI == v[1] {
+			if locURI == item.value[1] {
 				c = &item
+				break
 			}
 		}
 	}
 	if c != nil {
-		// TODO: choice was preconfigured, now we have to update the chain
-		// context, mark the job as complete and continue processing.
-		// Use exit_codes[0] if OK, or fallback_link_id but it's present in
-		// one of the two chain links only.
-		panic("not implemented")
+		return nextLink, l.decide(ctx, *c)
+	}
+
+	// Store the next link in all choices we're sharing with the decision.
+	for i := range l.j.chain.choices {
+		l.j.chain.choices[i].nextLink = nextLink
 	}
 
 	return createAwait(l.j, l.j.chain.choices)
@@ -340,10 +343,8 @@ func newUpdateContextDecisionJob(j *job) (*updateContextDecisionJob, error) {
 func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, err error) {
 	derrors.Add(&err, "nextChainDecisionJob")
 	defer func() {
-		if id := l.j.wl.ExitCodes[0].LinkID; id == nil || *id == uuid.Nil {
-			err = fmt.Errorf("updateContextDecisionJob: linkID undefined")
-		} else {
-			linkID = *id
+		if err == nil {
+			linkID = exitCodeLinkID(l.j.wl, 0)
 		}
 	}()
 
@@ -355,7 +356,7 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, 
 	if len(l.config.Replacements) == 0 {
 		if dict, err := l.loadDatabaseContext(ctx); err != nil {
 			return uuid.Nil, fmt.Errorf("load dict from db: %v", err)
-		} else if dict != nil {
+		} else if len(dict) > 0 {
 			l.j.chain.update(dict)
 			return uuid.Nil, nil
 		}
@@ -364,7 +365,7 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, 
 	// Load new context from processing configuration.
 	if dict, err := l.loadPreconfiguredContext(); err != nil {
 		return uuid.Nil, fmt.Errorf("load context with preconfigured choice: %v", err)
-	} else if dict != nil {
+	} else if len(dict) > 0 {
 		l.j.chain.update(dict)
 		return uuid.Nil, nil
 	}
@@ -374,7 +375,7 @@ func (l *updateContextDecisionJob) exec(ctx context.Context) (linkID uuid.UUID, 
 	for i, item := range l.config.Replacements {
 		c := &choices[i]
 		c.label = item.Description.String()
-		c.nextLink = *l.j.wl.ExitCodes[0].LinkID
+		c.nextLink = exitCodeLinkID(l.j.wl, 0)
 		for k, v := range item.Items {
 			c.value = [2]string{k, v}
 			break
@@ -422,6 +423,7 @@ func (l *updateContextDecisionJob) loadPreconfiguredContext() (map[string]string
 		return nil, err
 	}
 
+	ret := map[string]string{}
 	for _, choice := range choices {
 		if choice.AppliesTo != normalizedChoice.String() {
 			continue
@@ -435,7 +437,7 @@ func (l *updateContextDecisionJob) loadPreconfiguredContext() (map[string]string
 		}
 		ln, ok := l.j.wf.Links[normalizedChoice]
 		if !ok {
-			return nil, nil // fmt.Errorf("desired choice not found: %s", desiredChoice)
+			return nil, fmt.Errorf("desired choice not found: %s", desiredChoice)
 		}
 		config, ok := ln.Config.(workflow.LinkMicroServiceChoiceReplacementDic)
 		if !ok {
@@ -444,12 +446,13 @@ func (l *updateContextDecisionJob) loadPreconfiguredContext() (map[string]string
 		for _, replacement := range config.Replacements {
 			if replacement.ID == desiredChoice {
 				choices := maps.Clone(replacement.Items)
-				return l.formatChoices(choices), nil
+				ret = l.formatChoices(choices)
+				break
 			}
 		}
 	}
 
-	return nil, nil
+	return ret, nil
 }
 
 func (l *updateContextDecisionJob) formatChoices(choices map[string]string) map[string]string {
@@ -463,7 +466,7 @@ func (l *updateContextDecisionJob) formatChoices(choices map[string]string) map[
 
 func (l *updateContextDecisionJob) decide(ctx context.Context, c choice) error {
 	if c.value[0] != "" {
-		l.j.chain.context.Set(c.value[0], c.value[1]) // "AssignUUIDsToDirectories" => "True"
+		l.j.chain.context.Set(fmt.Sprintf("%%%s%%", c.value[0]), c.value[1])
 	}
 
 	return l.j.markComplete(ctx)

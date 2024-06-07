@@ -174,6 +174,8 @@ func (j *job) markComplete(ctx context.Context) error {
 		return fmt.Errorf("mark complete: %v", err)
 	}
 
+	j.finalStatusRecorded = true
+
 	return nil
 }
 
@@ -193,6 +195,22 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	j.finalStatusRecorded = true
 
 	return nil
+}
+
+func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID {
+	ret := uuid.Nil
+
+	if ec, ok := l.ExitCodes[code]; ok {
+		if ec.LinkID != nil {
+			ret = *ec.LinkID
+		}
+	}
+
+	if ret == uuid.Nil {
+		ret = l.FallbackLinkID
+	}
+
+	return ret
 }
 
 type ConfigT interface {

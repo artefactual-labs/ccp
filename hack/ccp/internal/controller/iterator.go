@@ -71,11 +71,9 @@ func (i *jobIterator) next() error {
 
 	if wc, ok := i.wf.Chains[i.nextLink]; ok {
 		i.logger.Info("Starting new chain.", "id", wc.ID, "desc", wc.Description)
-		i.chain = &chain{wc: wc}
-		if pCtx, err := loadContext(i.ctx, i.pkg); err != nil {
+		i.chain = newChain(wc)
+		if err := i.chain.load(i.ctx, i.pkg); err != nil {
 			return fmt.Errorf("load context: %v", err)
-		} else {
-			i.chain.context = pCtx
 		}
 		// Special case where the next list is override with the bypass.
 		if wc.ID == i.pkg.startAtChainID && i.pkg.startAtLinkID != uuid.Nil {
