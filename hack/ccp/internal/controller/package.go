@@ -10,12 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elliotchance/orderedmap/v2"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
-	"github.com/artefactual/archivematica/hack/ccp/internal/python"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
@@ -265,26 +263,15 @@ func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (string, error) {
 		return "", nil
 	}
 
-	var chainID uuid.UUID
+	var ret string
 	for _, choice := range choices {
 		if choice.LinkID() == linkID {
-			chainID = choice.ChainID()
+			ret = choice.GoToChain
 			break
 		}
 	}
 
-	// Resort to automated config.
-	// TODO: allow user to choose the system processing config to use.
-	if chainID == uuid.Nil {
-		for _, choice := range workflow.AutomatedConfig.Choices {
-			if choice.LinkID() == linkID {
-				chainID = choice.ChainID()
-				break
-			}
-		}
-	}
-
-	return chainID.String(), nil
+	return ret, nil
 }
 
 // Files iterates over all files associated with the package or that should be
@@ -677,56 +664,14 @@ func fileReplacements(pkg *Package, f *store.File) replacementMapping {
 		"%fileName%":             replacement(name),
 		"%fileExtension%":        replacement(ext),
 		"%fileExtensionWithDot%": replacement(extWithDot),
-		"%relativeLocation%":     replacement(absolutePath), // TODO: standardize duplicates.
-		"%inputFile%":            replacement(absolutePath),
-		"%fileFullName%":         replacement(absolutePath),
+
+		// TODO: standardize duplicates (the last two are used in the FPR db).
+		"%relativeLocation%": replacement(absolutePath),
+		"%inputFile%":        replacement(absolutePath),
+		"%fileFullName%":     replacement(absolutePath),
 	})
 
 	return mapping
-}
-
-// packageContext tracks choices made previously while processing.
-type packageContext struct {
-	// We're using an ordered map to mimic PackageContext's use of OrderedDict.
-	// It may not be necessary after all.
-	*orderedmap.OrderedMap[string, string]
-}
-
-func loadContext(ctx context.Context, p *Package) (*packageContext, error) {
-	pCtx := &packageContext{
-		orderedmap.NewOrderedMap[string, string](),
-	}
-
-	// TODO: we shouldn't need one UnitVariable per chain, with all the same values.
-	vars, err := p.store.ReadUnitVars(ctx, p.id, p.packageType(), "replacementDict")
-	if err != nil {
-		return nil, err
-	}
-	for _, item := range vars {
-		if item.Value == nil {
-			continue
-		}
-		m, err := python.EvalMap(*item.Value)
-		if err != nil {
-			p.logger.Error(err, "Failed to eval unit variable value %q.", *item.Value)
-			continue
-		}
-		for k, v := range m {
-			pCtx.Set(k, v)
-		}
-	}
-
-	kvs := []any{"len", pCtx.Len()}
-	for el := pCtx.Front(); el != nil; el = el.Next() {
-		kvs = append(kvs, fmt.Sprintf("var:%s", el.Key), el.Value)
-	}
-	p.logger.V(2).Info("Package context loaded from the database.", kvs...)
-
-	return pCtx, nil
-}
-
-func (ctx *packageContext) copy() *orderedmap.OrderedMap[string, string] { //nolint: unused
-	return ctx.Copy()
 }
 
 type replacement string
@@ -765,9 +710,9 @@ func (rm replacementMapping) copy() replacementMapping {
 	return n
 }
 
-// update the replacements with the package context.
-func (rm replacementMapping) update(pCtx *packageContext) replacementMapping {
-	for el := pCtx.Front(); el != nil; el = el.Next() {
+// update the replacements with the context values of a given chain.
+func (rm replacementMapping) update(c *chain) replacementMapping {
+	for el := c.context.Front(); el != nil; el = el.Next() {
 		rm[el.Key] = replacement(el.Value)
 	}
 
@@ -785,6 +730,7 @@ func (rm replacementMapping) with(input replacementMapping) replacementMapping {
 }
 
 func (rm replacementMapping) replaceValues(input string) string {
+	const defaultSharedDir = "/var/archivematica/sharedDirectory"
 	if input == "" {
 		return ""
 	}
@@ -799,7 +745,7 @@ func (rm replacementMapping) replaceValues(input string) string {
 			tailed := strings.HasSuffix(escaped, sep)
 			parts := strings.Split(escaped, sep)
 			if len(parts) > 3 && parts[1] == "tmp" && strings.HasPrefix(parts[2], "ccp-sharedDir") {
-				escaped = joinPath("/var/archivematica/sharedDirectory", filepath.Join(parts[3:]...))
+				escaped = joinPath(defaultSharedDir, filepath.Join(parts[3:]...))
 				if tailed {
 					escaped += sep
 				}

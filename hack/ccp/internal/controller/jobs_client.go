@@ -62,7 +62,7 @@ func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) 
 }
 
 func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResult, error) {
-	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain.context)
+	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
 	args := rm.replaceValues(l.config.Arguments)
 	stdout := rm.replaceValues(l.config.StdoutFile)
 	stderr := rm.replaceValues(l.config.StderrFile)
@@ -142,7 +142,7 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 }
 
 func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) (*taskResults, error) {
-	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain.context)
+	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain)
 	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
 
 	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, filterSubDir)
@@ -272,7 +272,7 @@ func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 }
 
 func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResult, error) {
-	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain.context)
+	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
 	args := rm.replaceValues(l.config.Arguments)
 	stdout := rm.replaceValues(l.config.StdoutFile)
 	stderr := rm.replaceValues(l.config.StderrFile)
