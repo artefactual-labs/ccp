@@ -33,6 +33,7 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	fs.StringVar(&cfg.db.driver, "db.driver", "", "Database driver")
 	fs.StringVar(&cfg.db.dsn, "db.dsn", "", "Database DSN")
 	fs.StringVar(&cfg.api.admin.Addr, "api.admin.addr", ":8000", "Admin API listen address")
+	fs.StringVar(&cfg.webui.Addr, "webui.addr", ":8001", "Web UI listen address")
 	fs.StringVar(&cfg.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
 	fs.StringVar(&cfg.ssclient.BaseURL, "ssclient.url", "", "Storage Service API base URL")
 	fs.StringVar(&cfg.ssclient.Username, "ssclient.username", "", "Storage Service API username")

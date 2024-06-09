@@ -19,6 +19,8 @@ require (
 	github.com/gohugoio/hugo v0.127.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/handlers v1.5.2
+	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/otiai10/copy v1.14.0

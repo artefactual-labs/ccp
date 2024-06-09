@@ -125,6 +125,10 @@ gen-buf: # @HELP Generate buf.build assets.
 gen-buf: $(BUF)
 	buf generate
 
+gen-ui: # @HELP Generate webui assets.
+gen-ui:
+	npm --prefix=$(CURDIR)/web run build
+
 push: # @HELP Push new build of CCP to development environment.
 push:
 	docker compose up -d --force-recreate --build --no-deps archivematica-ccp

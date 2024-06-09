@@ -7,7 +7,11 @@ import (
 	"github.com/rs/cors"
 )
 
-func New() *cors.Cors {
+func New(allowedOrigins []string) *cors.Cors {
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = []string{"*"}
+	}
+
 	// To let web developers play with the demo service from browsers, we need a
 	// very permissive CORS setup.
 	return cors.New(cors.Options{
@@ -19,10 +23,7 @@ func New() *cors.Cors {
 			http.MethodPatch,
 			http.MethodDelete,
 		},
-		AllowOriginFunc: func(origin string) bool {
-			// Allow all origins, which effectively disables CORS.
-			return true
-		},
+		AllowedOrigins: allowedOrigins,
 		AllowedHeaders: []string{"*"},
 		ExposedHeaders: []string{
 			// Content-Type is in the default safelist.
