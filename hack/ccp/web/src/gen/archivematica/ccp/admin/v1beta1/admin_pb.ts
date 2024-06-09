@@ -3,8 +3,15 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { BoolValue, Message, proto3, StringValue } from "@bufbuild/protobuf";
+import type {
+  BinaryReadOptions,
+  FieldList,
+  JsonReadOptions,
+  JsonValue,
+  PartialMessage,
+  PlainMessage
+} from '@bufbuild/protobuf'
+import { BoolValue, Message, proto3, StringValue } from '@bufbuild/protobuf'
 
 /**
  * Different types of transfers.
@@ -55,20 +62,20 @@ export enum TransferType {
   /**
    * @generated from enum value: TRANSFER_TYPE_DATAVERSE = 8;
    */
-  DATAVERSE = 8,
+  DATAVERSE = 8
 }
 // Retrieve enum metadata with: proto3.getEnumType(TransferType)
-proto3.util.setEnumType(TransferType, "archivematica.ccp.admin.v1beta1.TransferType", [
-  { no: 0, name: "TRANSFER_TYPE_UNSPECIFIED" },
-  { no: 1, name: "TRANSFER_TYPE_STANDARD" },
-  { no: 2, name: "TRANSFER_TYPE_ZIP_FILE" },
-  { no: 3, name: "TRANSFER_TYPE_UNZIPPED_BAG" },
-  { no: 4, name: "TRANSFER_TYPE_ZIPPED_BAG" },
-  { no: 5, name: "TRANSFER_TYPE_DSPACE" },
-  { no: 6, name: "TRANSFER_TYPE_MAILDIR" },
-  { no: 7, name: "TRANSFER_TYPE_TRIM" },
-  { no: 8, name: "TRANSFER_TYPE_DATAVERSE" },
-]);
+proto3.util.setEnumType(TransferType, 'archivematica.ccp.admin.v1beta1.TransferType', [
+  { no: 0, name: 'TRANSFER_TYPE_UNSPECIFIED' },
+  { no: 1, name: 'TRANSFER_TYPE_STANDARD' },
+  { no: 2, name: 'TRANSFER_TYPE_ZIP_FILE' },
+  { no: 3, name: 'TRANSFER_TYPE_UNZIPPED_BAG' },
+  { no: 4, name: 'TRANSFER_TYPE_ZIPPED_BAG' },
+  { no: 5, name: 'TRANSFER_TYPE_DSPACE' },
+  { no: 6, name: 'TRANSFER_TYPE_MAILDIR' },
+  { no: 7, name: 'TRANSFER_TYPE_TRIM' },
+  { no: 8, name: 'TRANSFER_TYPE_DATAVERSE' }
+])
 
 /**
  * @generated from enum archivematica.ccp.admin.v1beta1.PackageStatus
@@ -104,17 +111,17 @@ export enum PackageStatus {
    *
    * @generated from enum value: PACKAGE_STATUS_AWAITING_DECISION = 5;
    */
-  AWAITING_DECISION = 5,
+  AWAITING_DECISION = 5
 }
 // Retrieve enum metadata with: proto3.getEnumType(PackageStatus)
-proto3.util.setEnumType(PackageStatus, "archivematica.ccp.admin.v1beta1.PackageStatus", [
-  { no: 0, name: "PACKAGE_STATUS_UNSPECIFIED" },
-  { no: 1, name: "PACKAGE_STATUS_PROCESSING" },
-  { no: 2, name: "PACKAGE_STATUS_DONE" },
-  { no: 3, name: "PACKAGE_STATUS_COMPLETED_SUCCESSFULLY" },
-  { no: 4, name: "PACKAGE_STATUS_FAILED" },
-  { no: 5, name: "PACKAGE_STATUS_AWAITING_DECISION" },
-]);
+proto3.util.setEnumType(PackageStatus, 'archivematica.ccp.admin.v1beta1.PackageStatus', [
+  { no: 0, name: 'PACKAGE_STATUS_UNSPECIFIED' },
+  { no: 1, name: 'PACKAGE_STATUS_PROCESSING' },
+  { no: 2, name: 'PACKAGE_STATUS_DONE' },
+  { no: 3, name: 'PACKAGE_STATUS_COMPLETED_SUCCESSFULLY' },
+  { no: 4, name: 'PACKAGE_STATUS_FAILED' },
+  { no: 5, name: 'PACKAGE_STATUS_AWAITING_DECISION' }
+])
 
 /**
  * @generated from message archivematica.ccp.admin.v1beta1.CreatePackageRequest
@@ -125,28 +132,28 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
    *
    * @generated from field: string name = 1;
    */
-  name = "";
+  name = ''
 
   /**
    * Type of the transfer, default to "standard".
    *
    * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 2;
    */
-  type = TransferType.UNSPECIFIED;
+  type = TransferType.UNSPECIFIED
 
   /**
    * Identifier of the accession.
    *
    * @generated from field: string accession = 3;
    */
-  accession = "";
+  accession = ''
 
   /**
    * Identifier in the access system.
    *
    * @generated from field: string access_system_id = 4;
    */
-  accessSystemId = "";
+  accessSystemId = ''
 
   /**
    * List of <location_uuid>:<relative_path> to be included in the transfer.
@@ -155,7 +162,7 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
    *
    * @generated from field: repeated string path = 5;
    */
-  path: string[] = [];
+  path: string[] = []
 
   /**
    * The identifier (UUIDv4) of the metadata set to be included in this
@@ -163,54 +170,60 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
    *
    * @generated from field: google.protobuf.StringValue metadata_set_id = 6;
    */
-  metadataSetId?: string;
+  metadataSetId?: string
 
   /**
    * An option to auto-approve the package. It is enabled by default.
    *
    * @generated from field: google.protobuf.BoolValue auto_approve = 7;
    */
-  autoApprove?: boolean;
+  autoApprove?: boolean
 
   /**
    * Name of the processing configuration file to be included.
    *
    * @generated from field: string processing_config = 8;
    */
-  processingConfig = "";
+  processingConfig = ''
 
   constructor(data?: PartialMessage<CreatePackageRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.CreatePackageRequest";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.CreatePackageRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
-    { no: 3, name: "accession", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "access_system_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "metadata_set_id", kind: "message", T: StringValue },
-    { no: 7, name: "auto_approve", kind: "message", T: BoolValue },
-    { no: 8, name: "processing_config", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'type', kind: 'enum', T: proto3.getEnumType(TransferType) },
+    { no: 3, name: 'accession', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: 'access_system_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: 'path', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: 'metadata_set_id', kind: 'message', T: StringValue },
+    { no: 7, name: 'auto_approve', kind: 'message', T: BoolValue },
+    { no: 8, name: 'processing_config', kind: 'scalar', T: 9 /* ScalarType.STRING */ }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePackageRequest {
-    return new CreatePackageRequest().fromBinary(bytes, options);
+    return new CreatePackageRequest().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePackageRequest {
-    return new CreatePackageRequest().fromJson(jsonValue, options);
+    return new CreatePackageRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePackageRequest {
-    return new CreatePackageRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): CreatePackageRequest {
+    return new CreatePackageRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined, b: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined): boolean {
-    return proto3.util.equals(CreatePackageRequest, a, b);
+  static equals(
+    a: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined,
+    b: CreatePackageRequest | PlainMessage<CreatePackageRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(CreatePackageRequest, a, b)
   }
 }
 
@@ -223,33 +236,42 @@ export class CreatePackageResponse extends Message<CreatePackageResponse> {
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   constructor(data?: PartialMessage<CreatePackageResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.CreatePackageResponse";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.CreatePackageResponse'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePackageResponse {
-    return new CreatePackageResponse().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): CreatePackageResponse {
+    return new CreatePackageResponse().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePackageResponse {
-    return new CreatePackageResponse().fromJson(jsonValue, options);
+    return new CreatePackageResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePackageResponse {
-    return new CreatePackageResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): CreatePackageResponse {
+    return new CreatePackageResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined, b: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined): boolean {
-    return proto3.util.equals(CreatePackageResponse, a, b);
+  static equals(
+    a: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined,
+    b: CreatePackageResponse | PlainMessage<CreatePackageResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(CreatePackageResponse, a, b)
   }
 }
 
@@ -262,33 +284,39 @@ export class ReadPackageRequest extends Message<ReadPackageRequest> {
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   constructor(data?: PartialMessage<ReadPackageRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ReadPackageRequest";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ReadPackageRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReadPackageRequest {
-    return new ReadPackageRequest().fromBinary(bytes, options);
+    return new ReadPackageRequest().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReadPackageRequest {
-    return new ReadPackageRequest().fromJson(jsonValue, options);
+    return new ReadPackageRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReadPackageRequest {
-    return new ReadPackageRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ReadPackageRequest {
+    return new ReadPackageRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined, b: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined): boolean {
-    return proto3.util.equals(ReadPackageRequest, a, b);
+  static equals(
+    a: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined,
+    b: ReadPackageRequest | PlainMessage<ReadPackageRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(ReadPackageRequest, a, b)
   }
 }
 
@@ -299,7 +327,7 @@ export class ReadPackageResponse extends Message<ReadPackageResponse> {
   /**
    * @generated from field: archivematica.ccp.admin.v1beta1.Package pkg = 1;
    */
-  pkg?: Package;
+  pkg?: Package
 
   /**
    * A decision that needs to be resolved. Must be set in the package status is
@@ -307,34 +335,40 @@ export class ReadPackageResponse extends Message<ReadPackageResponse> {
    *
    * @generated from field: optional archivematica.ccp.admin.v1beta1.Decision decision = 2;
    */
-  decision?: Decision;
+  decision?: Decision
 
   constructor(data?: PartialMessage<ReadPackageResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ReadPackageResponse";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ReadPackageResponse'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "pkg", kind: "message", T: Package },
-    { no: 2, name: "decision", kind: "message", T: Decision, opt: true },
-  ]);
+    { no: 1, name: 'pkg', kind: 'message', T: Package },
+    { no: 2, name: 'decision', kind: 'message', T: Decision, opt: true }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReadPackageResponse {
-    return new ReadPackageResponse().fromBinary(bytes, options);
+    return new ReadPackageResponse().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReadPackageResponse {
-    return new ReadPackageResponse().fromJson(jsonValue, options);
+    return new ReadPackageResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReadPackageResponse {
-    return new ReadPackageResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ReadPackageResponse {
+    return new ReadPackageResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined, b: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined): boolean {
-    return proto3.util.equals(ReadPackageResponse, a, b);
+  static equals(
+    a: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined,
+    b: ReadPackageResponse | PlainMessage<ReadPackageResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(ReadPackageResponse, a, b)
   }
 }
 
@@ -347,41 +381,53 @@ export class ApproveTransferRequest extends Message<ApproveTransferRequest> {
    *
    * @generated from field: string directory = 1;
    */
-  directory = "";
+  directory = ''
 
   /**
    * Type of the transfer, default to "standard".
    *
    * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 2;
    */
-  type = TransferType.UNSPECIFIED;
+  type = TransferType.UNSPECIFIED
 
   constructor(data?: PartialMessage<ApproveTransferRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ApproveTransferRequest";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ApproveTransferRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "directory", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
-  ]);
+    { no: 1, name: 'directory', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'type', kind: 'enum', T: proto3.getEnumType(TransferType) }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApproveTransferRequest {
-    return new ApproveTransferRequest().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApproveTransferRequest {
-    return new ApproveTransferRequest().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApproveTransferRequest {
-    return new ApproveTransferRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ApproveTransferRequest {
+    return new ApproveTransferRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined, b: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined): boolean {
-    return proto3.util.equals(ApproveTransferRequest, a, b);
+  static equals(
+    a: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined,
+    b: ApproveTransferRequest | PlainMessage<ApproveTransferRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(ApproveTransferRequest, a, b)
   }
 }
 
@@ -394,33 +440,45 @@ export class ApproveTransferResponse extends Message<ApproveTransferResponse> {
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   constructor(data?: PartialMessage<ApproveTransferResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ApproveTransferResponse";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ApproveTransferResponse'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApproveTransferResponse {
-    return new ApproveTransferResponse().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApproveTransferResponse {
-    return new ApproveTransferResponse().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApproveTransferResponse {
-    return new ApproveTransferResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ApproveTransferResponse {
+    return new ApproveTransferResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined, b: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined): boolean {
-    return proto3.util.equals(ApproveTransferResponse, a, b);
+  static equals(
+    a: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined,
+    b: ApproveTransferResponse | PlainMessage<ApproveTransferResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(ApproveTransferResponse, a, b)
   }
 }
 
@@ -429,29 +487,40 @@ export class ApproveTransferResponse extends Message<ApproveTransferResponse> {
  */
 export class ListActivePackagesRequest extends Message<ListActivePackagesRequest> {
   constructor(data?: PartialMessage<ListActivePackagesRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ListActivePackagesRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ListActivePackagesRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListActivePackagesRequest {
-    return new ListActivePackagesRequest().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ListActivePackagesRequest {
+    return new ListActivePackagesRequest().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListActivePackagesRequest {
-    return new ListActivePackagesRequest().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ListActivePackagesRequest {
+    return new ListActivePackagesRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListActivePackagesRequest {
-    return new ListActivePackagesRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ListActivePackagesRequest {
+    return new ListActivePackagesRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ListActivePackagesRequest | PlainMessage<ListActivePackagesRequest> | undefined, b: ListActivePackagesRequest | PlainMessage<ListActivePackagesRequest> | undefined): boolean {
-    return proto3.util.equals(ListActivePackagesRequest, a, b);
+  static equals(
+    a: ListActivePackagesRequest | PlainMessage<ListActivePackagesRequest> | undefined,
+    b: ListActivePackagesRequest | PlainMessage<ListActivePackagesRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(ListActivePackagesRequest, a, b)
   }
 }
 
@@ -464,33 +533,45 @@ export class ListActivePackagesResponse extends Message<ListActivePackagesRespon
    *
    * @generated from field: repeated string value = 1;
    */
-  value: string[] = [];
+  value: string[] = []
 
   constructor(data?: PartialMessage<ListActivePackagesResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ListActivePackagesResponse";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ListActivePackagesResponse'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-  ]);
+    { no: 1, name: 'value', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListActivePackagesResponse {
-    return new ListActivePackagesResponse().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ListActivePackagesResponse {
+    return new ListActivePackagesResponse().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListActivePackagesResponse {
-    return new ListActivePackagesResponse().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ListActivePackagesResponse {
+    return new ListActivePackagesResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListActivePackagesResponse {
-    return new ListActivePackagesResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ListActivePackagesResponse {
+    return new ListActivePackagesResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ListActivePackagesResponse | PlainMessage<ListActivePackagesResponse> | undefined, b: ListActivePackagesResponse | PlainMessage<ListActivePackagesResponse> | undefined): boolean {
-    return proto3.util.equals(ListActivePackagesResponse, a, b);
+  static equals(
+    a: ListActivePackagesResponse | PlainMessage<ListActivePackagesResponse> | undefined,
+    b: ListActivePackagesResponse | PlainMessage<ListActivePackagesResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(ListActivePackagesResponse, a, b)
   }
 }
 
@@ -499,29 +580,40 @@ export class ListActivePackagesResponse extends Message<ListActivePackagesRespon
  */
 export class ListAwaitingDecisionsRequest extends Message<ListAwaitingDecisionsRequest> {
   constructor(data?: PartialMessage<ListAwaitingDecisionsRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ListAwaitingDecisionsRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ListAwaitingDecisionsRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListAwaitingDecisionsRequest {
-    return new ListAwaitingDecisionsRequest().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ListAwaitingDecisionsRequest {
+    return new ListAwaitingDecisionsRequest().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListAwaitingDecisionsRequest {
-    return new ListAwaitingDecisionsRequest().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ListAwaitingDecisionsRequest {
+    return new ListAwaitingDecisionsRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListAwaitingDecisionsRequest {
-    return new ListAwaitingDecisionsRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ListAwaitingDecisionsRequest {
+    return new ListAwaitingDecisionsRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ListAwaitingDecisionsRequest | PlainMessage<ListAwaitingDecisionsRequest> | undefined, b: ListAwaitingDecisionsRequest | PlainMessage<ListAwaitingDecisionsRequest> | undefined): boolean {
-    return proto3.util.equals(ListAwaitingDecisionsRequest, a, b);
+  static equals(
+    a: ListAwaitingDecisionsRequest | PlainMessage<ListAwaitingDecisionsRequest> | undefined,
+    b: ListAwaitingDecisionsRequest | PlainMessage<ListAwaitingDecisionsRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(ListAwaitingDecisionsRequest, a, b)
   }
 }
 
@@ -534,33 +626,45 @@ export class ListAwaitingDecisionsResponse extends Message<ListAwaitingDecisions
    *
    * @generated from field: repeated string value = 1;
    */
-  value: string[] = [];
+  value: string[] = []
 
   constructor(data?: PartialMessage<ListAwaitingDecisionsResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ListAwaitingDecisionsResponse";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ListAwaitingDecisionsResponse'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-  ]);
+    { no: 1, name: 'value', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListAwaitingDecisionsResponse {
-    return new ListAwaitingDecisionsResponse().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ListAwaitingDecisionsResponse {
+    return new ListAwaitingDecisionsResponse().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListAwaitingDecisionsResponse {
-    return new ListAwaitingDecisionsResponse().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ListAwaitingDecisionsResponse {
+    return new ListAwaitingDecisionsResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListAwaitingDecisionsResponse {
-    return new ListAwaitingDecisionsResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ListAwaitingDecisionsResponse {
+    return new ListAwaitingDecisionsResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ListAwaitingDecisionsResponse | PlainMessage<ListAwaitingDecisionsResponse> | undefined, b: ListAwaitingDecisionsResponse | PlainMessage<ListAwaitingDecisionsResponse> | undefined): boolean {
-    return proto3.util.equals(ListAwaitingDecisionsResponse, a, b);
+  static equals(
+    a: ListAwaitingDecisionsResponse | PlainMessage<ListAwaitingDecisionsResponse> | undefined,
+    b: ListAwaitingDecisionsResponse | PlainMessage<ListAwaitingDecisionsResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(ListAwaitingDecisionsResponse, a, b)
   }
 }
 
@@ -573,41 +677,53 @@ export class ResolveAwaitingDecisionRequest extends Message<ResolveAwaitingDecis
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   /**
    * The choice to be used to resolve the decision.
    *
    * @generated from field: archivematica.ccp.admin.v1beta1.Choice choice = 2;
    */
-  choice?: Choice;
+  choice?: Choice
 
   constructor(data?: PartialMessage<ResolveAwaitingDecisionRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ResolveAwaitingDecisionRequest";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ResolveAwaitingDecisionRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "choice", kind: "message", T: Choice },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'choice', kind: 'message', T: Choice }
+  ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveAwaitingDecisionRequest {
-    return new ResolveAwaitingDecisionRequest().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ResolveAwaitingDecisionRequest {
+    return new ResolveAwaitingDecisionRequest().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveAwaitingDecisionRequest {
-    return new ResolveAwaitingDecisionRequest().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ResolveAwaitingDecisionRequest {
+    return new ResolveAwaitingDecisionRequest().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveAwaitingDecisionRequest {
-    return new ResolveAwaitingDecisionRequest().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ResolveAwaitingDecisionRequest {
+    return new ResolveAwaitingDecisionRequest().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ResolveAwaitingDecisionRequest | PlainMessage<ResolveAwaitingDecisionRequest> | undefined, b: ResolveAwaitingDecisionRequest | PlainMessage<ResolveAwaitingDecisionRequest> | undefined): boolean {
-    return proto3.util.equals(ResolveAwaitingDecisionRequest, a, b);
+  static equals(
+    a: ResolveAwaitingDecisionRequest | PlainMessage<ResolveAwaitingDecisionRequest> | undefined,
+    b: ResolveAwaitingDecisionRequest | PlainMessage<ResolveAwaitingDecisionRequest> | undefined
+  ): boolean {
+    return proto3.util.equals(ResolveAwaitingDecisionRequest, a, b)
   }
 }
 
@@ -616,29 +732,40 @@ export class ResolveAwaitingDecisionRequest extends Message<ResolveAwaitingDecis
  */
 export class ResolveAwaitingDecisionResponse extends Message<ResolveAwaitingDecisionResponse> {
   constructor(data?: PartialMessage<ResolveAwaitingDecisionResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.ResolveAwaitingDecisionResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.ResolveAwaitingDecisionResponse'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveAwaitingDecisionResponse {
-    return new ResolveAwaitingDecisionResponse().fromBinary(bytes, options);
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>
+  ): ResolveAwaitingDecisionResponse {
+    return new ResolveAwaitingDecisionResponse().fromBinary(bytes, options)
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveAwaitingDecisionResponse {
-    return new ResolveAwaitingDecisionResponse().fromJson(jsonValue, options);
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>
+  ): ResolveAwaitingDecisionResponse {
+    return new ResolveAwaitingDecisionResponse().fromJson(jsonValue, options)
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveAwaitingDecisionResponse {
-    return new ResolveAwaitingDecisionResponse().fromJsonString(jsonString, options);
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>
+  ): ResolveAwaitingDecisionResponse {
+    return new ResolveAwaitingDecisionResponse().fromJsonString(jsonString, options)
   }
 
-  static equals(a: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined, b: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined): boolean {
-    return proto3.util.equals(ResolveAwaitingDecisionResponse, a, b);
+  static equals(
+    a: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined,
+    b: ResolveAwaitingDecisionResponse | PlainMessage<ResolveAwaitingDecisionResponse> | undefined
+  ): boolean {
+    return proto3.util.equals(ResolveAwaitingDecisionResponse, a, b)
   }
 }
 
@@ -651,57 +778,60 @@ export class Package extends Message<Package> {
    *
    * @generated from field: string id = 1;
    */
-  id = "";
+  id = ''
 
   /**
    * Name of the transfer.
    *
    * @generated from field: string name = 2;
    */
-  name = "";
+  name = ''
 
   /**
    * Type of the transfer.
    *
    * @generated from field: archivematica.ccp.admin.v1beta1.TransferType type = 3;
    */
-  type = TransferType.UNSPECIFIED;
+  type = TransferType.UNSPECIFIED
 
   /**
    * Status of the package.
    *
    * @generated from field: archivematica.ccp.admin.v1beta1.PackageStatus status = 4;
    */
-  status = PackageStatus.UNSPECIFIED;
+  status = PackageStatus.UNSPECIFIED
 
   constructor(data?: PartialMessage<Package>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.Package";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.Package'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(TransferType) },
-    { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(PackageStatus) },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: 'type', kind: 'enum', T: proto3.getEnumType(TransferType) },
+    { no: 4, name: 'status', kind: 'enum', T: proto3.getEnumType(PackageStatus) }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Package {
-    return new Package().fromBinary(bytes, options);
+    return new Package().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Package {
-    return new Package().fromJson(jsonValue, options);
+    return new Package().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Package {
-    return new Package().fromJsonString(jsonString, options);
+    return new Package().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Package | PlainMessage<Package> | undefined, b: Package | PlainMessage<Package> | undefined): boolean {
-    return proto3.util.equals(Package, a, b);
+  static equals(
+    a: Package | PlainMessage<Package> | undefined,
+    b: Package | PlainMessage<Package> | undefined
+  ): boolean {
+    return proto3.util.equals(Package, a, b)
   }
 }
 
@@ -714,41 +844,44 @@ export class Decision extends Message<Decision> {
    *
    * @generated from field: string name = 1;
    */
-  name = "";
+  name = ''
 
   /**
    * Choices available.
    *
    * @generated from field: repeated archivematica.ccp.admin.v1beta1.Choice choice = 2;
    */
-  choice: Choice[] = [];
+  choice: Choice[] = []
 
   constructor(data?: PartialMessage<Decision>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.Decision";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.Decision'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "choice", kind: "message", T: Choice, repeated: true },
-  ]);
+    { no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'choice', kind: 'message', T: Choice, repeated: true }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Decision {
-    return new Decision().fromBinary(bytes, options);
+    return new Decision().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Decision {
-    return new Decision().fromJson(jsonValue, options);
+    return new Decision().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Decision {
-    return new Decision().fromJsonString(jsonString, options);
+    return new Decision().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Decision | PlainMessage<Decision> | undefined, b: Decision | PlainMessage<Decision> | undefined): boolean {
-    return proto3.util.equals(Decision, a, b);
+  static equals(
+    a: Decision | PlainMessage<Decision> | undefined,
+    b: Decision | PlainMessage<Decision> | undefined
+  ): boolean {
+    return proto3.util.equals(Decision, a, b)
   }
 }
 
@@ -759,39 +892,41 @@ export class Choice extends Message<Choice> {
   /**
    * @generated from field: int32 id = 1;
    */
-  id = 0;
+  id = 0
 
   /**
    * @generated from field: string label = 2;
    */
-  label = "";
+  label = ''
 
   constructor(data?: PartialMessage<Choice>) {
-    super();
-    proto3.util.initPartial(data, this);
+    super()
+    proto3.util.initPartial(data, this)
   }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "archivematica.ccp.admin.v1beta1.Choice";
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'archivematica.ccp.admin.v1beta1.Choice'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    { no: 1, name: 'id', kind: 'scalar', T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: 'label', kind: 'scalar', T: 9 /* ScalarType.STRING */ }
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Choice {
-    return new Choice().fromBinary(bytes, options);
+    return new Choice().fromBinary(bytes, options)
   }
 
   static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Choice {
-    return new Choice().fromJson(jsonValue, options);
+    return new Choice().fromJson(jsonValue, options)
   }
 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Choice {
-    return new Choice().fromJsonString(jsonString, options);
+    return new Choice().fromJsonString(jsonString, options)
   }
 
-  static equals(a: Choice | PlainMessage<Choice> | undefined, b: Choice | PlainMessage<Choice> | undefined): boolean {
-    return proto3.util.equals(Choice, a, b);
+  static equals(
+    a: Choice | PlainMessage<Choice> | undefined,
+    b: Choice | PlainMessage<Choice> | undefined
+  ): boolean {
+    return proto3.util.equals(Choice, a, b)
   }
 }
-

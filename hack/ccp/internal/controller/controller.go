@@ -345,9 +345,12 @@ func (c *Controller) Decisions() []string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// TODO: use c.awaitingDecisionsByPackage.
+	ret := make([]string, 0, len(c.activePackages))
+	for _, decision := range c.awaitingPackages {
+		ret = append(ret, fmt.Sprintf("%s: %s", decision.pkg.id, decision.name))
+	}
 
-	return []string{}
+	return ret
 }
 
 func (c *Controller) ResolveDecision(pkgID uuid.UUID, pos int) error {

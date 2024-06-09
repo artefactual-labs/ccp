@@ -76,7 +76,7 @@ func (s *Server) Run() error {
 	s.server = &http.Server{
 		Addr: s.config.Addr,
 		Handler: h2c.NewHandler(
-			corsutil.New().Handler(mux),
+			corsutil.New(nil).Handler(mux),
 			&http2.Server{},
 		),
 		ReadHeaderTimeout: time.Second,
@@ -99,6 +99,10 @@ func (s *Server) Run() error {
 	}()
 
 	return nil
+}
+
+func (s *Server) Addr() string {
+	return s.ln.Addr().String()
 }
 
 func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1.CreatePackageRequest]) (*connect.Response[adminv1.CreatePackageResponse], error) {

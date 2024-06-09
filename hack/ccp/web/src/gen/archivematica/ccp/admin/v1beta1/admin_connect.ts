@@ -3,69 +3,81 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ApproveTransferRequest, ApproveTransferResponse, CreatePackageRequest, CreatePackageResponse, ListActivePackagesRequest, ListActivePackagesResponse, ListAwaitingDecisionsRequest, ListAwaitingDecisionsResponse, ReadPackageRequest, ReadPackageResponse, ResolveAwaitingDecisionRequest, ResolveAwaitingDecisionResponse } from "./admin_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import {
+  ApproveTransferRequest,
+  ApproveTransferResponse,
+  CreatePackageRequest,
+  CreatePackageResponse,
+  ListActivePackagesRequest,
+  ListActivePackagesResponse,
+  ListAwaitingDecisionsRequest,
+  ListAwaitingDecisionsResponse,
+  ReadPackageRequest,
+  ReadPackageResponse,
+  ResolveAwaitingDecisionRequest,
+  ResolveAwaitingDecisionResponse
+} from './admin_pb.js'
+import { MethodKind } from '@bufbuild/protobuf'
 
 /**
  * @generated from service archivematica.ccp.admin.v1beta1.AdminService
  */
 export const AdminService = {
-  typeName: "archivematica.ccp.admin.v1beta1.AdminService",
+  typeName: 'archivematica.ccp.admin.v1beta1.AdminService',
   methods: {
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.CreatePackage
      */
     createPackage: {
-      name: "CreatePackage",
+      name: 'CreatePackage',
       I: CreatePackageRequest,
       O: CreatePackageResponse,
-      kind: MethodKind.Unary,
+      kind: MethodKind.Unary
     },
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ReadPackage
      */
     readPackage: {
-      name: "ReadPackage",
+      name: 'ReadPackage',
       I: ReadPackageRequest,
       O: ReadPackageResponse,
-      kind: MethodKind.Unary,
+      kind: MethodKind.Unary
     },
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ApproveTransfer
      */
     approveTransfer: {
-      name: "ApproveTransfer",
+      name: 'ApproveTransfer',
       I: ApproveTransferRequest,
       O: ApproveTransferResponse,
-      kind: MethodKind.Unary,
+      kind: MethodKind.Unary
     },
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ListActivePackages
      */
     listActivePackages: {
-      name: "ListActivePackages",
+      name: 'ListActivePackages',
       I: ListActivePackagesRequest,
       O: ListActivePackagesResponse,
-      kind: MethodKind.Unary,
+      kind: MethodKind.Unary
     },
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ListAwaitingDecisions
      */
     listAwaitingDecisions: {
-      name: "ListAwaitingDecisions",
+      name: 'ListAwaitingDecisions',
       I: ListAwaitingDecisionsRequest,
       O: ListAwaitingDecisionsResponse,
-      kind: MethodKind.Unary,
+      kind: MethodKind.Unary
     },
     /**
      * @generated from rpc archivematica.ccp.admin.v1beta1.AdminService.ResolveAwaitingDecision
      */
     resolveAwaitingDecision: {
-      name: "ResolveAwaitingDecision",
+      name: 'ResolveAwaitingDecision',
       I: ResolveAwaitingDecisionRequest,
       O: ResolveAwaitingDecisionResponse,
-      kind: MethodKind.Unary,
-    },
+      kind: MethodKind.Unary
+    }
   }
-} as const;
-
+} as const
