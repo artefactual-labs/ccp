@@ -75,18 +75,18 @@ INSERT INTO Jobs (jobUUID, jobType, createdTime, createdTimeDec, directory, SIPU
 `
 
 type CreateJobParams struct {
-	ID                       uuid.UUID
-	Type                     string
-	CreatedAt                time.Time
-	Createdtimedec           string
-	Directory                string
-	SIPID                    uuid.UUID
-	Unittype                 string
-	Currentstep              int32
-	Microservicegroup        string
-	Hidden                   bool
-	Microservicechainlinkspk sql.NullString
-	Subjobof                 string
+	ID                uuid.UUID
+	Type              string
+	CreatedAt         time.Time
+	Createdtimedec    string
+	Directory         string
+	SIPID             uuid.UUID
+	Unittype          string
+	Currentstep       int32
+	Microservicegroup string
+	Hidden            bool
+	LinkID            uuid.NullUUID
+	Subjobof          string
 }
 
 // Jobs
@@ -102,7 +102,7 @@ func (q *Queries) CreateJob(ctx context.Context, arg *CreateJobParams) error {
 		arg.Currentstep,
 		arg.Microservicegroup,
 		arg.Hidden,
-		arg.Microservicechainlinkspk,
+		arg.LinkID,
 		arg.Subjobof,
 	)
 	return err
@@ -182,6 +182,154 @@ func (q *Queries) CreateUnitVar(ctx context.Context, arg *CreateUnitVarParams) e
 		arg.LinkID,
 	)
 	return err
+}
+
+const listJobs = `-- name: ListJobs :many
+SELECT jobuuid, jobtype, createdtime, createdtimedec, directory, sipuuid, unittype, currentstep, microservicegroup, hidden, subjobof, microservicechainlinkspk FROM Jobs WHERE SIPUUID = ? ORDER BY createdTime DESC
+`
+
+func (q *Queries) ListJobs(ctx context.Context, sipuuid uuid.UUID) ([]*Job, error) {
+	rows, err := q.query(ctx, q.listJobsStmt, listJobs, sipuuid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.Type,
+			&i.CreatedAt,
+			&i.Createdtimedec,
+			&i.Directory,
+			&i.SIPID,
+			&i.Unittype,
+			&i.Currentstep,
+			&i.Microservicegroup,
+			&i.Hidden,
+			&i.Subjobof,
+			&i.LinkID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSIPsWithCreationTimestamps = `-- name: ListSIPsWithCreationTimestamps :many
+SELECT
+    j.SIPUUID,
+    j.createdTime AS created_at,
+    j.createdTimeDec AS created_at_dec,
+    s.status
+FROM Jobs j
+JOIN (
+    SELECT
+        SIPUUID,
+        MAX(createdTime) AS max_created_at
+    FROM Jobs
+    WHERE unitType = 'unitSIP' AND NOT SIPUUID LIKE '%None%'
+    GROUP BY SIPUUID
+) AS latest_jobs ON j.SIPUUID = latest_jobs.SIPUUID AND j.createdTime = latest_jobs.max_created_at
+LEFT JOIN SIPs s ON s.sipUUID = j.SIPUUID
+WHERE j.unitType = 'unitSIP' AND NOT j.SIPUUID LIKE '%None%' AND s.hidden = 0
+`
+
+type ListSIPsWithCreationTimestampsRow struct {
+	SIPID        uuid.UUID
+	CreatedAt    time.Time
+	CreatedAtDec string
+	Status       sql.NullInt16
+}
+
+func (q *Queries) ListSIPsWithCreationTimestamps(ctx context.Context) ([]*ListSIPsWithCreationTimestampsRow, error) {
+	rows, err := q.query(ctx, q.listSIPsWithCreationTimestampsStmt, listSIPsWithCreationTimestamps)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListSIPsWithCreationTimestampsRow{}
+	for rows.Next() {
+		var i ListSIPsWithCreationTimestampsRow
+		if err := rows.Scan(
+			&i.SIPID,
+			&i.CreatedAt,
+			&i.CreatedAtDec,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransfersWithCreationTimestamps = `-- name: ListTransfersWithCreationTimestamps :many
+SELECT
+    j.SIPUUID,
+    j.createdTime AS created_at,
+    j.createdTimeDec AS created_at_dec,
+    t.status
+FROM Jobs j
+JOIN (
+    SELECT
+        SIPUUID,
+        MAX(createdTime) AS max_created_at
+    FROM Jobs
+    WHERE unitType = 'unitTransfer' AND NOT SIPUUID LIKE '%None%'
+    GROUP BY SIPUUID
+) AS latest_jobs ON j.SIPUUID = latest_jobs.SIPUUID AND j.createdTime = latest_jobs.max_created_at
+LEFT JOIN Transfers t ON t.transferUUID = j.SIPUUID
+WHERE j.unitType = 'unitTransfer' AND NOT j.SIPUUID LIKE '%None%' AND t.hidden = 0
+`
+
+type ListTransfersWithCreationTimestampsRow struct {
+	SIPID        uuid.UUID
+	CreatedAt    time.Time
+	CreatedAtDec string
+	Status       sql.NullInt16
+}
+
+func (q *Queries) ListTransfersWithCreationTimestamps(ctx context.Context) ([]*ListTransfersWithCreationTimestampsRow, error) {
+	rows, err := q.query(ctx, q.listTransfersWithCreationTimestampsStmt, listTransfersWithCreationTimestamps)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListTransfersWithCreationTimestampsRow{}
+	for rows.Next() {
+		var i ListTransfersWithCreationTimestampsRow
+		if err := rows.Scan(
+			&i.SIPID,
+			&i.CreatedAt,
+			&i.CreatedAtDec,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const readDashboardSetting = `-- name: ReadDashboardSetting :one

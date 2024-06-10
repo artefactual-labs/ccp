@@ -62,7 +62,7 @@ func (c *chain) update(kvs map[string]string) {
 //
 // TODO: we shouldn't need one UnitVariable per chain, with all the same values.
 func (c *chain) load(ctx context.Context, pkg *Package) error {
-	vars, err := pkg.store.ReadUnitVars(ctx, pkg.id, pkg.packageType(), "replacementDict")
+	vars, err := pkg.store.ReadUnitVars(ctx, pkg.id, "", "replacementDict")
 	if err != nil {
 		return err
 	}

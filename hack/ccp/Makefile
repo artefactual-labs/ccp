@@ -123,7 +123,13 @@ gen-enums: $(ENUMS)
 
 gen-buf: # @HELP Generate buf.build assets.
 gen-buf: $(BUF)
-	buf generate
+	buf generate --include-imports
+	rm -rf $(CURDIR)/internal/api/gen/buf/ $(CURDIR)/web/src/gen/buf
+	sed -i \
+		-e 's/^from archivematica\.ccp\.admin\.v1beta1/from client\.gen\.archivematica\.ccp\.admin\.v1beta1/' \
+		-e 's/^from buf\.validate/from client\.gen\.buf\.validate/' \
+		$(CURDIR)/../../src/dashboard/src/client/gen/archivematica/ccp/admin/v1beta1/*.py \
+		$(CURDIR)/../../src/dashboard/src/client/gen/buf/validate/*.py
 
 gen-ui: # @HELP Generate webui assets.
 gen-ui:

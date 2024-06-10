@@ -22,6 +22,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/otiai10/copy v1.14.0
 	github.com/peterbourgon/ff/v3 v3.4.0
@@ -38,7 +39,7 @@ require (
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/net v0.26.0
 	golang.org/x/sync v0.7.0
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/protobuf v1.34.2
 	gotest.tools/v3 v3.5.1
 )
 

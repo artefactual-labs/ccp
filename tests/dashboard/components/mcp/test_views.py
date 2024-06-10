@@ -39,10 +39,10 @@ MCPSERVER_JOBS_AWAITING_APPROVAL_RESULT = f"""
 def test_list(mocker, rf, admin_user):
     # Make the Gearman interactions return known values.
     job_complete = mocker.patch(
-        "contrib.mcp.client.gearman.JOB_COMPLETE",
+        "client.gearman.JOB_COMPLETE",
     )
     mocker.patch(
-        "contrib.mcp.client.GearmanClient",
+        "client.GearmanClient",
         return_value=mocker.Mock(
             **{
                 "submit_job.return_value": mocker.Mock(

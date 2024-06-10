@@ -100,6 +100,8 @@ greenlet==3.0.3
     # via
     #   -r requirements.txt
     #   gevent
+grpcio==1.64.1
+    # via -r requirements.txt
 gunicorn==22.0.0
     # via -r requirements.txt
 idna==3.7
@@ -177,6 +179,8 @@ prometheus-client==0.20.0
     # via
     #   -r requirements.txt
     #   django-prometheus
+protobuf==5.27.1
+    # via -r requirements.txt
 pyasn1==0.6.0
     # via
     #   -r requirements.txt

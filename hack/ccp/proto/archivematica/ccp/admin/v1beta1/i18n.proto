@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package archivematica.ccp.admin.v1beta1;
+
+// I18n represents a collection of translations for different languages. It is
+// used for internationalization (i18n) purposes.
+message I18n {
+  // A map that stores translations for different languages. Keys are language
+  // codes (e.g., "en", "es", "fr"). Values are the corresponding translations
+  // in those languages.
+  map<string, string> tx = 1;
+}

@@ -110,6 +110,28 @@ func TestNextChainDecisionJob(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("df54fec1-dae1-4ea6-8d17-a839ee7ac4a7"))
 	})
+
+	t.Run("Excludes choices related to disabled abilities", func(t *testing.T) {
+		t.Parallel()
+
+		job, store := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
+
+		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		id, err := job.exec(context.Background())
+		assert.Equal(t, id, uuid.Nil)
+
+		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
+			{label: "Create single SIP and continue processing", nextLink: uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969")},
+			{label: "Reject transfer", nextLink: uuid.MustParse("1b04ec43-055c-43b7-9543-bd03c6a778ba")},
+		})
+
+		decision.resolve(0)
+		nextLink, err := decision.await(context.Background())
+		assert.NilError(t, err)
+		assert.Equal(t, nextLink, uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969"))
+	})
 }
 
 func TestUpdateContextDecisionJob(t *testing.T) {

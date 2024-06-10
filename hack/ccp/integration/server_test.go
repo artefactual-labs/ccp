@@ -94,12 +94,14 @@ func TestServerCreatePackageWithUserDecision(t *testing.T) {
 
 			pkg := rpResp.Msg.Pkg
 			if pkg.Status == adminv1.PackageStatus_PACKAGE_STATUS_AWAITING_DECISION {
-				switch rpResp.Msg.Decision.Name {
-				case "Assign UUIDs to directories?":
-					resolve(t, env.ctx, env.ccpClient, pkg, rpResp.Msg.Decision, "Yes")
-					return poll.Continue("decision resolved")
-				default:
-					return poll.Error(errors.New("unexpected decision to be resolved"))
+				for _, decision := range rpResp.Msg.Decision {
+					switch decision.Name {
+					case "Assign UUIDs to directories?":
+						resolve(t, env.ctx, env.ccpClient, decision, "Yes")
+						return poll.Continue("decision resolved")
+					default:
+						return poll.Error(errors.New("unexpected decision to be resolved"))
+					}
 				}
 			}
 			if pkg.Status == adminv1.PackageStatus_PACKAGE_STATUS_FAILED {

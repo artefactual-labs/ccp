@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package archivematica.ccp.admin.v1beta1;
+
+import "archivematica/ccp/admin/v1beta1/admin.proto";
+import "archivematica/ccp/admin/v1beta1/deprecated.proto";
+import "archivematica/ccp/admin/v1beta1/i18n.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+service AdminService {
+  // CreatePackage ...
+  //
+  // It replaces `packageCreate` (_package_create_handler).
+  rpc CreatePackage(CreatePackageRequest) returns (CreatePackageResponse) {}
+
+  // ReadPackage ...
+  //
+  // It replaces `getUnitStatus` (_unit_status_handler).
+  rpc ReadPackage(ReadPackageRequest) returns (ReadPackageResponse) {}
+
+  // ListPackage ...
+  //
+  // It replaces `getUnitsStatuses` (_units_statuses_handler).
+  rpc ListPackages(ListPackagesRequest) returns (ListPackagesResponse) {}
+
+  // ListDecisions ...
+  //
+  // It replaces `getJobsAwaitingApproval` (_job_awaiting_approval_handler).
+  rpc ListDecisions(ListDecisionsRequest) returns (ListDecisionsResponse) {}
+
+  // ResolveDecision ...
+  //
+  rpc ResolveDecision(ResolveDecisionRequest) returns (ResolveDecisionResponse) {}
+
+  // ListProcessingConfigurationFields ...
+  //
+  // It replaces `getProcessingConfigFields` (_get_processing_config_fields_handler).
+  rpc ListProcessingConfigurationFields(ListProcessingConfigurationFieldsRequest) returns (ListProcessingConfigurationFieldsResponse) {}
+
+  // ApproveJob ...
+  //
+  // It replaces `approveJob` (_job_approve_handler).
+  rpc ApproveJob(ApproveJobRequest) returns (ApproveJobResponse) {
+    // TODO: use ResolveDecision.
+    option deprecated = true;
+  }
+
+  // ApproveTransferByPath
+  //
+  // It replaces `approveTransferByPath` (_approve_transfer_by_path_handler).
+  rpc ApproveTransferByPath(ApproveTransferByPathRequest) returns (ApproveTransferByPathResponse) {
+    // TODO: use ResolveDecision.
+    option deprecated = true;
+  }
+
+  // ApprovePartialReingest
+  //
+  // It replaces `approvePartialReingest` (_approve_partial_reingest_handler).
+  rpc ApprovePartialReingest(ApprovePartialReingestRequest) returns (ApprovePartialReingestResponse) {
+    // This is a temporary way of getting the API to do the equivalent of
+    // clicking "Approve AIP reingest" in the Dashboard when faced with
+    // "Approve AIP reingest".
+    //
+    // TODO: use ResolveDecision.
+    option deprecated = true;
+  }
+}
+
+message CreatePackageRequest {
+  // Name of the transfer.
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Type of the transfer, default to "standard".
+  TransferType type = 2;
+
+  // Identifier of the accession.
+  string accession = 3;
+
+  // Identifier in the access system.
+  string access_system_id = 4;
+
+  // List of <location_uuid>:<relative_path> to be included in the transfer.
+  // Locations should be associated with this pipeline, and relative path should
+  // be relative to the location. The strings should be base64-encoded.
+  repeated string path = 5 [(buf.validate.field).repeated = {
+    unique: true,
+    min_items: 1,
+    max_items: 500,
+    items: {
+      string: {min_len: 1},
+    },
+  }];
+
+  // The identifier (UUIDv4) of the metadata set to be included.
+  // An empty string is not a valid UUID, use null instead (default).
+  google.protobuf.StringValue metadata_set_id = 6 [(buf.validate.field).string.uuid = true];
+
+  // An option to auto-approve the package. It is enabled by default.
+  google.protobuf.BoolValue auto_approve = 7;
+
+  // Name of the processing configuration file to be included.
+  string processing_config = 8;
+}
+
+message CreatePackageResponse {
+  // Identifier of the package (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ReadPackageRequest {
+  // Identifier of the package (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ReadPackageResponse {
+  Package pkg = 1;
+
+  // List of awaiting decisions related to this package.
+  // Only used if the status of the package is AWAITING_DECISION.
+  repeated Decision decision = 2;
+
+  // List of jobs related to this package.
+  repeated Job job = 3;
+}
+
+message ListPackagesRequest {
+  PackageType type = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum = {
+      defined_only: true,
+      in: [
+        1,
+        2
+      ],
+    }
+  ];
+
+  bool exclude_hidden = 2;
+}
+
+message ListPackagesResponse {
+  repeated Package package = 1;
+}
+
+message ListDecisionsRequest {}
+
+message ListDecisionsResponse {
+  repeated Decision decision = 1;
+}
+
+message ResolveDecisionRequest {
+  // Identifier of the decision (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // The choice to be used to resolve the decision.
+  Choice choice = 2;
+}
+
+message ResolveDecisionResponse {}
+
+message ListProcessingConfigurationFieldsRequest {}
+
+message ListProcessingConfigurationFieldsResponse {
+  repeated ProcessingConfigField field = 1;
+}

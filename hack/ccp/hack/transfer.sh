@@ -6,7 +6,7 @@ __dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 transfer=$(mktemp -d)
 
-cp $__dir/processingMCP.xml $transfer
+# cp $__dir/processingMCP.xml $transfer
 
 num_files=$1
 if [[ ! "$num_files" =~ ^[0-9]+$ ]]; then

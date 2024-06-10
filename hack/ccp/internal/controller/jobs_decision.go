@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -50,7 +51,7 @@ func createAwait(j *job, choices []choice) (_ uuid.UUID, err error) {
 	}
 
 	err = &errWait{
-		decision: newDecision(j.wl.Description.String(), j.pkg, choices, jd),
+		decision: newDecision(j.wl.Description.String(), j.pkg, choices, j.id, jd),
 	}
 
 	return uuid.Nil, err
@@ -79,20 +80,24 @@ func (c choice) String() string {
 // A decision can be awaited until someone else resolves it. It provides the
 // list of available choices and the resolution interface.
 type decision struct {
+	id           uuid.UUID  // Identifier of the decision.
 	name         string     // Name of the decision.
 	pkg          *Package   // Related package.
 	choices      []choice   // Ordered list of choices.
+	jobID        uuid.UUID  // Identifier of the job.
 	decider      jobDecider // So we can call the decide callback.
 	res          chan int   // Resolution channel - receives the position of the choice.
 	resolved     bool       // Remembers if this decision is already resolved.
 	sync.RWMutex            // Protects the decision from concurrent read-writes.
 }
 
-func newDecision(name string, pkg *Package, choices []choice, job jobDecider) *decision {
+func newDecision(name string, pkg *Package, choices []choice, jobID uuid.UUID, job jobDecider) *decision {
 	return &decision{
+		id:      uuid.New(),
 		name:    name,
 		pkg:     pkg,
 		choices: choices,
+		jobID:   jobID,
 		decider: job,
 
 		// The channel is buffered so the decision can be resolved even when
@@ -134,6 +139,30 @@ func (d *decision) await(ctx context.Context) (uuid.UUID, error) {
 		}
 		return choice.nextLink, nil
 	}
+}
+
+func (d *decision) convert() *adminv1.Decision {
+	d.RLock()
+	defer d.RUnlock()
+
+	ret := &adminv1.Decision{
+		Id:          d.id.String(),
+		Name:        d.name,
+		Choice:      make([]*adminv1.Choice, 0, len(d.choices)),
+		PackageId:   d.pkg.id.String(),
+		PackagePath: d.pkg.PathForDB(),
+		PackageType: d.pkg.packageType().String(),
+		JobId:       d.jobID.String(),
+	}
+
+	for i, item := range d.choices {
+		ret.Choice = append(ret.Choice, &adminv1.Choice{
+			Id:    int32(i),
+			Label: item.label,
+		})
+	}
+
+	return ret
 }
 
 // outputDecisionJob.
@@ -259,19 +288,19 @@ func (l *nextChainDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error
 	}
 
 	// Build choices.
-	choices := make([]choice, len(l.config.Choices))
-	for i, item := range l.config.Choices {
-		c := &choices[i]
-
-		var label string
-		if ch, ok := l.j.wf.Chains[item]; ok {
-			label = ch.Description.String()
-		} else {
-			label = fmt.Sprintf("Chain: %s (not found)", item)
+	choices := make([]choice, 0, len(l.config.Choices))
+	for _, item := range l.config.Choices {
+		c := choice{}
+		ch, ok := l.j.wf.Chains[item]
+		if !ok {
+			continue
 		}
-		c.label = label
-
+		if !workflow.ChoiceAvailable(l.j.wl, ch) {
+			continue
+		}
+		c.label = ch.Description.String()
 		c.nextLink = item
+		choices = append(choices, c)
 	}
 
 	return createAwait(l.j, choices)

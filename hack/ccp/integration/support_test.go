@@ -466,7 +466,7 @@ func (c *logConsumer) Accept(l testcontainers.Log) {
 }
 
 // resolve a decision.
-func resolve(t *testing.T, ctx context.Context, client adminv1connect.AdminServiceClient, pkg *adminv1.Package, decision *adminv1.Decision, choiceLabel string) {
+func resolve(t *testing.T, ctx context.Context, client adminv1connect.AdminServiceClient, decision *adminv1.Decision, choiceLabel string) {
 	var choice *adminv1.Choice
 	for _, c := range decision.Choice {
 		if c.Label == choiceLabel {
@@ -475,9 +475,9 @@ func resolve(t *testing.T, ctx context.Context, client adminv1connect.AdminServi
 	}
 	assert.Assert(t, choice != nil, "choice %s not found", choiceLabel)
 
-	_, err := client.ResolveAwaitingDecision(ctx, &connect.Request[adminv1.ResolveAwaitingDecisionRequest]{
-		Msg: &adminv1.ResolveAwaitingDecisionRequest{
-			Id:     pkg.Id,
+	_, err := client.ResolveDecision(ctx, &connect.Request[adminv1.ResolveDecisionRequest]{
+		Msg: &adminv1.ResolveDecisionRequest{
+			Id:     decision.Id,
 			Choice: choice,
 		},
 	})

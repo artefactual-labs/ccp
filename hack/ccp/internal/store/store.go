@@ -29,8 +29,16 @@ type Store interface {
 	// UpdateJobStatus modifies the status of a Job.
 	UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) error
 
+	// ListJobs returns a list of jobs related to a package showing the most
+	// recently created jobs first.
+	ListJobs(ctx context.Context, pkgID uuid.UUID) ([]*adminv1.Job, error)
+
 	// CreateTasks creates a group of Tasks in bulk.
 	CreateTasks(ctx context.Context, tasks []*Task) error
+
+	// ReadPackagesWithCreationTimestamps returns a list of packages along with
+	// their creation timestamps. It excludes hidden packages.
+	ReadPackagesWithCreationTimestamps(ctx context.Context, packageType adminv1.PackageType) ([]*adminv1.Package, error)
 
 	// UpdatePackageStatus modifies the status of a Transfer, DIP or SIP.
 	UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) error
@@ -151,7 +159,7 @@ type SIP struct {
 	CurrentPath string
 	Hidden      bool
 	AIPFilename string
-	Type        string // SIP, AIC, AIP-REIN, AIC-REN
+	Type        string // SIP, AIC, AIP-REIN, AIC-REIN
 	DirIDs      bool
 	Status      int
 	CompletedAt time.Time

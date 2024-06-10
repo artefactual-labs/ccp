@@ -27,7 +27,7 @@ func TestSetUnitVarLinkJob(t *testing.T) {
 
 		linkID, err := job.exec(context.Background())
 		assert.NilError(t, err)
-		assert.Equal(t, linkID, uuid.MustParse("180ae3d0-aa6c-4ed4-ab94-d0a2121e7f21"))
+		assert.Equal(t, linkID, uuid.MustParse("498f7a6d-1b8c-431a-aa5d-83f14f3c5e65"))
 	})
 }
 

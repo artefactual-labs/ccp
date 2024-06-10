@@ -14,17 +14,9 @@ onMounted(async () => {
 
 const fetchStatus = async () => {
   try {
-    const response = await client.listAwaitingDecisions({})
+    const response = await client.listDecisions({})
     isLoaded.value = true
-    decisions.value = response.value
-  } catch (err) {
-    error.value = (err as Error).message
-  }
-
-  try {
-    const response = await client.listActivePackages({})
-    isLoaded.value = true
-    active.value = response.value
+    decisions.value = response.decision.map((x) => x.name)
   } catch (err) {
     error.value = (err as Error).message
   }

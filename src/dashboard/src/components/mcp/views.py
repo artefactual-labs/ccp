@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
-from contrib.mcp.client import MCPClient
+from client import get_client
 from django.http import HttpResponse
 from lxml import etree
 
@@ -22,16 +22,16 @@ from lxml import etree
 def execute(request):
     result = ""
     if request.POST.get("uuid"):
-        client = MCPClient(request.user)
-        result = client.execute(
+        client = get_client(request.user.id)
+        result = client.approve_job(
             request.POST.get("uuid"), request.POST.get("choice", "")
         )
     return HttpResponse(result, content_type="text/plain")
 
 
 def list(request):
-    client = MCPClient(request.user)
-    jobs = etree.XML(client.list())
+    client = get_client(request.user.id)
+    jobs = etree.XML(client.list_jobs_awaiting_approval())
     response = ""
     if 0 < len(jobs):
         for job in jobs:

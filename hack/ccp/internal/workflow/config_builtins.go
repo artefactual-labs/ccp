@@ -17,6 +17,12 @@ func InstallBuiltinConfigs(path string) error {
 	var errs error
 	for name, config := range builtinConfigs {
 		path := filepath.Join(path, fmt.Sprintf("%sProcessingMCP.xml", name))
+		if _, err := os.Stat(path); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			errs = errors.Join(errs, fmt.Errorf("check %s: %v", path, err))
+			continue
+		}
 		blob, err := xml.MarshalIndent(config, "", "  ")
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("encode %s: %v", path, err))

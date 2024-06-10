@@ -6,9 +6,9 @@ from agentarchives.archivesspace import ArchivesSpaceClient
 from agentarchives.archivesspace import ArchivesSpaceError
 from agentarchives.archivesspace import AuthenticationError
 from agentarchives.archivesspace import ConnectionError
+from client import get_client
 from components import advanced_search
 from components.ingest import pair_matcher
-from contrib.mcp.client import MCPClient
 from django.contrib import messages
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -293,8 +293,8 @@ def complete_matching(request, uuid):
     if request.method != "POST":
         return HttpResponse(status=405)
     try:
-        client = MCPClient(request.user)
-        client.execute_unit(
+        client = get_client(request.user.id)
+        client.execute_package(
             uuid,
             # Microservice: Upload DIP
             mscl_id="92879a29-45bf-4f0b-ac43-e64474f0f2f9",

@@ -43,7 +43,7 @@ func (l *setUnitVarLinkJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
 		return uuid.Nil, err
 	}
 
-	return l.config.LinkID, nil
+	return exitCodeLinkID(l.j.wl, 0), nil
 }
 
 // getUnitVarLinkJob is a local job that gets the next link in the chain from a

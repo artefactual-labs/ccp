@@ -14,6 +14,7 @@ django-tastypie
 elasticsearch>=6.0.0,<7.0.0
 git+https://github.com/artefactual-labs/python-gearman.git@b68efc868c7a494dd6a2d2e820fb098a6da9f797#egg=gearman3
 gevent
+grpcio
 gunicorn
 importlib-metadata
 inotify_simple
@@ -24,6 +25,7 @@ metsrw
 orjson
 git+https://github.com/artefactual-labs/fido.git@564ceb8018a8650fe931cf20e6780ee008e60fca#opf-fido
 prometheus_client
+protobuf
 python-dateutil
 requests
 unidecode
