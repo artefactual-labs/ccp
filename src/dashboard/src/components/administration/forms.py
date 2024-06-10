@@ -16,8 +16,8 @@
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
+from client import get_client
 from components import helpers
-from contrib.mcp.client import MCPClient
 from django import forms
 from django.conf import settings
 from django.forms.widgets import Select
@@ -306,7 +306,7 @@ class ProcessingConfigurationForm(forms.Form):
 
     def load_processing_config_fields(self, user):
         """Obtain processing fields and available choices from MCPServer."""
-        client = MCPClient(user)
+        client = get_client(user.id)
         self.processing_fields = client.get_processing_config_fields()
 
         # Override labels with translations in this form.

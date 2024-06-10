@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
 from archivematicaFunctions import escape
+from client import get_client
 from components import helpers
-from contrib.mcp.client import MCPClient
 from django.conf import settings as django_settings
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
@@ -74,8 +74,8 @@ def home(request):
 
 # TODO: hide removed elements
 def status(request):
-    client = MCPClient(request.user)
-    xml = etree.XML(client.list())
+    client = get_client(request.user.id)
+    xml = etree.XML(client.list_jobs_awaiting_approval())
 
     sip_count = len(
         xml.xpath(

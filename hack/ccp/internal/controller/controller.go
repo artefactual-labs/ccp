@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -22,6 +23,9 @@ import (
 
 const maxConcurrentPackages = 2
 
+// Controller manages concurrent processing of packages.
+//
+// There are three queues: queued, active and awaiting.
 type Controller struct {
 	logger logr.Logger
 
@@ -49,8 +53,9 @@ type Controller struct {
 	// queuedPackages is the list of queued packages, FIFO style.
 	queuedPackages []*Package
 
-	// awaitingPackages is the list of packages awaiting a decision.
-	awaitingPackages map[uuid.UUID]*decision
+	// awaitingPackages is the list packages awaiting a decision indexed by the
+	// package identifier.
+	awaitingPackages map[uuid.UUID][]*decision
 
 	// sync.RWMutex protects the internal Package slices.
 	mu sync.RWMutex
@@ -79,7 +84,7 @@ func New(logger logr.Logger, ssclient ssclient.Client, store store.Store, gearma
 		watchedDir:       watchedDir,
 		activePackages:   []*Package{},
 		queuedPackages:   []*Package{},
-		awaitingPackages: map[uuid.UUID]*decision{},
+		awaitingPackages: map[uuid.UUID][]*decision{},
 	}
 
 	c.groupCtx, c.groupCancel = context.WithCancel(context.Background())
@@ -232,11 +237,11 @@ func (c *Controller) deactivate(p *Package) {
 }
 
 // await blocks until the awaiting package is resolved.
-func (c *Controller) await(iter *jobIterator, pkg *Package, decision *decision) error {
-	_ = c.queueToAwait(pkg, decision)
-	defer c.dequeueFromAwait(pkg)
+func (c *Controller) await(iter *jobIterator, pkg *Package, dec *decision) error {
+	_ = c.queueToAwait(pkg, dec)
+	defer c.dequeueFromAwait(pkg, dec)
 
-	next, err := decision.await(c.groupCtx)
+	next, err := dec.await(c.groupCtx)
 	c.logger.Info("Resolution of awaiting package completed.", "next", next, "err", err)
 	if err != nil {
 		return err
@@ -248,48 +253,73 @@ func (c *Controller) await(iter *jobIterator, pkg *Package, decision *decision) 
 }
 
 // queueToAwait moves an active package to the awaiting list.
-func (c *Controller) queueToAwait(pkg *Package, decision *decision) error {
-	pkgID := pkg.id
+func (c *Controller) queueToAwait(pkg *Package, dec *decision) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	// Confirm that the package is in the active queue.
-	c.mu.RLock()
-	var index int
-	var found bool
+	var pos *int
 	for i, active := range c.activePackages {
-		if active.id == pkgID {
-			index = i
-			found = true
+		if active.id == pkg.id {
+			pos = &i
 			break
 		}
 	}
-	c.mu.RUnlock()
-	if !found {
+	if pos == nil {
 		return errors.New("package not found in the active list")
 	}
 
-	// Move to the awaiting list.
-	c.mu.Lock()
-	c.activePackages = append(c.activePackages[:index], c.activePackages[index+1:]...)
-	c.awaitingPackages[pkgID] = decision
-	c.mu.Unlock()
+	// Remove from the active list.
+	c.activePackages = append(c.activePackages[:*pos], c.activePackages[*pos+1:]...)
+
+	// Add to the awaiting list.
+	if l, ok := c.awaitingPackages[pkg.id]; !ok {
+		c.awaitingPackages[pkg.id] = []*decision{dec}
+	} else {
+		c.awaitingPackages[pkg.id] = append(l, dec)
+	}
 
 	return nil
 }
 
-func (c *Controller) dequeueFromAwait(pkg *Package) {
+func (c *Controller) dequeueFromAwait(pkg *Package, dec *decision) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	_, ok := c.awaitingPackages[pkg.id]
+	// Retrieve the list of decisions of this package.
+	decisions, ok := c.awaitingPackages[pkg.id]
 	if !ok {
 		return
 	}
 
-	delete(c.awaitingPackages, pkg.id)
+	// Find the position of the decision that we want to remove.
+	var pos *int
+	for i, item := range decisions {
+		if item.id == dec.id {
+			pos = &i
+			break
+		}
+	}
+
+	if pos == nil {
+		return
+	}
+
+	// Remove the decision from the slice.
+	decisions = append(decisions[:*pos], decisions[*pos+1:]...)
+
+	// Update the awaitingPackages map.
+	if len(decisions) == 0 {
+		delete(c.awaitingPackages, pkg.id)
+	} else {
+		c.awaitingPackages[pkg.id] = decisions
+	}
+
+	// Add package back to the active list.
 	c.activePackages = append(c.activePackages, pkg)
 }
 
-func (c *Controller) IsPackageActive(id uuid.UUID) bool {
+func (c *Controller) Active(id uuid.UUID) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -302,33 +332,8 @@ func (c *Controller) IsPackageActive(id uuid.UUID) bool {
 	return false
 }
 
-// Decision returns the decision of a Package given its identifier.
-func (c *Controller) Decision(id uuid.UUID) (*adminv1.Decision, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	decision, ok := c.awaitingPackages[id]
-	if !ok {
-		return nil, false
-	}
-
-	ret := &adminv1.Decision{
-		Name:   decision.name,
-		Choice: make([]*adminv1.Choice, 0, len(decision.choices)),
-	}
-	for i, item := range decision.choices {
-		choice := &adminv1.Choice{
-			Id:    int32(i),
-			Label: item.label,
-		}
-		ret.Choice = append(ret.Choice, choice)
-	}
-
-	return ret, true
-}
-
-// Active lists all active packages.
-func (c *Controller) Active() []uuid.UUID {
+// ActivePackages lists all active packages.
+func (c *Controller) ActivePackages() []uuid.UUID {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -340,33 +345,88 @@ func (c *Controller) Active() []uuid.UUID {
 	return ret
 }
 
-// Decisions lists awaiting decisions for all active packages.
-func (c *Controller) Decisions() []string {
+// PackageDecisions returns the awaiting decisions of a given package.
+func (c *Controller) PackageDecisions(pkgID uuid.UUID) ([]*adminv1.Decision, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	ret := make([]string, 0, len(c.activePackages))
-	for _, decision := range c.awaitingPackages {
-		ret = append(ret, fmt.Sprintf("%s: %s", decision.pkg.id, decision.name))
+	decisions, ok := c.awaitingPackages[pkgID]
+	if !ok {
+		return nil, false
+	}
+
+	ret := make([]*adminv1.Decision, len(decisions))
+	for i, dec := range decisions {
+		ret[i] = dec.convert()
+	}
+
+	return ret, true
+}
+
+// Decisions lists awaiting decisions for all active packages.
+func (c *Controller) Decisions() map[uuid.UUID][]*adminv1.Decision {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	ret := make(map[uuid.UUID][]*adminv1.Decision, len(c.awaitingPackages))
+
+	for pkgID, decList := range c.awaitingPackages {
+		decisions := make([]*adminv1.Decision, len(decList))
+		for i, dec := range decList {
+			decisions[i] = dec.convert()
+		}
+		ret[pkgID] = decisions
 	}
 
 	return ret
 }
 
-func (c *Controller) ResolveDecision(pkgID uuid.UUID, pos int) error {
+func (c *Controller) ResolveDecision(id uuid.UUID, pos int) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	var match *decision
-	for id, decision := range c.awaitingPackages {
-		if id == pkgID {
-			match = decision
-			break
+	for _, decisions := range c.awaitingPackages {
+		for _, dec := range decisions {
+			if dec.id == id {
+				match = dec
+				break
+			}
+		}
+	}
+
+	if match == nil {
+		return errors.New("decision cannot be found")
+	}
+
+	return match.resolve(pos)
+}
+
+func (c *Controller) ResolveDecisionLegacy(jobID uuid.UUID, choice string) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var match *decision
+	for _, decisions := range c.awaitingPackages {
+		for _, dec := range decisions {
+			if dec.jobID == jobID {
+				match = dec
+				break
+			}
 		}
 	}
 
 	if match == nil {
 		return errors.New("package is not awaiting")
+	}
+
+	// For now we're asumming that the client is sending the choice position,
+	// but this many not always be true. We should probably support the old
+	// mechanism where the choices are indexed by a string with different
+	// meanings depending on the decision job, e.g. chan ID, location URI...
+	pos, err := strconv.Atoi(choice)
+	if err != nil {
+		return errors.New("unexpectec choice format")
 	}
 
 	return match.resolve(pos)

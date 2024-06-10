@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
@@ -148,6 +150,54 @@ func (s *mysqlStoreImpl) UpdateJobStatus(ctx context.Context, id uuid.UUID, stat
 	})
 }
 
+func (s *mysqlStoreImpl) ListJobs(ctx context.Context, pkgID uuid.UUID) (_ []*adminv1.Job, err error) {
+	defer wrap(&err, "ListJobs(tasks)")
+
+	jobs, err := s.queries.ListJobs(ctx, pkgID)
+	if err != nil {
+		return nil, err
+	}
+
+	convert := func(j *sqlc.Job) (*adminv1.Job, error) {
+		ret := &adminv1.Job{
+			Id:              j.ID.String(),
+			PackageId:       j.SIPID.String(),
+			Directory:       j.Directory,
+			LinkId:          j.LinkID.UUID.String(),
+			LinkDescription: j.Type,
+			Hidden:          j.Hidden,
+			Group:           j.Microservicegroup,
+			Status:          adminv1.JobStatus(j.Currentstep),
+		}
+
+		switch j.Unittype {
+		case "unitDIP":
+			ret.PackageType = adminv1.PackageType_PACKAGE_TYPE_DIP
+		case "unitSIP":
+			ret.PackageType = adminv1.PackageType_PACKAGE_TYPE_SIP
+		case "unitTransfer":
+			ret.PackageType = adminv1.PackageType_PACKAGE_TYPE_TRANSFER
+		}
+
+		if err := updateTimeWithFraction(&ret.CreatedAt, j.CreatedAt, j.Createdtimedec); err != nil {
+			return nil, err
+		}
+
+		return ret, nil
+	}
+
+	ret := make([]*adminv1.Job, 0, len(jobs))
+	for _, item := range jobs {
+		if j, err := convert(item); err != nil {
+			return nil, fmt.Errorf("convert: %v", err)
+		} else {
+			ret = append(ret, j)
+		}
+	}
+
+	return ret, nil
+}
+
 func (s *mysqlStoreImpl) CreateTasks(ctx context.Context, tasks []*Task) (err error) {
 	defer wrap(&err, "CreateTasks(tasks)")
 
@@ -157,6 +207,47 @@ func (s *mysqlStoreImpl) CreateTasks(ctx context.Context, tasks []*Task) (err er
 	}
 
 	return nil
+}
+
+func (s *mysqlStoreImpl) ReadPackagesWithCreationTimestamps(ctx context.Context, packageType adminv1.PackageType) (ret []*adminv1.Package, err error) {
+	defer wrap(&err, "ReadPackagesWithCreationTimestamps(tasks)")
+
+	switch packageType {
+	case adminv1.PackageType_PACKAGE_TYPE_TRANSFER:
+		rows, err := s.queries.ListTransfersWithCreationTimestamps(ctx)
+		if err != nil {
+			return nil, err
+		}
+		ret = make([]*adminv1.Package, 0, len(rows))
+		for _, row := range rows {
+			pkg := &adminv1.Package{}
+			pkg.Id = row.SIPID.String()
+			pkg.Status = adminv1.PackageStatus(int32(row.Status.Int16))
+			if err := updateTimeWithFraction(&pkg.CreatedAt, row.CreatedAt, row.CreatedAtDec); err != nil {
+				return nil, err
+			}
+			ret = append(ret, pkg)
+		}
+	case adminv1.PackageType_PACKAGE_TYPE_SIP:
+		rows, err := s.queries.ListSIPsWithCreationTimestamps(ctx)
+		if err != nil {
+			return nil, err
+		}
+		ret = make([]*adminv1.Package, 0, len(rows))
+		for _, row := range rows {
+			pkg := &adminv1.Package{}
+			pkg.Id = row.SIPID.String()
+			pkg.Status = adminv1.PackageStatus(int32(row.Status.Int16))
+			if err := updateTimeWithFraction(&pkg.CreatedAt, row.CreatedAt, row.CreatedAtDec); err != nil {
+				return nil, err
+			}
+			ret = append(ret, pkg)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported package type: %s", packageType)
+	}
+
+	return ret, nil
 }
 
 func (s *mysqlStoreImpl) UpdatePackageStatus(ctx context.Context, id uuid.UUID, packageType enums.PackageType, status enums.PackageStatus) (err error) {
@@ -380,6 +471,9 @@ func (s *mysqlStoreImpl) ReadSIP(ctx context.Context, id uuid.UUID) (_ SIP, err 
 	sip.DirIDs = row.Diruuids
 	sip.Status = int(row.Status)
 	sip.CompletedAt = row.CompletedAt.Time
+
+	// SIP, AIC, AIP-REIN, AIC-REIN
+	sip.Type = row.Siptype
 
 	return sip, nil
 }
@@ -875,4 +969,18 @@ func wrap(errp *error, format string, args ...any) {
 		errfmt = "%s: %v"
 	}
 	*errp = fmt.Errorf(errfmt, message, *errp)
+}
+
+func updateTimeWithFraction(dst **timestamppb.Timestamp, t time.Time, dec string) error {
+	df, err := strconv.ParseFloat(dec, 64)
+	if err != nil {
+		return fmt.Errorf("error parsing fractional seconds: %v", err)
+	}
+
+	ns := int64(df * float64(time.Second))
+	t = t.Add(time.Duration(ns))
+
+	*dst = timestamppb.New(t)
+
+	return nil
 }

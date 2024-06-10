@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	adminv1beta1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	store "github.com/artefactual/archivematica/hack/ccp/internal/store"
 	enums "github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	sqlcmysql "github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
@@ -392,6 +393,45 @@ func (c *MockStoreFilesCall) DoAndReturn(f func(context.Context, uuid.UUID, enum
 	return c
 }
 
+// ListJobs mocks base method.
+func (m *MockStore) ListJobs(ctx context.Context, pkgID uuid.UUID) ([]*adminv1beta1.Job, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListJobs", ctx, pkgID)
+	ret0, _ := ret[0].([]*adminv1beta1.Job)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListJobs indicates an expected call of ListJobs.
+func (mr *MockStoreMockRecorder) ListJobs(ctx, pkgID any) *MockStoreListJobsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListJobs", reflect.TypeOf((*MockStore)(nil).ListJobs), ctx, pkgID)
+	return &MockStoreListJobsCall{Call: call}
+}
+
+// MockStoreListJobsCall wrap *gomock.Call
+type MockStoreListJobsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreListJobsCall) Return(arg0 []*adminv1beta1.Job, arg1 error) *MockStoreListJobsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreListJobsCall) Do(f func(context.Context, uuid.UUID) ([]*adminv1beta1.Job, error)) *MockStoreListJobsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreListJobsCall) DoAndReturn(f func(context.Context, uuid.UUID) ([]*adminv1beta1.Job, error)) *MockStoreListJobsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // ReadDIP mocks base method.
 func (m *MockStore) ReadDIP(ctx context.Context, id uuid.UUID) (store.DIP, error) {
 	m.ctrl.T.Helper()
@@ -466,6 +506,45 @@ func (c *MockStoreReadDictCall) Do(f func(context.Context, string) (map[string]s
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreReadDictCall) DoAndReturn(f func(context.Context, string) (map[string]string, error)) *MockStoreReadDictCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// ReadPackagesWithCreationTimestamps mocks base method.
+func (m *MockStore) ReadPackagesWithCreationTimestamps(ctx context.Context, packageType adminv1beta1.PackageType) ([]*adminv1beta1.Package, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadPackagesWithCreationTimestamps", ctx, packageType)
+	ret0, _ := ret[0].([]*adminv1beta1.Package)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadPackagesWithCreationTimestamps indicates an expected call of ReadPackagesWithCreationTimestamps.
+func (mr *MockStoreMockRecorder) ReadPackagesWithCreationTimestamps(ctx, packageType any) *MockStoreReadPackagesWithCreationTimestampsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadPackagesWithCreationTimestamps", reflect.TypeOf((*MockStore)(nil).ReadPackagesWithCreationTimestamps), ctx, packageType)
+	return &MockStoreReadPackagesWithCreationTimestampsCall{Call: call}
+}
+
+// MockStoreReadPackagesWithCreationTimestampsCall wrap *gomock.Call
+type MockStoreReadPackagesWithCreationTimestampsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreReadPackagesWithCreationTimestampsCall) Return(arg0 []*adminv1beta1.Package, arg1 error) *MockStoreReadPackagesWithCreationTimestampsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreReadPackagesWithCreationTimestampsCall) Do(f func(context.Context, adminv1beta1.PackageType) ([]*adminv1beta1.Package, error)) *MockStoreReadPackagesWithCreationTimestampsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreReadPackagesWithCreationTimestampsCall) DoAndReturn(f func(context.Context, adminv1beta1.PackageType) ([]*adminv1beta1.Package, error)) *MockStoreReadPackagesWithCreationTimestampsCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

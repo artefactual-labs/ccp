@@ -131,7 +131,7 @@ func NewTransferPackage(
 	pkg.startAtChainID = transferType.BypassChainID
 	pkg.startAtLinkID = transferType.BypassLinkID
 
-	var msID uuid.UUID
+	msID := uuid.Nil
 	if req.MetadataSetId != nil {
 		msID, _ = uuid.Parse(req.MetadataSetId.Value)
 	}
@@ -250,12 +250,6 @@ func (p *Package) parseProcessingConfig() ([]workflow.Choice, error) {
 // PreconfiguredChoice looks up a pre-configured choice in the processing
 // configuration file that is part of the package.
 func (p *Package) PreconfiguredChoice(linkID uuid.UUID) (string, error) {
-	// TODO: auto-approval should only happen if requested by the user, but
-	// this is convenient during initial development.
-	if chainID := Transfers.Decide(linkID); chainID != uuid.Nil {
-		return chainID.String(), nil
-	}
-
 	choices, err := p.parseProcessingConfig()
 	if err != nil {
 		return "", err
@@ -542,9 +536,9 @@ func (u *SIP) replacements(filterSubdirPath string) replacementMapping {
 	mapping := u.pkg.replacements()
 	maps.Copy(mapping, baseReplacements(u.pkg))
 	maps.Copy(mapping, map[string]replacement{
-		"%unitType%":   replacement(u.packageType()),
-		"%AIPFilename": replacement(u.aipFilename),
-		"%SIPType%":    replacement(u.sipType),
+		"%unitType%":    replacement(u.packageType()),
+		"%AIPFilename%": replacement(u.aipFilename),
+		"%SIPType%":     replacement(u.sipType),
 	})
 	return mapping
 }

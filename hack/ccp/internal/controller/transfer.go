@@ -24,25 +24,9 @@ type TransferType struct {
 	// BypassLinkID is the specific chain link within the bypass chain where
 	// we want to start processing when using auto-approval.
 	BypassLinkID uuid.UUID
-
-	// DecisionLink is the chain link used to prompt the user for approval.
-	// Decision is the chain that we have to choose to accept the transfer.
-	// TODO: remove these two once we implement the Decision API.
-	DecisionLink uuid.UUID
-	Decision     uuid.UUID
 }
 
 type TransferTypes []TransferType
-
-// Decide resolves the workflow decision point that implements the approval.
-func (t TransferTypes) Decide(linkID uuid.UUID) uuid.UUID {
-	for _, item := range t {
-		if item.DecisionLink == linkID {
-			return item.Decision
-		}
-	}
-	return uuid.Nil
-}
 
 func (t TransferTypes) WithName(name string) *TransferType {
 	for _, item := range t {
@@ -76,8 +60,6 @@ var Transfers TransferTypes = []TransferType{
 		WatchedDir:    "activeTransfers/standardTransfer",
 		BypassChainID: uuid.MustParse("6953950b-c101-4f4c-a0c3-0cd0684afe5e"),
 		BypassLinkID:  uuid.MustParse("045c43ae-d6cf-44f7-97d6-c8a602748565"),
-		DecisionLink:  uuid.MustParse("0c94e6b5-4714-4bec-82c8-e187e0c04d77"),
-		Decision:      uuid.MustParse("b4567e89-9fea-4256-99f5-a88987026488"),
 	},
 	{
 		Name:          "zipfile",

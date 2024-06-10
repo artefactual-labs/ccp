@@ -108,6 +108,7 @@ func TestClient(t *testing.T) {
 					Path:         "/var/archivematica/sharedDirectory/www/AIPsStore",
 					RelativePath: "var/archivematica/sharedDirectory/www/AIPsStore",
 					Pipelines:    []string{"/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"},
+					Description:  "Store AIP in standard Archivematica Directory",
 				})
 			},
 		},
@@ -231,6 +232,7 @@ func TestClient(t *testing.T) {
 						Path:         "/var/archivematica/sharedDirectory/www/DIPsStore",
 						RelativePath: "var/archivematica/sharedDirectory/www/DIPsStore",
 						Pipelines:    []string{"/api/v2/pipeline/fb2b8866-6f39-4616-b6cd-fa73193a3b05/"},
+						Description:  "Store DIP in standard Archivematica Directory",
 					},
 				})
 			},

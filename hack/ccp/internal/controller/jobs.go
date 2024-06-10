@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -145,9 +144,9 @@ func (j *job) save(ctx context.Context) (err error) {
 		Currentstep:       3,
 		Microservicegroup: j.wl.Group.String(),
 		Hidden:            false,
-		Microservicechainlinkspk: sql.NullString{
-			String: j.wl.ID.String(),
-			Valid:  true,
+		LinkID: uuid.NullUUID{
+			UUID:  j.wl.ID,
+			Valid: true,
 		},
 	})
 }
@@ -197,7 +196,7 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	return nil
 }
 
-func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID {
+func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID { //nolint:unparam
 	ret := uuid.Nil
 
 	if ec, ok := l.ExitCodes[code]; ok {

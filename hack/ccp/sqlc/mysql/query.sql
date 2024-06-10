@@ -8,6 +8,45 @@ INSERT INTO Jobs (jobUUID, jobType, createdTime, createdTimeDec, directory, SIPU
 -- name: UpdateJobStatus :exec
 UPDATE Jobs SET currentStep = ? WHERE jobUUID = ?;
 
+-- name: ListJobs :many
+SELECT * FROM Jobs WHERE SIPUUID = ? ORDER BY createdTime DESC;
+
+-- name: ListTransfersWithCreationTimestamps :many
+SELECT
+    j.SIPUUID,
+    j.createdTime AS created_at,
+    j.createdTimeDec AS created_at_dec,
+    t.status
+FROM Jobs j
+JOIN (
+    SELECT
+        SIPUUID,
+        MAX(createdTime) AS max_created_at
+    FROM Jobs
+    WHERE unitType = 'unitTransfer' AND NOT SIPUUID LIKE '%None%'
+    GROUP BY SIPUUID
+) AS latest_jobs ON j.SIPUUID = latest_jobs.SIPUUID AND j.createdTime = latest_jobs.max_created_at
+LEFT JOIN Transfers t ON t.transferUUID = j.SIPUUID
+WHERE j.unitType = 'unitTransfer' AND NOT j.SIPUUID LIKE '%None%' AND t.hidden = 0;
+
+-- name: ListSIPsWithCreationTimestamps :many
+SELECT
+    j.SIPUUID,
+    j.createdTime AS created_at,
+    j.createdTimeDec AS created_at_dec,
+    s.status
+FROM Jobs j
+JOIN (
+    SELECT
+        SIPUUID,
+        MAX(createdTime) AS max_created_at
+    FROM Jobs
+    WHERE unitType = 'unitSIP' AND NOT SIPUUID LIKE '%None%'
+    GROUP BY SIPUUID
+) AS latest_jobs ON j.SIPUUID = latest_jobs.SIPUUID AND j.createdTime = latest_jobs.max_created_at
+LEFT JOIN SIPs s ON s.sipUUID = j.SIPUUID
+WHERE j.unitType = 'unitSIP' AND NOT j.SIPUUID LIKE '%None%' AND s.hidden = 0;
+
 --
 -- Transfers
 --

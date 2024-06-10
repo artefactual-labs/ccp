@@ -133,7 +133,8 @@ func (s *Server) Run() error {
 	}
 
 	s.logger.V(1).Info("Creating admin API.")
-	if s.admin, err = admin.New(s.logger.WithName("api.admin"), s.config.api.admin, s.controller, s.store); err != nil {
+	processingConfigForm := workflow.NewProcessingConfigForm(wf, ssclient)
+	if s.admin, err = admin.New(s.logger.WithName("api.admin"), s.config.api.admin, s.controller, s.store, wf, processingConfigForm); err != nil {
 		return fmt.Errorf("error creating admin API: %v", err)
 	}
 	if err := s.admin.Run(); err != nil {

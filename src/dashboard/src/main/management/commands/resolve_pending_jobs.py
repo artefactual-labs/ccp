@@ -13,7 +13,7 @@ interactive command-line interface in the future it will rely on
 public APIs. This is an alternative to the old mcp-rpc-cli command.
 """
 
-from contrib.mcp.client import MCPClient
+from client import get_client
 from django.contrib.auth import get_user_model
 from django.core.management.base import CommandError
 from lxml import etree
@@ -34,11 +34,11 @@ class Command(DashboardCommand):
         admin_user = self.admin_user()
         if not admin_user:
             raise CommandError("Cannot find a superuser.")
-        client = MCPClient(admin_user)
+        client = get_client(admin_user.id)
 
         while True:
             self.success("Fetching packages awaiting decisions...")
-            packages = etree.fromstring(client.list())
+            packages = etree.fromstring(client.list_jobs_awaiting_approval())
             if not len(packages):
                 self.error("No packages!")
 
@@ -69,7 +69,7 @@ class Command(DashboardCommand):
             job_id = package.find("./UUID").text
             job = {
                 job["id"]: job["description"]
-                for job in client.get_unit_status(package_id)["jobs"]
+                for job in client.get_package_status(package_id)["jobs"]
             }.get(job_id)
 
             while True:
@@ -96,7 +96,7 @@ class Command(DashboardCommand):
                 chain_id = selected.find("./chainAvailable").text
 
                 try:
-                    client.execute_unit(package_id, chain_id)
+                    client.execute_package(package_id, chain_id)
                     break
                 except Exception:
                     self.error("There was a problem executing the selected choice")

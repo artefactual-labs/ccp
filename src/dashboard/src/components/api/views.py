@@ -24,10 +24,10 @@ from cgi import parse_header
 
 import archivematicaFunctions
 import django.http
+from client import get_client
 from components import helpers
 from components.filesystem_ajax import views as filesystem_ajax_views
 from components.unit import views as unit_views
-from contrib.mcp.client import MCPClient
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -510,7 +510,7 @@ def approve_transfer(request):
         # Append a slash to complete the directory path.
         db_transfer_path = os.path.join(watched_path, "")
     try:
-        client = MCPClient(request.user)
+        client = get_client(request.user.id)
         unit_uuid = client.approve_transfer_by_path(db_transfer_path, transfer_type)
     except Exception as err:
         msg = "Unable to start the transfer."
@@ -547,7 +547,7 @@ def reingest_approve(request):
     if sip_uuid is None:
         return _error_response('"uuid" is required.')
     try:
-        client = MCPClient(request.user)
+        client = get_client(request.user.id)
         client.approve_partial_reingest(sip_uuid)
     except Exception as err:
         msg = "Unable to approve the partial reingest."
@@ -839,7 +839,7 @@ def _package_create(request):
     if processing_config is not None:
         kwargs["processing_config"] = processing_config
     try:
-        client = MCPClient(request.user)
+        client = get_client(request.user.id)
         id_ = client.create_package(*args, **kwargs)
     except Exception as err:
         msg = "Package cannot be created"

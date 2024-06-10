@@ -34,12 +34,19 @@ sql:
             "createdtime": "CreatedAt"
             "updatedtime": "UpdatedAt"
             "microservicechainlink": "LinkID"
+            "microservicechainlinkspk": "LinkID"
             # table todo
             # left: name of table, lowercase, also singualrized otherwise it doesn't match
 
           # In overrides, `column` must refer to the table and column name in the
           # database schema, but matching is only possible in lowercase.
           overrides:
+            - column: "jobs.microservicechainlinkspk"
+              go_type:
+                import: "github.com/google/uuid"
+                package: "uuid"
+                type: "NullUUID"
+                pointer: false
             - column: "unitvariables.microservicechainlink"
               go_type:
                 import: "github.com/google/uuid"

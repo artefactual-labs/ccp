@@ -26,12 +26,12 @@ import elasticSearchFunctions
 import requests
 import storageService as storage_service
 from archivematicaFunctions import b64encode_string
+from client import get_client
 from components import advanced_search
 from components import decorators
 from components import helpers
 from components.ingest import forms as ingest_forms
 from components.ingest.views_NormalizationReport import getNormalizationReportQuery
-from contrib.mcp.client import MCPClient
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -108,8 +108,8 @@ class SipsView(View):
 def ingest_status(request, uuid=None):
     response = {"objects": {}, "mcp": False}
     try:
-        client = MCPClient(request.user)
-        response["objects"] = client.get_sips_statuses()
+        client = get_client(request.user.id)
+        response["objects"] = client.get_sips_status()
     except Exception:
         pass
     else:

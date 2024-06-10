@@ -20,3 +20,7 @@ plugins:
   - remote: buf.build/bufbuild/es
     out: web/src/gen
     opt: target=ts
+  - remote: buf.build/grpc/python
+    out: ../../src/dashboard/src/client/gen
+  - remote: buf.build/protocolbuffers/python
+    out: ../../src/dashboard/src/client/gen

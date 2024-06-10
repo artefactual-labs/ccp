@@ -33,6 +33,7 @@ type Location struct {
 	Path         string
 	RelativePath string
 	Pipelines    []string
+	Description  string
 }
 
 // Client wraps go.artefactual.dev/ssclient-go. It provides additional

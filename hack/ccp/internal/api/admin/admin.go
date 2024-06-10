@@ -4,6 +4,11 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"os"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -12,6 +17,7 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	"github.com/jellydator/ttlcache/v3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -20,6 +26,7 @@ import (
 	adminv1connect "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 // Server implements the Admin API.
@@ -28,17 +35,26 @@ type Server struct {
 	config Config
 	ctrl   *controller.Controller
 	store  store.Store
+	wf     *workflow.Document
+	form   *workflow.ProcessingConfigForm
 	server *http.Server
 	ln     net.Listener
 	v      *protovalidate.Validator
+
+	// cache provides an in-memory cache with expiration to prevent concurrent
+	// clients from overloading the system.
+	cache *ttlcache.Cache[adminv1.PackageType, *adminv1.ListPackagesResponse]
+	wg    sync.WaitGroup
 }
 
-func New(logger logr.Logger, config Config, ctrl *controller.Controller, store store.Store) (*Server, error) {
+func New(logger logr.Logger, config Config, ctrl *controller.Controller, store store.Store, wf *workflow.Document, form *workflow.ProcessingConfigForm) (*Server, error) {
 	srv := &Server{
 		logger: logger,
 		config: config,
 		ctrl:   ctrl,
 		store:  store,
+		wf:     wf,
+		form:   form,
 	}
 
 	if v, err := protovalidate.New(); err != nil {
@@ -46,6 +62,15 @@ func New(logger logr.Logger, config Config, ctrl *controller.Controller, store s
 	} else {
 		srv.v = v
 	}
+
+	srv.cache = ttlcache.New[adminv1.PackageType, *adminv1.ListPackagesResponse](
+		ttlcache.WithTTL[adminv1.PackageType, *adminv1.ListPackagesResponse](1 * time.Second),
+	)
+	srv.wg.Add(1)
+	go func() {
+		defer srv.wg.Done()
+		srv.cache.Start()
+	}()
 
 	return srv, nil
 }
@@ -145,52 +170,97 @@ func (s *Server) ReadPackage(ctx context.Context, req *connect.Request[adminv1.R
 		},
 	}
 
-	if decision, ok := s.ctrl.Decision(id); ok {
+	if decisions, ok := s.ctrl.PackageDecisions(id); ok {
 		resp.Pkg.Status = adminv1.PackageStatus_PACKAGE_STATUS_AWAITING_DECISION
-		resp.Decision = decision
+		resp.Decision = decisions
 	}
+
+	resp.Job = []*adminv1.Job{}
 
 	return connect.NewResponse(resp), nil
 }
 
-func (s *Server) ApproveTransfer(ctx context.Context, req *connect.Request[adminv1.ApproveTransferRequest]) (*connect.Response[adminv1.ApproveTransferResponse], error) {
-	return connect.NewResponse(&adminv1.ApproveTransferResponse{
-		Id: uuid.New().String(),
-	}), nil
-}
-
-func (s *Server) ListActivePackages(ctx context.Context, req *connect.Request[adminv1.ListActivePackagesRequest]) (*connect.Response[adminv1.ListActivePackagesResponse], error) {
-	active := s.ctrl.Active()
-	ret := make([]string, 0, len(active))
-	for _, item := range active {
-		ret = append(ret, item.String())
+// ListPackages ...
+func (s *Server) ListPackages(ctx context.Context, req *connect.Request[adminv1.ListPackagesRequest]) (*connect.Response[adminv1.ListPackagesResponse], error) {
+	if err := s.v.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	return connect.NewResponse(&adminv1.ListActivePackagesResponse{
-		Value: ret,
+	if resp := s.cache.Get(req.Msg.Type); resp != nil {
+		return connect.NewResponse(resp.Value()), nil
+	}
+
+	// ReadPackagesWithCreationTimestamps hides packages by default, i.e.
+	// req.Msg.ExcludeHidden not needed at this point.
+	pkgs, err := s.store.ReadPackagesWithCreationTimestamps(ctx, req.Msg.Type)
+	if err != nil {
+		s.logger.Error(err, "Failed to read packages.")
+		return nil, connect.NewError(connect.CodeUnknown, nil)
+	}
+
+	// TODO: if we have a SIP, we should provide the access_system_id (transser).
+
+	// Populate directory and jobs for each package.
+	for _, pkg := range pkgs {
+		pkgID, _ := uuid.Parse(pkg.Id)
+		if dir, jobs, err := s.listJobs(ctx, pkgID, true); err != nil {
+			s.logger.Error(err, "Failed to read jobs.")
+			return nil, connect.NewError(connect.CodeUnknown, nil)
+		} else {
+			pkg.Name = packageName(pkgID, dir)
+			pkg.Directory = dir
+			pkg.Job = jobs
+		}
+	}
+
+	return connect.NewResponse(&adminv1.ListPackagesResponse{
+		Package: pkgs,
 	}), nil
 }
 
-func (s *Server) ListAwaitingDecisions(ctx context.Context, req *connect.Request[adminv1.ListAwaitingDecisionsRequest]) (*connect.Response[adminv1.ListAwaitingDecisionsResponse], error) {
-	return connect.NewResponse(&adminv1.ListAwaitingDecisionsResponse{
-		Value: s.ctrl.Decisions(),
+func (s *Server) ListDecisions(ctx context.Context, req *connect.Request[adminv1.ListDecisionsRequest]) (*connect.Response[adminv1.ListDecisionsResponse], error) {
+	if err := s.v.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	decisions := []*adminv1.Decision{}
+	for _, item := range s.ctrl.Decisions() {
+		decisions = slices.Concat(decisions, item)
+	}
+
+	return connect.NewResponse(&adminv1.ListDecisionsResponse{
+		Decision: decisions,
 	}), nil
 }
 
-func (s *Server) ResolveAwaitingDecision(ctx context.Context, req *connect.Request[adminv1.ResolveAwaitingDecisionRequest]) (*connect.Response[adminv1.ResolveAwaitingDecisionResponse], error) {
+func (s *Server) ResolveDecision(ctx context.Context, req *connect.Request[adminv1.ResolveDecisionRequest]) (*connect.Response[adminv1.ResolveDecisionResponse], error) {
 	if err := s.v.Validate(req.Msg); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	id := uuid.MustParse(req.Msg.Id)
-
 	err := s.ctrl.ResolveDecision(id, int(req.Msg.Choice.Id))
 	if err != nil {
 		s.logger.Error(err, "Failed to resolve awaiting decision.", "id", id)
 		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}
 
-	return connect.NewResponse(&adminv1.ResolveAwaitingDecisionResponse{}), nil
+	return connect.NewResponse(&adminv1.ResolveDecisionResponse{}), nil
+}
+
+func (s *Server) ListProcessingConfigurationFields(ctx context.Context, req *connect.Request[adminv1.ListProcessingConfigurationFieldsRequest]) (*connect.Response[adminv1.ListProcessingConfigurationFieldsResponse], error) {
+	if err := s.v.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	fields, err := s.form.Fields(ctx)
+	if err != nil {
+		s.logger.Error(err, "Failed to compute some processing configuration fields.")
+	}
+
+	return connect.NewResponse(&adminv1.ListProcessingConfigurationFieldsResponse{
+		Field: fields,
+	}), nil
 }
 
 func (s *Server) Close() error {
@@ -203,5 +273,76 @@ func (s *Server) Close() error {
 		}
 	}
 
+	s.cache.Stop()
+	s.wg.Wait()
+
 	return nil
+}
+
+func (s *Server) listJobs(ctx context.Context, pkgID uuid.UUID, withDecisions bool) (string, []*adminv1.Job, error) {
+	jobs, err := s.store.ListJobs(ctx, pkgID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// The first item in the list is the most recent, i.e. it contains the
+	// current directory.
+	dir := ""
+	if len(jobs) > 0 {
+		dir = jobs[0].Directory
+	}
+
+	// We're only doing this to include a workflow that is backward-compatible
+	// with the Archivematica Dashboard, but it seems inefficient.
+	if withDecisions {
+		decisions, ok := s.ctrl.PackageDecisions(pkgID)
+		if !ok {
+			return dir, jobs, nil
+		}
+		for _, j := range jobs {
+			for _, d := range decisions {
+				if j.Id == d.JobId {
+					j.Decision = d
+				}
+			}
+		}
+	}
+
+	return dir, jobs, nil
+}
+
+var (
+	matchGroup       = "directory"
+	newTransferRegex = regexp.MustCompile(`^.*/(?P<directory>.*)/$`)
+	transferRegex    = regexp.MustCompile(`^.*/(?P<directory>.*)-[\w]{8}(-[\w]{4}){3}-[\w]{12}[/]{0,1}$`)
+)
+
+func packageName(id uuid.UUID, dir string) string {
+	if dir == "" {
+		return id.String()
+	}
+
+	matches := transferRegex.FindStringSubmatch(dir)
+	if len(matches) > 1 {
+		for i, name := range transferRegex.SubexpNames() {
+			if name == matchGroup {
+				return matches[i]
+			}
+		}
+	}
+
+	sep := string(os.PathSeparator)
+	if !strings.HasSuffix(dir, sep) {
+		dir = dir + sep // TODO: use joinPath util.
+	}
+	matches = newTransferRegex.FindStringSubmatch(dir)
+	if len(matches) > 1 {
+		for i, name := range newTransferRegex.SubexpNames() {
+			if name == matchGroup {
+				return matches[i]
+			}
+		}
+	}
+
+	return id.String()
 }

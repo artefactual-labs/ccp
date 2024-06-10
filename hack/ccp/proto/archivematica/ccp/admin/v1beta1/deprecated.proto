@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package archivematica.ccp.admin.v1beta1;
+
+import "archivematica/ccp/admin/v1beta1/admin.proto";
+import "buf/validate/validate.proto";
+
+message ApproveJobRequest {
+  // Identifier of the job (UUIDv4).
+  string job_id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Identifier of the choice (UUIDv4).
+  string choice = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message ApproveJobResponse {}
+
+message ApproveTransferByPathRequest {
+  // Directory where the transfer is currently located.
+  string directory = 1;
+
+  // Type of the transfer, default to "standard".
+  TransferType type = 2;
+}
+
+message ApproveTransferByPathResponse {
+  // Identifier of the package (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ApprovePartialReingestRequest {
+  // Identifier of the package (UUIDv4).
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ApprovePartialReingestResponse {}

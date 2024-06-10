@@ -319,18 +319,18 @@ type Identifier struct {
 }
 
 type Job struct {
-	ID                       uuid.UUID
-	Type                     string
-	CreatedAt                time.Time
-	Createdtimedec           string
-	Directory                string
-	SIPID                    uuid.UUID
-	Unittype                 string
-	Currentstep              int32
-	Microservicegroup        string
-	Hidden                   bool
-	Subjobof                 string
-	Microservicechainlinkspk sql.NullString
+	ID                uuid.UUID
+	Type              string
+	CreatedAt         time.Time
+	Createdtimedec    string
+	Directory         string
+	SIPID             uuid.UUID
+	Unittype          string
+	Currentstep       int32
+	Microservicegroup string
+	Hidden            bool
+	Subjobof          string
+	LinkID            uuid.NullUUID
 }
 
 type MainArchivesspacedigitalobject struct {

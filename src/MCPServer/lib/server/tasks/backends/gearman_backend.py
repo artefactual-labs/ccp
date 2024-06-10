@@ -2,6 +2,7 @@
 Gearman task backend. Submits `Task` objects to gearman for processing,
 and returns results.
 """
+
 import datetime
 import logging
 import uuid
@@ -12,6 +13,7 @@ from gearman.constants import JOB_COMPLETE
 from gearman.constants import JOB_FAILED
 from gearman.constants import JOB_UNKNOWN
 from gearman_encoder import JSONDataEncoder
+
 from server import metrics
 from server.tasks.backends.base import TaskBackend
 from server.tasks.task import Task

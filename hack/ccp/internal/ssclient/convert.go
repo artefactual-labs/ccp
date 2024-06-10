@@ -43,6 +43,7 @@ func convertLocation(m models.Locationable) (_ *Location, err error) {
 	r.RelativePath = ref.DerefZero(m.GetRelativePath())
 	r.Pipelines = m.GetPipeline()
 	r.Purpose = enums.LocationPurpose(ref.DerefDefault(m.GetPurpose(), -1))
+	r.Description = ref.DerefZero(m.GetDescription())
 
 	return r, nil
 }

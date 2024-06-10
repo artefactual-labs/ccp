@@ -20,9 +20,9 @@ from uuid import uuid4
 
 import components.decorators as decorators
 import storageService as storage_service
+from client import get_client
 from components import helpers
 from components.ingest.forms import DublinCoreMetadataForm
-from contrib.mcp.client import MCPClient
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
@@ -124,10 +124,10 @@ def component(request, uuid):
 def status(request, uuid=None):
     response = {"objects": {}, "mcp": False}
     try:
-        client = MCPClient(request.user)
-        response["objects"] = client.get_transfers_statuses()
+        client = get_client(request.user.id)
+        response["objects"] = client.get_transfers_status()
     except Exception:
-        pass
+        logger.error("Failed to load packages status.", exc_info=True)
     else:
         response["mcp"] = True
     return HttpResponse(json.dumps(response), content_type="application/json")

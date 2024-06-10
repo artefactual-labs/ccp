@@ -17,8 +17,8 @@
 import logging
 
 import django.http
+from client import get_client
 from components import helpers
-from contrib.mcp.client import MCPClient
 from django.shortcuts import render
 from main import models
 
@@ -55,8 +55,8 @@ def microservices(request, unit_type, unit_uuid):
     :param unit_uuid: UUID of the Transfer or SIP
 
     """
-    client = MCPClient(request.user)
-    resp = client.get_unit_status(unit_uuid)
+    client = get_client(request.user.id)
+    resp = client.get_package_status(unit_uuid)
     return render(
         request,
         unit_type + "/microservices.html",

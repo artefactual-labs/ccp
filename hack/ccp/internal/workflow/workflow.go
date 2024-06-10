@@ -62,6 +62,14 @@ func LoadFromJSON(blob []byte) (*Document, error) {
 
 type I18nField map[string]string
 
+func (f I18nField) Value(lang string) string {
+	s, ok := f[lang]
+	if ok {
+		return s
+	}
+	return f.String()
+}
+
 func (f I18nField) String() string {
 	s, ok := f["en"]
 	if ok {
