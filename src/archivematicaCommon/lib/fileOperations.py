@@ -340,8 +340,7 @@ def findFileInNormalizationCSV(
 
     :returns: Path to the origin file for `target_file`. Note this is the path from normalization.csv, so will be the original location.
     """
-    # use universal newline mode to support unusual newlines, like \r
-    with open(csv_path, "rb") as csv_file:
+    with open(csv_path) as csv_file:
         reader = csv.reader(csv_file)
         # Search CSV for an access/preservation filename that matches target_file
         # Get original name of target file, to handle filename changes.
@@ -353,17 +352,13 @@ def findFileInNormalizationCSV(
             )
         except File.MultipleObjectsReturned:
             printfn(
-                "More than one result found for {} file ({}) in DB.".format(
-                    commandClassification, target_file
-                ),
+                f"More than one result found for {commandClassification} file ({target_file}) in DB.",
                 file=sys.stderr,
             )
             raise FindFileInNormalizatonCSVError(2)
         except File.DoesNotExist:
             printfn(
-                "{} file ({}) not found in DB.".format(
-                    commandClassification, target_file
-                ),
+                f"{commandClassification} file ({target_file}) not found in DB.",
                 file=sys.stderr,
             )
             raise FindFileInNormalizatonCSVError(2)
@@ -380,29 +375,21 @@ def findFileInNormalizationCSV(
                     continue
                 original, access, preservation = row
                 if commandClassification == "access" and access == target_file:
-                    printfn(
-                        "Found access file ({}) for original ({})".format(
-                            access, original
-                        )
-                    )
+                    printfn(f"Found access file ({access}) for original ({original})")
                     return original
                 if (
                     commandClassification == "preservation"
                     and preservation == target_file
                 ):
                     printfn(
-                        "Found preservation file ({}) for original ({})".format(
-                            preservation, original
-                        )
+                        f"Found preservation file ({preservation}) for original ({original})"
                     )
                     return original
             else:
                 return None
-        except csv.Error:
+        except (ValueError, csv.Error):
             printfn(
-                "Error reading {filename} on line {linenum}".format(
-                    filename=csv_path, linenum=reader.line_num
-                ),
+                f"Error reading {csv_path} on line {reader.line_num}",
                 file=sys.stderr,
             )
             raise FindFileInNormalizatonCSVError(2)

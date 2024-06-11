@@ -1,4 +1,3 @@
-# flake8: noqa
 # This file is part of Archivematica.
 #
 # Copyright 2010-2017 Artefactual Systems Inc. <http://artefactual.com>
@@ -16,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
 """Production settings and globals."""
-from .base import *
 
+from .base import *
 
 ALLOWED_HOSTS = config.get("allowed_hosts").split(",")
 

@@ -1,4 +1,3 @@
-# flake8: noqa
 # This file is part of Archivematica.
 #
 # Copyright 2010-2017 Artefactual Systems Inc. <http://artefactual.com>
@@ -16,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
 """Test settings and globals."""
+
 import ldap
 from django_auth_ldap.config import LDAPSearch
 
@@ -53,9 +53,9 @@ LOGGING = {
 }
 
 # Disable whitenoise
-STORAGES["staticfiles"][
-    "BACKEND"
-] = "django.contrib.staticfiles.storage.StaticFilesStorage"
+STORAGES["staticfiles"]["BACKEND"] = (
+    "django.contrib.staticfiles.storage.StaticFilesStorage"
+)
 if MIDDLEWARE[0] == "whitenoise.middleware.WhiteNoiseMiddleware":
     del MIDDLEWARE[0]
 

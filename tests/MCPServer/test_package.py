@@ -5,14 +5,14 @@ from pathlib import Path
 import pytest
 from django.core.exceptions import ValidationError
 from main import models
+from server.packages import DIP
+from server.packages import SIP
+from server.packages import Package
+from server.packages import Transfer
 from server.packages import _determine_transfer_paths
 from server.packages import _move_to_internal_shared_dir
 from server.packages import _pad_destination_filepath_if_it_already_exists
 from server.packages import create_package
-from server.packages import DIP
-from server.packages import Package
-from server.packages import SIP
-from server.packages import Transfer
 from server.queues import PackageQueue
 from server.workflow import Workflow
 
@@ -147,9 +147,7 @@ def test_package_get_or_create_from_db_by_path_updates_model(
         model.objects.get(**{"uuid": package_id, loc_attribute: path_dst})
     except (models.Transfer.DoesNotExist, ValidationError):
         pytest.fail(
-            "Method {}.get_or_create_from_db_by_path didn't update {} model".format(
-                package_class.__name__, model.__name__
-            )
+            f"Method {package_class.__name__}.get_or_create_from_db_by_path didn't update {model.__name__} model"
         )
 
 
@@ -185,7 +183,7 @@ def test_reload_file_list(tmp_path):
 
     # One file will be returned from the database  with a UUID, another from
     # the filesystem without a UUID.
-    for _file_count, file_info in enumerate(transfer.files(None, None, "/objects"), 1):
+    for _file_count, file_info in enumerate(transfer.files(None, "/objects"), 1):
         assert "%fileUUID%" in file_info
         assert "%fileGrpUse%" in file_info
         assert "%relativeLocation%" in file_info
@@ -215,7 +213,7 @@ def test_reload_file_list(tmp_path):
     sub_dir.mkdir()
     new_file = sub_dir / "another_new_file.txt"
     new_file.touch()
-    for _file_count, file_info in enumerate(transfer.files(None, None, "/objects"), 1):
+    for _file_count, file_info in enumerate(transfer.files(None, "/objects"), 1):
         if file_info.get("%fileUUID%") != "None":
             continue
         file_path = Path(
@@ -237,12 +235,10 @@ def test_reload_file_list(tmp_path):
 
     # Now the database is updated, we will still have the same file count, but
     # all objects will be returned from the database and we will have uuids.
-    for _file_count, file_info in enumerate(transfer.files(None, None, "/objects"), 1):
+    for _file_count, file_info in enumerate(transfer.files(None, "/objects"), 1):
         if file_info.get("%fileUUID%") == "None":
             raise AssertionError(
-                "Non-database entries returned from package.files(): {}".format(
-                    file_info
-                )
+                f"Non-database entries returned from package.files(): {file_info}"
             )
     assert _file_count == 3
 
@@ -253,7 +249,7 @@ def test_reload_file_list(tmp_path):
         new_file = objects_path / file_
         new_file.touch()
     new_count = 0
-    for _file_count, file_info in enumerate(transfer.files(None, None, "/objects"), 1):
+    for _file_count, file_info in enumerate(transfer.files(None, "/objects"), 1):
         if file_info.get("%fileUUID%") == "None":
             new_count += 1
     assert new_count == 5
@@ -289,7 +285,7 @@ def test_package_files_with_non_ascii_names(tmp_path):
     models.File.objects.create(**kwargs)
 
     # Assert only one file is returned
-    result = list(transfer.files(None, None, "/objects"))
+    result = list(transfer.files(None, "/objects"))
     assert len(result) == 1
 
     # And it is the file we just created

@@ -19,6 +19,7 @@ Start and run MCPServer via the `main` function.
     watched dirs as set in the workflow.
 10. The `PackageQueue.work` processing loop is started on the main thread.
 """
+
 import concurrent.futures
 import functools
 import getpass
@@ -33,14 +34,19 @@ django.setup()
 
 from django.conf import settings
 
-from server import metrics, rpc_server, shared_dirs
-from server.jobs import Job, JobChain
-from server.packages import Package, DIP, Transfer, SIP
+from server import metrics
+from server import rpc_server
+from server import shared_dirs
+from server.jobs import Job
+from server.jobs import JobChain
+from server.packages import DIP
+from server.packages import SIP
+from server.packages import Package
+from server.packages import Transfer
 from server.queues import PackageQueue
 from server.tasks import Task
 from server.watch_dirs import watch_directories
 from server.workflow import load_workflow
-
 
 logger = logging.getLogger("archivematica.mcp.server")
 
@@ -51,18 +57,17 @@ def watched_dir_handler(package_queue, path, watched_dir):
     logger.debug("Starting chain for %s", path)
 
     package = None
-    package_type = watched_dir["unit_type"]
-    watched_dir_path = watched_dir["path"]
+    package_type = watched_dir.unit_type
     is_dir = os.path.isdir(path)
 
     if package_type == "SIP" and is_dir:
-        package = SIP.get_or_create_from_db_by_path(path, watched_dir_path)
+        package = SIP.get_or_create_from_db_by_path(path, watched_dir.path)
     elif package_type == "DIP" and is_dir:
-        package = DIP.get_or_create_from_db_by_path(path, watched_dir_path)
+        package = DIP.get_or_create_from_db_by_path(path, watched_dir.path)
     elif package_type == "Transfer" and is_dir:
-        package = Transfer.get_or_create_from_db_by_path(path, watched_dir_path)
+        package = Transfer.get_or_create_from_db_by_path(path, watched_dir.path)
     elif package_type == "Transfer" and not is_dir:
-        package = Transfer.get_or_create_from_db_by_path(path, watched_dir_path)
+        package = Transfer.get_or_create_from_db_by_path(path, watched_dir.path)
     else:
         raise ValueError(f"Unexpected unit type given for file {path}")
 

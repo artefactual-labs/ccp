@@ -16,7 +16,6 @@ from server import metrics
 from server.tasks.backends.base import TaskBackend
 from server.tasks.task import Task
 
-
 logger = logging.getLogger("archivematica.mcp.server.jobs.tasks")
 
 
@@ -229,9 +228,7 @@ class GearmanTaskBatch:
             return job_result["task_results"]
         except KeyError:
             raise ValueError(
-                "Expected a map containing 'task_results', but got: {!r}".format(
-                    job_result
-                )
+                f"Expected a map containing 'task_results', but got: {job_result!r}"
             )
 
     def update_task_results(self):

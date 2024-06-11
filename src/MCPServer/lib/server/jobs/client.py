@@ -1,18 +1,21 @@
 """
 Jobs remotely executed by on MCP client.
 """
+
 import abc
 import ast
+import json
 import logging
 
 from dbconns import auto_close_old_connections
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from main import models
+
 from server import metrics
 from server.jobs.base import Job
-from server.tasks import get_task_backend
 from server.tasks import Task
+from server.tasks import get_task_backend
 
 logger = logging.getLogger("archivematica.mcp.server.jobs.client")
 
@@ -168,11 +171,6 @@ class FilesClientScriptJob(ClientScriptJob):
     """
 
     @property
-    def filter_file_start(self):
-        """Returns path prefix to filter files on, as defined in the workflow."""
-        return self.link.config.get("filter_file_start", "")
-
-    @property
     def filter_file_end(self):
         """Returns path suffix to filter files on, as defined in the workflow."""
         return self.link.config.get("filter_file_end", "")
@@ -215,7 +213,6 @@ class FilesClientScriptJob(ClientScriptJob):
     def submit_tasks(self):
         """Iterate through all matching files for the package, and submit tasks."""
         for file_replacements in self.package.files(
-            filter_filename_start=self.filter_file_start,
             filter_filename_end=self.filter_file_end,
             filter_subdir=self.filter_subdir,
         ):
@@ -241,13 +238,14 @@ class FilesClientScriptJob(ClientScriptJob):
 
 
 class OutputClientScriptJob(ClientScriptJob):
-    """Retrieves output (e.g. a set of choices) from mcp client, for use in a decision.
+    """Retrieves output (e.g. a set of choices) from MCPClient, for use in a decision.
 
     Output is returned via stderr, and parsed via eval. It is stored for access by the
     next job on the `generated_choices` attribute of the job chain, which is used for
     only this purpose.
 
-    TODO: Remove from workflow if possible.
+    TODO: Remove from workflow if possible - this is only used by
+    getAipStorageLocations_v0.0 (twice).
     """
 
     # We always need output for this type of job
@@ -257,8 +255,8 @@ class OutputClientScriptJob(ClientScriptJob):
         logger.debug("stdout emitted by client: %s", task.stdout)
 
         try:
-            choices = ast.literal_eval(task.stdout)
-        except (ValueError, SyntaxError):
+            choices = json.loads(task.stdout)
+        except (TypeError, ValueError):
             logger.exception("Unable to parse output %s", task.stdout)
             choices = {}
 

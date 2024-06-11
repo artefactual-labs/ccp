@@ -1,17 +1,18 @@
 """
 The PackageQueue class handles job queueing, as it relates to packages.
 """
+
 import functools
 import logging
 import queue as Queue
 import threading
 
 from django.conf import settings
+
 from server import metrics
 from server.jobs import DecisionJob
 from server.packages import DIP
 from server.packages import SIP
-
 
 logger = logging.getLogger("archivematica.mcp.server.queues")
 
@@ -185,10 +186,6 @@ class PackageQueue:
             result.add_done_callback(package_done_callback)
 
         return result
-
-    def stop(self):
-        """Trigger queue shutdown."""
-        self.shutdown_event.set()
 
     def _package_completed_callback(self, package, link_id, future):
         """Marks the package as inactive and schedules a new package.
