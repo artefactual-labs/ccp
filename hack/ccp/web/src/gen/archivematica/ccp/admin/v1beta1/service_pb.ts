@@ -5,7 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { BoolValue, Message, proto3, StringValue } from "@bufbuild/protobuf";
-import { Choice, Decision, Job, Package, PackageType, ProcessingConfigField, TransferType } from "./admin_pb.js";
+import { Choice, Decision, Package, PackageType, ProcessingConfigField, TransferType } from "./admin_pb.js";
 
 /**
  * @generated from message archivematica.ccp.admin.v1beta1.CreatePackageRequest
@@ -200,13 +200,6 @@ export class ReadPackageResponse extends Message<ReadPackageResponse> {
    */
   decision: Decision[] = [];
 
-  /**
-   * List of jobs related to this package.
-   *
-   * @generated from field: repeated archivematica.ccp.admin.v1beta1.Job job = 3;
-   */
-  job: Job[] = [];
-
   constructor(data?: PartialMessage<ReadPackageResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -217,7 +210,6 @@ export class ReadPackageResponse extends Message<ReadPackageResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pkg", kind: "message", T: Package },
     { no: 2, name: "decision", kind: "message", T: Decision, repeated: true },
-    { no: 3, name: "job", kind: "message", T: Job, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReadPackageResponse {

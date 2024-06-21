@@ -120,9 +120,6 @@ message ReadPackageResponse {
   // List of awaiting decisions related to this package.
   // Only used if the status of the package is AWAITING_DECISION.
   repeated Decision decision = 2;
-
-  // List of jobs related to this package.
-  repeated Job job = 3;
 }
 
 message ListPackagesRequest {

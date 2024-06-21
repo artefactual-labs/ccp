@@ -161,21 +161,30 @@ func (s *Server) ReadPackage(ctx context.Context, req *connect.Request[adminv1.R
 		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}
 
+	pkg := &adminv1.Package{
+		Id:     req.Msg.Id,
+		Name:   t.Name,
+		Type:   t.Type,
+		Status: t.Status,
+	}
+
+	if dir, jobs, err := s.listJobs(ctx, id, true); err != nil {
+		s.logger.Error(err, "Failed to read jobs.")
+		return nil, connect.NewError(connect.CodeUnknown, nil)
+	} else {
+		pkg.Name = packageName(id, dir)
+		pkg.Directory = dir
+		pkg.Job = jobs
+	}
+
 	resp := &adminv1.ReadPackageResponse{
-		Pkg: &adminv1.Package{
-			Id:     req.Msg.Id,
-			Name:   t.Name,
-			Type:   t.Type,
-			Status: t.Status,
-		},
+		Pkg: pkg,
 	}
 
 	if decisions, ok := s.ctrl.PackageDecisions(id); ok {
 		resp.Pkg.Status = adminv1.PackageStatus_PACKAGE_STATUS_AWAITING_DECISION
 		resp.Decision = decisions
 	}
-
-	resp.Job = []*adminv1.Job{}
 
 	return connect.NewResponse(resp), nil
 }

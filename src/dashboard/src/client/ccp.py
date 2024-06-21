@@ -298,8 +298,19 @@ class CCPClient(Client):
         """Uses AdminService.ReadPackage."""
         req = service_pb2.ReadPackageRequest(id=id)
         resp = self.stub.ReadPackage(req)
-        # TODO: format response.
-        return resp
+
+        def format_job(job):
+            return {
+                "id": job.id,
+                "description": job.link_description,
+                "status": job.status,
+                "group": job.group,
+            }
+
+        return {
+            "name": resp.pkg.name,
+            "jobs": [format_job(job) for job in resp.pkg.job],
+        }
 
     def close(self):
         self.channel.close()
