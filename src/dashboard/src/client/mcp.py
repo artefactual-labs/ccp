@@ -153,7 +153,7 @@ class MCPClient(Client):
 
     def approve_partial_reingest(self, sip_id):
         return self._rpc_sync_call(
-            "approveTransferByPath",
+            "approvePartialReingest",
             {
                 "sip_id": sip_id,
             },

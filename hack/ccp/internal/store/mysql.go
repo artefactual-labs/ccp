@@ -13,11 +13,17 @@ import (
 	"github.com/go-logr/logr"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"go.artefactual.dev/tools/ref"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	sqlc "github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
+)
+
+var (
+	myJobsTable  = "Jobs"
+	myFilesTable = "Files"
 )
 
 func connectToMySQL(logger logr.Logger, dsn string) (*sql.DB, error) {
@@ -148,6 +154,38 @@ func (s *mysqlStoreImpl) UpdateJobStatus(ctx context.Context, id uuid.UUID, stat
 		ID:          id,
 		Currentstep: step,
 	})
+}
+
+func (s *mysqlStoreImpl) FindAwaitingJob(ctx context.Context, params *FindAwaitingJobParams) (_ *adminv1.Job, err error) {
+	defer wrap(&err, "FindAwaitingJob(ctx, params)")
+
+	ex := goqu.Ex{"currentStep": adminv1.JobStatus_JOB_STATUS_AWAITING_DECISION}
+
+	if params.Directory != nil { // ApproveTransferByPath
+		ex["directory"] = *params.Directory
+	} else if params.PackageID != nil { // ApprovePartialReingest
+		ex["SIPUUID"] = params.PackageID.String()
+		ex["microserviceGroup"] = ref.DerefZero(params.Group)
+	}
+
+	sel := s.goqu.Select().From(myJobsTable).Where(ex).Limit(1)
+
+	j := struct {
+		ID        uuid.UUID `db:"jobUUID"`
+		PackageID uuid.UUID `db:"SIPUUID"`
+	}{}
+	if ok, err := sel.ScanStructContext(ctx, &j); err != nil {
+		return nil, fmt.Errorf("scan: %v", err)
+	} else if !ok {
+		return nil, ErrNotFound
+	}
+
+	ret := &adminv1.Job{
+		Id:        j.ID.String(),
+		PackageId: j.PackageID.String(),
+	}
+
+	return ret, nil
 }
 
 func (s *mysqlStoreImpl) ListJobs(ctx context.Context, pkgID uuid.UUID) (_ []*adminv1.Job, err error) {
@@ -836,7 +874,7 @@ func (s *mysqlStoreImpl) CreateUnitVar(ctx context.Context, id uuid.UUID, packag
 func (s *mysqlStoreImpl) Files(ctx context.Context, id uuid.UUID, packageType enums.PackageType, filterFilenameEnd, filterSubdir, replacementPath string) (_ []File, err error) {
 	defer wrap(&err, "Files(%s, %s, %s, %s, %s)", id, packageType, filterFilenameEnd, filterSubdir, replacementPath)
 
-	sel := s.goqu.Select().From("Files")
+	sel := s.goqu.Select().From(myFilesTable)
 	if filterFilenameEnd != "" {
 		sel = sel.Where(goqu.Ex{"currentLocation": goqu.Op{"like": "%" + filterFilenameEnd}})
 	}

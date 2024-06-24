@@ -59,6 +59,9 @@ tparse: # @HELP Run all tests and output a coverage report using tparse.
 tparse: $(TPARSE)
 	go test -count=1 -json -cover $(TEST_PACKAGES) | tparse -follow -all -notests
 
+db: # @HELP Connect to the MySQL server using the CLI.
+	docker compose exec mysql mysql -hlocalhost -uroot -p12345 MCP
+
 test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
 test: GOTEST_FLAGS ?=

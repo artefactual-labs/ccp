@@ -106,8 +106,8 @@ func newDecision(name string, pkg *Package, choices []choice, jobID uuid.UUID, j
 	}
 }
 
-// resolve the decision given the position of one of the known choices.
-func (d *decision) resolve(pos int) error {
+// resolveWithPos the decision given the position of one of the known choices.
+func (d *decision) resolveWithPos(pos int) error {
 	d.RLock()
 	if d.resolved {
 		return errors.New("decision is not pending resolution")
@@ -117,6 +117,31 @@ func (d *decision) resolve(pos int) error {
 	d.Lock()
 	d.res <- pos
 	d.resolved = true
+	d.Unlock()
+
+	return nil
+}
+
+func (d *decision) resolveWithChoice(choice string) error {
+	d.RLock()
+	if d.resolved {
+		return errors.New("decision is not pending resolution")
+	}
+	d.RUnlock()
+
+	d.Lock()
+	var pos *int
+	for i, c := range d.choices {
+		if c.nextLink.String() == choice {
+			pos = &i
+		}
+	}
+	if pos == nil {
+		return errors.New("position unmatched")
+	} else {
+		d.res <- *pos
+		d.resolved = true
+	}
 	d.Unlock()
 
 	return nil
