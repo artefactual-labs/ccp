@@ -66,6 +66,10 @@ jobs:
       - name: Run tests
         run: go test -race ./...
         working-directory: hack/ccp
+      - name: Run integration tests
+        run: ./hack/integration.sh
+        working-directory: hack/ccp
+        if: false # TODO: investigate; runner fails becaused dir is not watched.
   mod:
     name: Check that `go mod tidy` is clean
     runs-on: ubuntu-latest
