@@ -15,6 +15,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -43,6 +44,9 @@ var batchSize = 128
 type taskBackend struct {
 	logger logr.Logger
 
+	// metrics container.
+	metrics *metrics.Metrics
+
 	// job that generates the tasks.
 	job *job
 
@@ -58,7 +62,7 @@ type taskBackend struct {
 	// wg is used to wait until all batches are completed.
 	wg sync.WaitGroup
 
-	// tasks contains the entire set of tasks across tasks batches.
+	// tasks contains the entire set of tasks across all batches.
 	tasks []*task
 
 	// batch contains the set of batch for the current batch.
@@ -74,9 +78,10 @@ type taskBackend struct {
 	mu sync.Mutex
 }
 
-func newTaskBackend(logger logr.Logger, job *job, store store.Store, gearman *gearmin.Server, config *workflow.LinkStandardTaskConfig) *taskBackend {
+func newTaskBackend(logger logr.Logger, metrics *metrics.Metrics, job *job, store store.Store, gearman *gearmin.Server, config *workflow.LinkStandardTaskConfig) *taskBackend {
 	return &taskBackend{
 		logger:  logger.V(3),
+		metrics: metrics,
 		job:     job,
 		store:   store,
 		gearman: gearman,
@@ -102,10 +107,13 @@ func (b *taskBackend) submit(ctx context.Context, rm replacementMapping, args st
 		t.WantsOutput = true
 	}
 
+	// Add the task to the current batch.
 	b.batch = append(b.batch, t)
 
+	// Send the batch for processing if it has reached its max. size.
 	var err error
 	if len(b.batch)%batchSize == 0 {
+		b.metrics.GearmanPendingJobsGauge.Inc()
 		err = b.sendBatch(ctx)
 	}
 
@@ -156,6 +164,9 @@ func (b *taskBackend) sendBatch(ctx context.Context) (err error) {
 	}
 
 	b.logger.Info("Submitting batch to MCPClient.", "script", b.config.Execute, "size", size)
+
+	b.metrics.GearmanActiveJobsGauge.Inc()
+	b.metrics.GearmanPendingJobsGauge.Dec()
 
 	// Launch a goroutine to wait for this batch.
 	done := make(chan *gearmin.JobUpdate, 1)
@@ -228,6 +239,7 @@ func (b *taskBackend) handleJobUpdate(ctx context.Context, update *gearmin.JobUp
 	}
 
 	b.logger.Info("Received job update from worker.", "type", update.Type)
+	b.metrics.GearmanActiveJobsGauge.Dec()
 
 	var data []byte
 
@@ -243,7 +255,7 @@ func (b *taskBackend) handleJobUpdate(ctx context.Context, update *gearmin.JobUp
 
 	res := &taskResults{}
 	if err := json.Unmarshal(data, res); err != nil {
-		b.logger.V(3).Info("Failed to decode results of a batch.", "type", update.Type)
+		b.logger.Info("Failed to decode results of a batch.", "type", update.Type)
 		return
 	}
 
@@ -252,6 +264,7 @@ func (b *taskBackend) handleJobUpdate(ctx context.Context, update *gearmin.JobUp
 	for _, task := range b.tasks {
 		id := task.ID
 		if r, ok := res.Results[id]; ok {
+			r.task = task
 			b.results.Results[id] = r
 			_ = task.writeOutput(r.Stdout, r.Stderr)
 		}
@@ -313,7 +326,7 @@ type task struct {
 	stderrFilePath string
 
 	// exitCode       *int
-	// completedAt    time.Time
+	// completedAt time.Time
 }
 
 func (t task) MarshalJSON() ([]byte, error) {
@@ -396,4 +409,6 @@ type taskResult struct {
 	FinishedAt time.Time `json:"finishedTimestamp"`
 	Stdout     string    `json:"stdout"`
 	Stderr     string    `json:"stderr"`
+
+	task *task
 }

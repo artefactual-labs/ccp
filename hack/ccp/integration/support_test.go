@@ -95,6 +95,10 @@ type env struct {
 	// TODO: use free port.
 	ccpJobServerAddr hostPort
 
+	// Listen address for the CCP Metrics API server.
+	// TODO: use free port.
+	ccpMetricsServerAddr hostPort
+
 	// CCP Admin API client, should be ready to use once the env is created.
 	ccpClient adminv1connect.AdminServiceClient
 
@@ -110,10 +114,11 @@ type env struct {
 // tests successfully. It uses testcontainers to run containers.
 func createEnv(t *testing.T) *env {
 	env := &env{
-		t:                  t,
-		ctx:                context.Background(),
-		ccpAdminServerAddr: newHostPort("127.0.0.1", 22300),
-		ccpJobServerAddr:   newHostPort("127.0.0.1", 22301),
+		t:                    t,
+		ctx:                  context.Background(),
+		ccpAdminServerAddr:   newHostPort("127.0.0.1", 22300),
+		ccpJobServerAddr:     newHostPort("127.0.0.1", 22301),
+		ccpMetricsServerAddr: newHostPort("127.0.0.1", 22302),
 	}
 	env.lookUpUser()
 
@@ -280,6 +285,7 @@ func (e *env) runCCP() {
 		"--ssclient.url=" + e.storageServiceBaseURL,
 		"--ssclient.username=test",
 		"--ssclient.key=test",
+		"--metrics.addr=" + e.ccpMetricsServerAddr.Addr(),
 	}
 
 	var stdout io.Writer

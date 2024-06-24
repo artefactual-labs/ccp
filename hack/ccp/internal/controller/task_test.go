@@ -8,12 +8,14 @@ import (
 
 	"github.com/artefactual-labs/gearmin/gearmintest"
 	"github.com/go-logr/logr/testr"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/mikespook/gearman-go/worker"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -53,7 +55,7 @@ func workerHandler(t *testing.T, job worker.Job) ([]byte, error) {
 func TestTaskBackend(t *testing.T) {
 	t.Parallel()
 
-	t.Skip("Fails interminttently in (github.com/mikespook/gearman-go).")
+	t.Skip("Fails intermittently in (github.com/mikespook/gearman-go).")
 
 	batchSize = 128
 	fnName := "do"
@@ -76,7 +78,7 @@ func TestTaskBackend(t *testing.T) {
 	})).AnyTimes()
 
 	logger := testr.NewWithOptions(t, testr.Options{Verbosity: 10})
-	backend := newTaskBackend(logger, &job{}, s, srv, &workflow.LinkStandardTaskConfig{
+	backend := newTaskBackend(logger, metrics.NewMetrics(nil), &job{}, s, srv, &workflow.LinkStandardTaskConfig{
 		Execute:    fnName,
 		StdoutFile: tmpDir.Join("stdout.log"),
 		StderrFile: tmpDir.Join("stderr.log"),
@@ -148,5 +150,5 @@ func TestTaskResultsDecoding(t *testing.T) {
 				Stderr:     "data",
 			},
 		},
-	})
+	}, cmpopts.IgnoreUnexported(taskResult{}))
 }

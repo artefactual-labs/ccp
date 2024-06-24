@@ -9,13 +9,15 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 type job struct {
-	logger logr.Logger
+	logger  logr.Logger
+	metrics *metrics.Metrics
 
 	// gearman is used to dispatch jobs to MCPClient.
 	gearman *gearmin.Server
@@ -50,9 +52,10 @@ type jobRunner interface {
 	exec(context.Context) (uuid.UUID, error)
 }
 
-func newJob(logger logr.Logger, chain *chain, pkg *Package, gearman *gearmin.Server, wl *workflow.Link, wf *workflow.Document) (*job, error) {
+func newJob(logger logr.Logger, metrics *metrics.Metrics, chain *chain, pkg *Package, gearman *gearmin.Server, wl *workflow.Link, wf *workflow.Document) (*job, error) {
 	j := &job{
 		logger:    logger,
+		metrics:   metrics,
 		gearman:   gearman,
 		id:        uuid.New(),
 		createdAt: time.Now().UTC(),
@@ -194,6 +197,29 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	j.finalStatusRecorded = true
 
 	return nil
+}
+
+// processTasksResults processes a set of task results produced by a client job,
+// e.g.: filesClientScriptJob. It returns the highest exist code seen.
+func (j *job) processTaskResults(cfg *workflow.LinkStandardTaskConfig, tr *taskResults) int {
+	maxExitCode := 0
+
+	for _, result := range tr.Results {
+		j.metrics.TaskCompleted(
+			result.task.CreatedAt,
+			result.FinishedAt,
+			cfg.Execute,
+			j.wl.Group.String(),
+			j.wl.Description.String(),
+		)
+
+		// Calculate the maximum exit code.
+		if result.ExitCode > maxExitCode {
+			maxExitCode = result.ExitCode
+		}
+	}
+
+	return maxExitCode
 }
 
 func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID { //nolint:unparam
