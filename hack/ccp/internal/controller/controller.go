@@ -399,7 +399,7 @@ func (c *Controller) ResolveDecision(id uuid.UUID, pos int) error {
 		return errors.New("decision cannot be found")
 	}
 
-	return match.resolve(pos)
+	return match.resolveWithPos(pos)
 }
 
 func (c *Controller) ResolveDecisionLegacy(jobID uuid.UUID, choice string) error {
@@ -420,16 +420,13 @@ func (c *Controller) ResolveDecisionLegacy(jobID uuid.UUID, choice string) error
 		return errors.New("package is not awaiting")
 	}
 
-	// For now we're asumming that the client is sending the choice position,
-	// but this many not always be true. We should probably support the old
-	// mechanism where the choices are indexed by a string with different
-	// meanings depending on the decision job, e.g. chan ID, location URI...
-	pos, err := strconv.Atoi(choice)
-	if err != nil {
-		return errors.New("unexpectec choice format")
+	// We attempt to read the choice as an integer describing the position of
+	// the decision to choose.
+	if pos, err := strconv.Atoi(choice); err == nil {
+		return match.resolveWithPos(pos)
 	}
 
-	return match.resolve(pos)
+	return match.resolveWithChoice(choice)
 }
 
 func (c *Controller) Close() error {

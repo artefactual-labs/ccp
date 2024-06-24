@@ -61,7 +61,7 @@ func TestOutputDecisionJob(t *testing.T) {
 
 		decision := assertErrWait(t, err, "Store AIP location", chainChoices)
 
-		decision.resolve(0)
+		decision.resolveWithPos(0)
 		nextLink, err := decision.await(context.Background())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("5f213529-ced4-49b0-9e30-be4e0c9b81d5"))
@@ -105,7 +105,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 			{label: "No", nextLink: uuid.MustParse("e9eaef1e-c2e0-4e3b-b942-bfb537162795")},
 		})
 
-		decision.resolve(0)
+		decision.resolveWithPos(0)
 		nextLink, err := decision.await(context.Background())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("df54fec1-dae1-4ea6-8d17-a839ee7ac4a7"))
@@ -127,7 +127,29 @@ func TestNextChainDecisionJob(t *testing.T) {
 			{label: "Reject transfer", nextLink: uuid.MustParse("1b04ec43-055c-43b7-9543-bd03c6a778ba")},
 		})
 
-		decision.resolve(0)
+		decision.resolveWithPos(0)
+		nextLink, err := decision.await(context.Background())
+		assert.NilError(t, err)
+		assert.Equal(t, nextLink, uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969"))
+	})
+
+	t.Run("Resolves decision when the position is unknown", func(t *testing.T) {
+		t.Parallel()
+
+		job, store := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
+
+		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		id, err := job.exec(context.Background())
+		assert.Equal(t, id, uuid.Nil)
+
+		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
+			{label: "Create single SIP and continue processing", nextLink: uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969")},
+			{label: "Reject transfer", nextLink: uuid.MustParse("1b04ec43-055c-43b7-9543-bd03c6a778ba")},
+		})
+
+		decision.resolveWithChoice("61cfa825-120e-4b17-83e6-51a42b67d969")
 		nextLink, err := decision.await(context.Background())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969"))
@@ -196,7 +218,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 			{label: "Yes", value: [2]string{"AssignUUIDsToDirectories", "True"}, nextLink: uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c")},
 		})
 
-		decision.resolve(0)
+		decision.resolveWithPos(0)
 		nextLink, err := decision.await(context.Background())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c"))

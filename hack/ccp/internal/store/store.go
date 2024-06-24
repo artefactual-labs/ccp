@@ -29,6 +29,9 @@ type Store interface {
 	// UpdateJobStatus modifies the status of a Job.
 	UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) error
 
+	// FindAwaitingJob returns the first job awaiting a decision.
+	FindAwaitingJob(ctx context.Context, params *FindAwaitingJobParams) (*adminv1.Job, error)
+
 	// ListJobs returns a list of jobs related to a package showing the most
 	// recently created jobs first.
 	ListJobs(ctx context.Context, pkgID uuid.UUID) ([]*adminv1.Job, error)
@@ -203,4 +206,10 @@ type StorageServiceConfig struct {
 	URL      string
 	Username string
 	APIKey   string
+}
+
+type FindAwaitingJobParams struct {
+	Directory *string
+	PackageID *uuid.UUID
+	Group     *string
 }

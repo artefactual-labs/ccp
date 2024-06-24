@@ -20,7 +20,7 @@ message ApproveTransferByPathRequest {
   string directory = 1;
 
   // Type of the transfer, default to "standard".
-  TransferType type = 2;
+  TransferType type = 2 [(buf.validate.field).enum = {defined_only: true}];
 }
 
 message ApproveTransferByPathResponse {

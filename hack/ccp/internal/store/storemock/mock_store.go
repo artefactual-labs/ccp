@@ -393,6 +393,45 @@ func (c *MockStoreFilesCall) DoAndReturn(f func(context.Context, uuid.UUID, enum
 	return c
 }
 
+// FindAwaitingJob mocks base method.
+func (m *MockStore) FindAwaitingJob(ctx context.Context, params *store.FindAwaitingJobParams) (*adminv1beta1.Job, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAwaitingJob", ctx, params)
+	ret0, _ := ret[0].(*adminv1beta1.Job)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAwaitingJob indicates an expected call of FindAwaitingJob.
+func (mr *MockStoreMockRecorder) FindAwaitingJob(ctx, params any) *MockStoreFindAwaitingJobCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAwaitingJob", reflect.TypeOf((*MockStore)(nil).FindAwaitingJob), ctx, params)
+	return &MockStoreFindAwaitingJobCall{Call: call}
+}
+
+// MockStoreFindAwaitingJobCall wrap *gomock.Call
+type MockStoreFindAwaitingJobCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreFindAwaitingJobCall) Return(arg0 *adminv1beta1.Job, arg1 error) *MockStoreFindAwaitingJobCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreFindAwaitingJobCall) Do(f func(context.Context, *store.FindAwaitingJobParams) (*adminv1beta1.Job, error)) *MockStoreFindAwaitingJobCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreFindAwaitingJobCall) DoAndReturn(f func(context.Context, *store.FindAwaitingJobParams) (*adminv1beta1.Job, error)) *MockStoreFindAwaitingJobCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // ListJobs mocks base method.
 func (m *MockStore) ListJobs(ctx context.Context, pkgID uuid.UUID) ([]*adminv1beta1.Job, error) {
 	m.ctrl.T.Helper()
