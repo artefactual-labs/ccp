@@ -28,6 +28,7 @@ import (
 	"go.uber.org/goleak"
 	"golang.org/x/exp/slices"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/poll"
 
 	"github.com/artefactual/archivematica/hack/ccp/integration/storage"
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
@@ -354,6 +355,16 @@ func (e *env) createTransfer(config workflow.ProcessingConfig, processingConfigT
 	return tmpDir
 }
 
+func (e *env) depositTransferViaWatchedDir(transferName, watchedDir string, config workflow.ProcessingConfig, processingConfigTransformations ...string) string {
+	transferDir := e.createTransfer(config, processingConfigTransformations...)
+	dest := filepath.Join(e.sharedDir, "watchedDirectories/activeTransfers", watchedDir, transferName)
+
+	err := os.Rename(transferDir, dest) // This should be picked up by the watcher.
+	assert.NilError(e.t, err)
+
+	return dest
+}
+
 // waitForHealthStatus blocks until the heatlh check status succeeds.
 func waitForHealthStatus(t testing.TB, baseURL string) {
 	client := &http.Client{}
@@ -482,4 +493,33 @@ func resolve(t *testing.T, ctx context.Context, client adminv1connect.AdminServi
 		},
 	})
 	assert.NilError(t, err)
+}
+
+// approve a package.
+func approve(t *testing.T, ctx context.Context, client adminv1connect.AdminServiceClient, name string, transferType adminv1.TransferType) { //nolint: unparam
+	poll.WaitOn(t,
+		func(lt poll.LogT) poll.Result {
+			resp, err := client.ListDecisions(ctx, &connect.Request[adminv1.ListDecisionsRequest]{Msg: &adminv1.ListDecisionsRequest{}})
+			if err != nil {
+				return poll.Error(err)
+			}
+
+			ln := len(resp.Msg.Decision)
+			if ln == 0 {
+				return poll.Continue("decision not available yet")
+			} else if ln > 1 {
+				return poll.Error(fmt.Errorf("unexpected number of decisions: %d", ln))
+			}
+
+			decision := resp.Msg.Decision[0]
+			if decision.Name != "Approve standard transfer" {
+				return poll.Error(errors.New("unexpected decision to be resolved"))
+			}
+
+			resolve(t, ctx, client, decision, "Approve transfer")
+			return poll.Success()
+		},
+		poll.WithDelay(time.Second/4),
+		poll.WithTimeout(time.Minute),
+	)
 }

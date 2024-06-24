@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,6 +14,52 @@ import (
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
+
+func TestServerCreatePackageViaWatchedDir(t *testing.T) {
+	requireFlag(t)
+	env := createEnv(t)
+
+	transferName := "Test"
+	_ = env.depositTransferViaWatchedDir(
+		transferName,
+		"standardTransfer",
+		workflow.AutomatedConfig,
+		configTransformations()...,
+	)
+
+	approve(t, env.ctx, env.ccpClient, transferName, adminv1.TransferType_TRANSFER_TYPE_STANDARD)
+
+	poll.WaitOn(t,
+		func(t poll.LogT) poll.Result {
+			resp, err := env.ccpClient.ListPackages(env.ctx, &connect.Request[adminv1.ListPackagesRequest]{Msg: &adminv1.ListPackagesRequest{
+				Type: adminv1.PackageType_PACKAGE_TYPE_TRANSFER,
+			}})
+			if err != nil {
+				return poll.Error(err)
+			}
+
+			packages := resp.Msg.Package
+			ln := len(packages)
+			if ln == 0 {
+				return poll.Continue("package not seen yet")
+			} else if ln > 2 {
+				return poll.Error(fmt.Errorf("unexpected number of packages listed: %d", ln))
+			}
+
+			pkg := packages[0]
+			if pkg.Status == adminv1.PackageStatus_PACKAGE_STATUS_FAILED {
+				return poll.Error(errors.New("package processing failed"))
+			}
+			if pkg.Status == adminv1.PackageStatus_PACKAGE_STATUS_DONE || pkg.Status == adminv1.PackageStatus_PACKAGE_STATUS_COMPLETED_SUCCESSFULLY {
+				return poll.Success()
+			}
+
+			return poll.Continue("work is still ongoing")
+		},
+		poll.WithDelay(time.Second/4),
+		poll.WithTimeout(time.Minute*2),
+	)
+}
 
 func TestServerCreatePackage(t *testing.T) {
 	requireFlag(t)
@@ -56,8 +103,6 @@ func TestServerCreatePackage(t *testing.T) {
 		poll.WithDelay(time.Second/4),
 		poll.WithTimeout(time.Minute*2),
 	)
-
-	t.Log("Test completed successfully!")
 }
 
 func TestServerCreatePackageWithUserDecision(t *testing.T) {
@@ -116,6 +161,4 @@ func TestServerCreatePackageWithUserDecision(t *testing.T) {
 		poll.WithDelay(time.Second/4),
 		poll.WithTimeout(time.Minute),
 	)
-
-	t.Log("Test completed successfully!")
 }
