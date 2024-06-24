@@ -4,9 +4,7 @@ package archivematica.ccp.admin.v1beta1;
 
 import "archivematica/ccp/admin/v1beta1/admin.proto";
 import "archivematica/ccp/admin/v1beta1/deprecated.proto";
-import "archivematica/ccp/admin/v1beta1/i18n.proto";
 import "buf/validate/validate.proto";
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 service AdminService {

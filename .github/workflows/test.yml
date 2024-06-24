@@ -5,6 +5,20 @@ on:
 permissions:
   contents: read
 jobs:
+  lint-protos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-lint-action@v1
+        with:
+          input: hack/ccp
+      - uses: bufbuild/buf-push-action@v1
+        if: github.ref_name == 'ccp'
+        with:
+          buf_token: ${{ secrets.BUF_TOKEN }}
+          input: hack/ccp
   golangci-lint:
     runs-on: ubuntu-latest
     steps:

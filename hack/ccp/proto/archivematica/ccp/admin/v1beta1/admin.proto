@@ -5,7 +5,6 @@ package archivematica.ccp.admin.v1beta1;
 import "archivematica/ccp/admin/v1beta1/i18n.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
 message Package {
   // Identifier of the package (UUIDv4).
