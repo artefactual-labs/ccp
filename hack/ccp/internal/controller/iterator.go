@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
@@ -18,6 +19,7 @@ var errEnd = errors.New("terminator")
 type jobIterator struct {
 	ctx      context.Context
 	logger   logr.Logger
+	metrics  *metrics.Metrics
 	gearman  *gearmin.Server
 	wf       *workflow.Document
 	pkg      *Package
@@ -25,10 +27,11 @@ type jobIterator struct {
 	chain    *chain    // Current workflow chain
 }
 
-func newJobIterator(ctx context.Context, logger logr.Logger, gearman *gearmin.Server, wf *workflow.Document, pkg *Package) *jobIterator {
+func newJobIterator(ctx context.Context, logger logr.Logger, metrics *metrics.Metrics, gearman *gearmin.Server, wf *workflow.Document, pkg *Package) *jobIterator {
 	iter := &jobIterator{
 		ctx:     ctx,
 		logger:  logger,
+		metrics: metrics,
 		gearman: gearman,
 		wf:      wf,
 		pkg:     pkg,
@@ -138,7 +141,7 @@ func (i *jobIterator) buildJob(wl *workflow.Link, logger logr.Logger) (*job, err
 		"terminator", wl.End,
 	)
 
-	j, err := newJob(logger, i.chain, i.pkg, i.gearman, wl, i.wf)
+	j, err := newJob(logger, i.metrics, i.chain, i.pkg, i.gearman, wl, i.wf)
 	if err != nil {
 		return nil, fmt.Errorf("build job: %v", err)
 	}

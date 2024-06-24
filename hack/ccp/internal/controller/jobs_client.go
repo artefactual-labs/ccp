@@ -43,11 +43,12 @@ func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) 
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
 
-	if err := l.j.updateStatusFromExitCode(ctx, taskResult.ExitCode); err != nil {
+	exitCode := l.j.processTaskResults(l.config, taskResult)
+	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
 		return uuid.Nil, err
 	}
 
-	if ec, ok := l.j.wl.ExitCodes[taskResult.ExitCode]; ok {
+	if ec, ok := l.j.wl.ExitCodes[exitCode]; ok {
 		if ec.LinkID == nil {
 			return uuid.Nil, io.EOF // End of chain.
 		}
@@ -61,13 +62,13 @@ func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) 
 	return l.j.wl.FallbackLinkID, nil
 }
 
-func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResult, error) {
+func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResults, error) {
 	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
 	args := rm.replaceValues(l.config.Arguments)
 	stdout := rm.replaceValues(l.config.StdoutFile)
 	stderr := rm.replaceValues(l.config.StderrFile)
 
-	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
+	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
 	if err := taskBackend.submit(ctx, rm, args, false, stdout, stderr); err != nil {
 		return nil, err
 	}
@@ -77,12 +78,7 @@ func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResult
 		return nil, fmt.Errorf("wait: %v", err)
 	}
 
-	ret := results.First()
-	if ret == nil {
-		return nil, errors.New("submit task: no results")
-	}
-
-	return ret, nil
+	return results, nil
 }
 
 // filesClientScriptJob.
@@ -118,11 +114,8 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
-	exitCode := 0
-	if taskResults != nil {
-		exitCode = taskResults.ExitCode()
-	}
 
+	exitCode := l.j.processTaskResults(l.config, taskResults)
 	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
 		return uuid.Nil, err
 	}
@@ -143,14 +136,14 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 
 func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) (*taskResults, error) {
 	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain)
-	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
+	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
 
 	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, filterSubDir)
 	if err != nil {
 		return nil, err
 	}
 	if len(files) == 0 {
-		return nil, nil // Nothing to do.
+		return &taskResults{}, nil // Nothing to do.
 	}
 
 	for _, fileReplacements := range files {
@@ -234,10 +227,13 @@ type outputClientScriptChoice struct {
 }
 
 func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	taskResult, err := l.submitTasks(ctx)
+	taskResults, err := l.submitTasks(ctx)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
+
+	exitCode := l.j.processTaskResults(l.config, taskResults)
+	taskResult := taskResults.First()
 
 	output := map[string]outputClientScriptChoice{}
 	if err := json.Unmarshal([]byte(taskResult.Stdout), &output); err != nil {
@@ -253,11 +249,11 @@ func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 		l.j.chain.choices = choices
 	}
 
-	if err := l.j.updateStatusFromExitCode(ctx, taskResult.ExitCode); err != nil {
+	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
 		return uuid.Nil, err
 	}
 
-	if ec, ok := l.j.wl.ExitCodes[taskResult.ExitCode]; ok {
+	if ec, ok := l.j.wl.ExitCodes[exitCode]; ok {
 		if ec.LinkID == nil {
 			return uuid.Nil, io.EOF // End of chain.
 		}
@@ -271,13 +267,13 @@ func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 	return uuid.Nil, nil
 }
 
-func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResult, error) {
+func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResults, error) {
 	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
 	args := rm.replaceValues(l.config.Arguments)
 	stdout := rm.replaceValues(l.config.StdoutFile)
 	stderr := rm.replaceValues(l.config.StderrFile)
 
-	taskBackend := newTaskBackend(l.j.logger, l.j, l.j.pkg.store, l.j.gearman, l.config)
+	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
 	if err := taskBackend.submit(ctx, rm, args, true, stdout, stderr); err != nil {
 		return nil, err
 	}
@@ -287,10 +283,5 @@ func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResult, e
 		return nil, fmt.Errorf("wait: %v", err)
 	}
 
-	ret := results.First()
-	if ret == nil {
-		return nil, errors.New("submit task: no results")
-	}
-
-	return ret, nil
+	return results, nil
 }

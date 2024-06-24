@@ -12,6 +12,7 @@ import (
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -33,7 +34,7 @@ func createJob(t *testing.T, linkID string) (*job, *storemock.MockStore) {
 	pkg.unit = &noUnit{}
 	pkg.path = tmpDir.Join("sharedDir/tmp/pkg")
 
-	job, err := newJob(logr.Discard(), chain, pkg, gearmin, ln, wf)
+	job, err := newJob(logr.Discard(), metrics.NewMetrics(nil), chain, pkg, gearmin, ln, wf)
 	assert.NilError(t, err)
 
 	return job, store

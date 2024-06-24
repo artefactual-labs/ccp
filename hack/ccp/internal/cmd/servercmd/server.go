@@ -28,6 +28,9 @@ type Server struct {
 	cancel context.CancelFunc
 	config *Config
 
+	// Metrics server.
+	metrics *metricsServer
+
 	// Data store.
 	store store.Store
 
@@ -71,6 +74,12 @@ func (s *Server) Run() error {
 	}
 	if err != nil {
 		return fmt.Errorf("error loading workflow: %v", err)
+	}
+
+	s.logger.V(1).Info("Creating metrics server.")
+	s.metrics = newMetricsServer(s.logger.WithName("metrics"), s.config.metrics, wf)
+	if err := s.metrics.Run(); err != nil {
+		return fmt.Errorf("error creating metrics server: %v", err)
 	}
 
 	s.logger.V(1).Info("Creating database store.")
@@ -122,7 +131,7 @@ func (s *Server) Run() error {
 	}
 
 	s.logger.V(1).Info("Creating controller.")
-	s.controller = controller.New(s.logger.WithName("controller"), ssclient, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
+	s.controller = controller.New(s.logger.WithName("controller"), s.metrics.metrics, ssclient, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
 	if err := s.controller.Run(); err != nil {
 		return fmt.Errorf("error creating controller: %v", err)
 	}
@@ -155,6 +164,8 @@ func (s *Server) Run() error {
 func (s *Server) Close() error {
 	var errs error
 
+	ctx := context.Background()
+
 	s.logger.Info("Shutting down...")
 
 	s.cancel()
@@ -177,6 +188,10 @@ func (s *Server) Close() error {
 
 	if s.webui != nil {
 		errs = errors.Join(errs, s.webui.Close())
+	}
+
+	if s.metrics != nil {
+		errs = errors.Join(errs, s.metrics.Close(ctx))
 	}
 
 	s.gearman.Stop()

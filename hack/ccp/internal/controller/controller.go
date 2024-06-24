@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -28,6 +29,9 @@ const maxConcurrentPackages = 2
 // There are three queues: queued, active and awaiting.
 type Controller struct {
 	logger logr.Logger
+
+	// Application metrics.
+	metrics *metrics.Metrics
 
 	// Archivematica Storage Service API client.
 	ssclient ssclient.Client
@@ -73,9 +77,10 @@ type Controller struct {
 	closeOnce sync.Once
 }
 
-func New(logger logr.Logger, ssclient ssclient.Client, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
+func New(logger logr.Logger, metrics *metrics.Metrics, ssclient ssclient.Client, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
 	c := &Controller{
 		logger:           logger,
+		metrics:          metrics,
 		ssclient:         ssclient,
 		store:            store,
 		gearman:          gearman,
@@ -175,6 +180,7 @@ func (c *Controller) Notify(path string) (err error) {
 func (c *Controller) queue(pkg *Package) {
 	c.mu.Lock()
 	c.queuedPackages = append(c.queuedPackages, pkg)
+	c.metrics.PackageQueueLengthGauge.WithLabelValues(pkg.packageType().String()).Inc()
 	c.mu.Unlock()
 }
 
@@ -192,6 +198,7 @@ func (c *Controller) pick() {
 		pkg = c.queuedPackages[0]
 		c.activePackages = append(c.activePackages, pkg)
 		c.queuedPackages = c.queuedPackages[1:]
+		c.metrics.ActivePackageGauge.Inc()
 	}
 
 	if pkg == nil {
@@ -203,7 +210,7 @@ func (c *Controller) pick() {
 		logger.Info("Processing started.")
 		defer c.deactivate(pkg)
 
-		iter := newJobIterator(c.groupCtx, logger, c.gearman, c.wf, pkg)
+		iter := newJobIterator(c.groupCtx, logger, c.metrics, c.gearman, c.wf, pkg)
 		for {
 			err := iter.next() // Runs the next job.
 
@@ -224,13 +231,15 @@ func (c *Controller) pick() {
 }
 
 // deactivate removes a package from the activePackages queue.
-func (c *Controller) deactivate(p *Package) {
+func (c *Controller) deactivate(pkg *Package) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	for i, item := range c.activePackages {
-		if item.id == p.id {
+		if item.id == pkg.id {
 			c.activePackages = append(c.activePackages[:i], c.activePackages[i+1:]...)
+			c.metrics.ActivePackageGauge.Dec()
+			c.metrics.PackageQueueLengthGauge.WithLabelValues(pkg.packageType().String()).Dec()
 			break
 		}
 	}

@@ -71,6 +71,7 @@ services:
       - "CCP_SSCLIENT_URL=http://nginx:8000"
       - "CCP_SSCLIENT_USERNAME=test"
       - "CCP_SSCLIENT_KEY=test"
+      - "CCP_METRICS_ADDR=:7999"
     volumes:
       - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
     links:

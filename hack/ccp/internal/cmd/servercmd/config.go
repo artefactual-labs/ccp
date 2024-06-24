@@ -5,6 +5,7 @@ import (
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
+	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/webui"
 )
@@ -19,6 +20,7 @@ type Config struct {
 	gearmin    gearminConfig
 	ssclient   ssclient.Config
 	webui      webui.Config
+	metrics    metrics.Config
 }
 
 type databaseConfig struct {

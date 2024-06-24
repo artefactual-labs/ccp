@@ -179,8 +179,7 @@ func copyFromTransferSources(ctx context.Context, c ssclient.Client, sharedDir s
 			return fmt.Errorf("location %s is not associated with this pipeline", locID)
 		}
 
-		dir := isDir(filepath.Join(sharedDir, "tmp", strings.TrimPrefix("/", destRel)))
-		fmt.Println(dir, sharedDir)
+		_ = isDir(filepath.Join(sharedDir, "tmp", strings.TrimPrefix("/", destRel)))
 
 		// Source relative to the transfer source path.
 		source := strings.Replace(path, ops.transferSource.Path, "", 1)

@@ -3,17 +3,37 @@ package integration_test
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/poll"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
+
+func TestPrometheusMetrics(t *testing.T) {
+	requireFlag(t)
+
+	t.Run("Exposes metrics via its HTTP API", func(t *testing.T) {
+		env := createEnv(t)
+
+		resp, err := http.Get(env.ccpMetricsServerAddr.URL("http") + "/metrics")
+		assert.NilError(t, err)
+		defer resp.Body.Close()
+
+		blob, err := io.ReadAll(resp.Body)
+		assert.NilError(t, err)
+
+		assert.Assert(t, cmp.Contains(string(blob), "mcpserver_active_jobs 0"))
+	})
+}
 
 func TestServerCreatePackageViaWatchedDir(t *testing.T) {
 	requireFlag(t)
