@@ -272,10 +272,7 @@ func (s *Server) ListProcessingConfigurationFields(ctx context.Context, req *con
 	}), nil
 }
 
-func (s *Server) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
+func (s *Server) Close(ctx context.Context) error {
 	if s.server != nil {
 		if err := s.server.Shutdown(ctx); err != nil {
 			return err

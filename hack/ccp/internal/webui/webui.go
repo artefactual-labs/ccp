@@ -99,9 +99,6 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	s.json(w, http.StatusOK, map[string]string{"status": "OK"})
 }
 
-func (s *Server) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
+func (s *Server) Close(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }

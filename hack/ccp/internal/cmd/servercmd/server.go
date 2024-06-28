@@ -164,11 +164,12 @@ func (s *Server) Run() error {
 func (s *Server) Close() error {
 	var errs error
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
 
 	s.logger.Info("Shutting down...")
 
-	s.cancel()
+	s.cancel() // Cancel the root context.
 
 	if s.store != nil && s.store.Running() {
 		errs = errors.Join(errs, s.store.Close())
@@ -183,18 +184,27 @@ func (s *Server) Close() error {
 	}
 
 	if s.admin != nil {
-		errs = errors.Join(errs, s.admin.Close())
+		errs = errors.Join(errs, s.admin.Close(ctx))
 	}
 
 	if s.webui != nil {
-		errs = errors.Join(errs, s.webui.Close())
+		errs = errors.Join(errs, s.webui.Close(ctx))
 	}
 
 	if s.metrics != nil {
 		errs = errors.Join(errs, s.metrics.Close(ctx))
 	}
 
-	s.gearman.Stop()
+	// TODO: gearmin's Stop method can block indefinitely under certain circumstances.
+	done := make(chan struct{}, 1)
+	go func() {
+		s.gearman.Stop()
+		done <- struct{}{}
+	}()
+	select {
+	case <-time.After(time.Second / 2):
+	case <-done:
+	}
 
 	return errs
 }
