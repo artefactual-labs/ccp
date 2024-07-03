@@ -126,7 +126,7 @@ func (f *storageLocationField) addChoice(cf *configField, uri, label string) {
 
 func (f *storageLocationField) update(ctx context.Context, cf *configField, ssclient ssclient.Client) error {
 	var err error
-	locations, err := ssclient.ListLocations(context.Background(), "", f.purpose)
+	locations, err := ssclient.ListLocations(ctx, "", f.purpose)
 	if err != nil {
 		return err
 	}

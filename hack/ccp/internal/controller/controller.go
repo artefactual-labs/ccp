@@ -119,7 +119,7 @@ func (c *Controller) Run() error {
 }
 
 // Submit a transfer request.
-func (c *Controller) Submit(ctx context.Context, req *adminv1.CreatePackageRequest) (*Package, error) {
+func (c *Controller) Submit(req *adminv1.CreatePackageRequest) (*Package, error) {
 	// TODO: have NewTransferPackage return a function we can schedule here.
 	var once sync.Once
 	queue := func(pkg *Package) {

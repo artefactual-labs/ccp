@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artefactual/archivematica/hack/ccp/internal/version"
-	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/artefactual/archivematica/hack/ccp/internal/version"
+	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
 var (

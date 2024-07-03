@@ -11,7 +11,7 @@ linters:
     - gosec
     - unused
     - intrange
-    # - contextcheck
+    - contextcheck
 
 issues:
   exclude-dirs:

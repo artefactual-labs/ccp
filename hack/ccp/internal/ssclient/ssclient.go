@@ -212,7 +212,7 @@ func (c *clientImpl) MoveFiles(ctx context.Context, src, dst *Location, files []
 	}
 	body.SetFiles(moves)
 
-	_, err = c.client.Location().ByUuid(dst.ID.String()).Post(context.Background(), body, nil)
+	_, err = c.client.Location().ByUuid(dst.ID.String()).Post(ctx, body, nil)
 
 	return err
 }

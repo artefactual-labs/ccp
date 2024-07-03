@@ -135,7 +135,7 @@ func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	pkg, err := s.ctrl.Submit(ctx, req.Msg)
+	pkg, err := s.ctrl.Submit(req.Msg)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}

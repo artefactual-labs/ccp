@@ -1,3 +1,4 @@
+// nolint: contextcheck
 package servercmd
 
 import (
