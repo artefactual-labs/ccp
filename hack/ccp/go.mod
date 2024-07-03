@@ -1,13 +1,13 @@
 module github.com/artefactual/archivematica/hack/ccp
 
-go 1.22.4
+go 1.22.5
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.1-20240508200655-46a4cf4ba109.1
 	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
-	github.com/artefactual-labs/gearmin v0.1.0
+	github.com/artefactual-labs/gearmin v0.3.0
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/docker/docker v25.0.5+incompatible
@@ -16,7 +16,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.2
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/gohugoio/hugo v0.127.0
+	github.com/gohugoio/hugo v0.128.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2

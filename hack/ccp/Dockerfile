@@ -7,7 +7,7 @@ RUN --mount=type=cache,target=/app/.npm npm set cache /app/.npm && npm install-c
 COPY --link web/ ./
 RUN npm run build
 
-FROM golang:1.22.4-alpine AS go-builder
+FROM golang:1.22.5-alpine AS go-builder
 ARG VERSION_PATH=github.com/artefactual/archivematica/hack/ccp/internal/version
 ARG VERSION_NUMBER
 ARG VERSION_GIT_COMMIT

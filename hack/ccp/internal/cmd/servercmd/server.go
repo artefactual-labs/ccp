@@ -195,16 +195,7 @@ func (s *Server) Close() error {
 		errs = errors.Join(errs, s.metrics.Close(ctx))
 	}
 
-	// TODO: gearmin's Stop method can block indefinitely under certain circumstances.
-	done := make(chan struct{}, 1)
-	go func() {
-		s.gearman.Stop()
-		done <- struct{}{}
-	}()
-	select {
-	case <-time.After(time.Second / 2):
-	case <-done:
-	}
+	s.gearman.Stop()
 
 	return errs
 }
