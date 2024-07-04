@@ -975,18 +975,31 @@ func (s *mysqlStoreImpl) ReadStorageServiceConfig(ctx context.Context) (ret Stor
 	return ret, nil
 }
 
-func (s *mysqlStoreImpl) ValidateUserAPIKey(ctx context.Context, username, key string) (_ bool, err error) {
+func (s *mysqlStoreImpl) ValidateUserAPIKey(ctx context.Context, username, key string) (_ *User, err error) {
 	defer wrap(&err, "ValidateUserAPIKey(%q, %q)", username, key)
 
-	_, err = s.queries.ReadUserWithKey(ctx, &sqlc.ReadUserWithKeyParams{
+	row, err := s.queries.ReadUserWithKey(ctx, &sqlc.ReadUserWithKeyParams{
 		Username: username,
 		Key:      key,
 	})
-	if err == sql.ErrNoRows {
-		return false, nil
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return true, nil
+	ret := &User{
+		ID:       int(row.ID),
+		Username: row.Username,
+		Email:    row.Email,
+		Active:   row.IsActive,
+	}
+	if row.AgentID.Valid {
+		ret.AgentID = ref.New(int(row.AgentID.Int32))
+	}
+
+	return ret, nil
 }
 
 func (s *mysqlStoreImpl) Running() bool {
