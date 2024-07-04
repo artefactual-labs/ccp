@@ -617,6 +617,34 @@ func (q *Queries) ReadUnitVars(ctx context.Context, arg *ReadUnitVarsParams) ([]
 	return items, nil
 }
 
+const readUserWithKey = `-- name: ReadUserWithKey :one
+
+SELECT auth_user.id, auth_user.username, auth_user.is_active
+FROM auth_user
+JOIN tastypie_apikey ON auth_user.id = tastypie_apikey.user_id
+WHERE auth_user.username = ? AND tastypie_apikey.key = ? AND auth_user.is_active = 1
+LIMIT 1
+`
+
+type ReadUserWithKeyParams struct {
+	Username string
+	Key      string
+}
+
+type ReadUserWithKeyRow struct {
+	ID       int32
+	Username string
+	IsActive bool
+}
+
+// Authorization
+func (q *Queries) ReadUserWithKey(ctx context.Context, arg *ReadUserWithKeyParams) (*ReadUserWithKeyRow, error) {
+	row := q.queryRow(ctx, q.readUserWithKeyStmt, readUserWithKey, arg.Username, arg.Key)
+	var i ReadUserWithKeyRow
+	err := row.Scan(&i.ID, &i.Username, &i.IsActive)
+	return &i, err
+}
+
 const updateJobStatus = `-- name: UpdateJobStatus :exec
 UPDATE Jobs SET currentStep = ? WHERE jobUUID = ?
 `

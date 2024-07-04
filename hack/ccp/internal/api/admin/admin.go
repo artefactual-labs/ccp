@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
@@ -63,7 +64,7 @@ func New(logger logr.Logger, config Config, ctrl *controller.Controller, store s
 		srv.v = v
 	}
 
-	srv.cache = ttlcache.New[adminv1.PackageType, *adminv1.ListPackagesResponse](
+	srv.cache = ttlcache.New(
 		ttlcache.WithTTL[adminv1.PackageType, *adminv1.ListPackagesResponse](1 * time.Second),
 	)
 	srv.wg.Add(1)
@@ -98,10 +99,13 @@ func (s *Server) Run() error {
 		compress1KB,
 	))
 
+	auth := authenticate(s.logger, s.store)
+	handler := authn.NewMiddleware(auth).Wrap(mux)
+
 	s.server = &http.Server{
 		Addr: s.config.Addr,
 		Handler: h2c.NewHandler(
-			corsutil.New(nil).Handler(mux),
+			corsutil.New(nil).Handler(handler),
 			&http2.Server{},
 		),
 		ReadHeaderTimeout: time.Second,
