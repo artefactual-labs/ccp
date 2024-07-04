@@ -74,7 +74,7 @@ def home(request):
 
 # TODO: hide removed elements
 def status(request):
-    client = get_client(request.user.id)
+    client = get_client(request.user)
     xml = etree.XML(client.list_jobs_awaiting_approval())
 
     sip_count = len(

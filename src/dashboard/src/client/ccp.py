@@ -121,8 +121,9 @@ class CCPClient(Client):
     supported yet, we choose to make use of the gRPC protocol.
     """
 
-    def __init__(self, user_id, lang):
-        self.user_id = str(user_id)
+    def __init__(self, user, lang):
+        self.username = user.username
+        self.api_key = user.api_key.key
         self.lang = lang
         self.channel = insecure_channel(
             target=settings.GEARMAN_SERVER,
@@ -136,7 +137,7 @@ class CCPClient(Client):
             self.channel,
             header_adder_interceptor(
                 [
-                    ("user_id", self.user_id),
+                    ("authorization", f"apikey {self.username}:{self.api_key}"),
                     ("lang", self.lang),
                 ],
             ),
@@ -145,7 +146,6 @@ class CCPClient(Client):
 
     def _tx(self, translations):
         tx = translations.tx
-
         return tx.get(self.lang, tx.get("en", ""))
 
     def approve_job(self, job_id, choice):

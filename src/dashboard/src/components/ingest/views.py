@@ -108,7 +108,7 @@ class SipsView(View):
 def ingest_status(request, uuid=None):
     response = {"objects": {}, "mcp": False}
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         response["objects"] = client.get_sips_status()
     except Exception:
         pass

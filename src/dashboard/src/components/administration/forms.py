@@ -306,7 +306,7 @@ class ProcessingConfigurationForm(forms.Form):
 
     def load_processing_config_fields(self, user):
         """Obtain processing fields and available choices from MCPServer."""
-        client = get_client(user.id)
+        client = get_client(user)
         self.processing_fields = client.get_processing_config_fields()
 
         # Override labels with translations in this form.

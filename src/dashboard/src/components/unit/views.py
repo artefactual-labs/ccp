@@ -55,7 +55,7 @@ def microservices(request, unit_type, unit_uuid):
     :param unit_uuid: UUID of the Transfer or SIP
 
     """
-    client = get_client(request.user.id)
+    client = get_client(request.user)
     resp = client.get_package_status(unit_uuid)
     return render(
         request,
