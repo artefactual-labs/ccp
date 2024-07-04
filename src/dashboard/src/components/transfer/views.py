@@ -124,7 +124,7 @@ def component(request, uuid):
 def status(request, uuid=None):
     response = {"objects": {}, "mcp": False}
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         response["objects"] = client.get_transfers_status()
     except Exception:
         logger.error("Failed to load packages status.", exc_info=True)

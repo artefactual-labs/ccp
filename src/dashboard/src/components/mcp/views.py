@@ -22,7 +22,7 @@ from lxml import etree
 def execute(request):
     result = ""
     if request.POST.get("uuid"):
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         result = client.approve_job(
             request.POST.get("uuid"), request.POST.get("choice", "")
         )
@@ -30,7 +30,7 @@ def execute(request):
 
 
 def list(request):
-    client = get_client(request.user.id)
+    client = get_client(request.user)
     jobs = etree.XML(client.list_jobs_awaiting_approval())
     response = ""
     if 0 < len(jobs):

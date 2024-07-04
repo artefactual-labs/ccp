@@ -34,7 +34,7 @@ class Command(DashboardCommand):
         admin_user = self.admin_user()
         if not admin_user:
             raise CommandError("Cannot find a superuser.")
-        client = get_client(admin_user.id)
+        client = get_client(admin_user)
 
         while True:
             self.success("Fetching packages awaiting decisions...")

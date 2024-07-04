@@ -293,7 +293,7 @@ def complete_matching(request, uuid):
     if request.method != "POST":
         return HttpResponse(status=405)
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         client.execute_package(
             uuid,
             # Microservice: Upload DIP

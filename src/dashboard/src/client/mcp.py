@@ -69,9 +69,9 @@ INFLIGHT_POLL_TIMEOUT = 30.0
 class MCPClient(Client):
     """Handles communication with MCPServer."""
 
-    def __init__(self, user_id, lang):
+    def __init__(self, user, lang):
         self.server = settings.GEARMAN_SERVER
-        self.user_id = user_id
+        self.user_id = user.id
         self.lang = lang
 
     def _rpc_sync_call(self, ability, data=None, timeout=INFLIGHT_POLL_TIMEOUT):

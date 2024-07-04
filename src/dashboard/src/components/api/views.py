@@ -510,7 +510,7 @@ def approve_transfer(request):
         # Append a slash to complete the directory path.
         db_transfer_path = os.path.join(watched_path, "")
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         unit_uuid = client.approve_transfer_by_path(db_transfer_path, transfer_type)
     except Exception as err:
         msg = "Unable to start the transfer."
@@ -547,7 +547,7 @@ def reingest_approve(request):
     if sip_uuid is None:
         return _error_response('"uuid" is required.')
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         client.approve_partial_reingest(sip_uuid)
     except Exception as err:
         msg = "Unable to approve the partial reingest."
@@ -839,7 +839,7 @@ def _package_create(request):
     if processing_config is not None:
         kwargs["processing_config"] = processing_config
     try:
-        client = get_client(request.user.id)
+        client = get_client(request.user)
         id_ = client.create_package(*args, **kwargs)
     except Exception as err:
         msg = "Package cannot be created"
