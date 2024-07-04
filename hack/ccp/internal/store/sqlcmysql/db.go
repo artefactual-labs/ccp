@@ -96,6 +96,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.readUnitVarsStmt, err = db.PrepareContext(ctx, readUnitVars); err != nil {
 		return nil, fmt.Errorf("error preparing query ReadUnitVars: %w", err)
 	}
+	if q.readUserWithKeyStmt, err = db.PrepareContext(ctx, readUserWithKey); err != nil {
+		return nil, fmt.Errorf("error preparing query ReadUserWithKey: %w", err)
+	}
 	if q.updateJobStatusStmt, err = db.PrepareContext(ctx, updateJobStatus); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateJobStatus: %w", err)
 	}
@@ -239,6 +242,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing readUnitVarsStmt: %w", cerr)
 		}
 	}
+	if q.readUserWithKeyStmt != nil {
+		if cerr := q.readUserWithKeyStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing readUserWithKeyStmt: %w", cerr)
+		}
+	}
 	if q.updateJobStatusStmt != nil {
 		if cerr := q.updateJobStatusStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateJobStatusStmt: %w", cerr)
@@ -332,6 +340,7 @@ type Queries struct {
 	readTransferWithLocationStmt            *sql.Stmt
 	readUnitVarStmt                         *sql.Stmt
 	readUnitVarsStmt                        *sql.Stmt
+	readUserWithKeyStmt                     *sql.Stmt
 	updateJobStatusStmt                     *sql.Stmt
 	updateSIPLocationStmt                   *sql.Stmt
 	updateSIPStatusStmt                     *sql.Stmt
@@ -368,6 +377,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		readTransferWithLocationStmt:            q.readTransferWithLocationStmt,
 		readUnitVarStmt:                         q.readUnitVarStmt,
 		readUnitVarsStmt:                        q.readUnitVarsStmt,
+		readUserWithKeyStmt:                     q.readUserWithKeyStmt,
 		updateJobStatusStmt:                     q.updateJobStatusStmt,
 		updateSIPLocationStmt:                   q.updateSIPLocationStmt,
 		updateSIPStatusStmt:                     q.updateSIPStatusStmt,

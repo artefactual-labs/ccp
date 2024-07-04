@@ -161,3 +161,14 @@ SELECT name, value, scope FROM DashboardSettings WHERE name LIKE ?;
 
 -- name: ReadDashboardSetting :one
 SELECT name, value, scope FROM DashboardSettings WHERE name = ?;
+
+--
+-- Authorization
+--
+
+-- name: ReadUserWithKey :one
+SELECT auth_user.id, auth_user.username, auth_user.is_active
+FROM auth_user
+JOIN tastypie_apikey ON auth_user.id = tastypie_apikey.user_id
+WHERE auth_user.username = ? AND tastypie_apikey.key = ? AND auth_user.is_active = 1
+LIMIT 1;

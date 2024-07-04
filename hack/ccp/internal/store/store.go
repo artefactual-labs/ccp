@@ -115,6 +115,10 @@ type Store interface {
 	// Archivematica Storage Service associated to this pipeline.
 	ReadStorageServiceConfig(ctx context.Context) (StorageServiceConfig, error)
 
+	// ValidateUserAPIKey confirms that the username with the given API key
+	// exists in the database and is active.
+	ValidateUserAPIKey(ctx context.Context, username, key string) (bool, error)
+
 	Running() bool
 	Close() error
 }
