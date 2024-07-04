@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"connectrpc.com/authn"
-	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/mockutil"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual/archivematica/hack/ccp/internal/store"
+	"github.com/artefactual/archivematica/hack/ccp/internal/store/storemock"
 )
 
 func TestAuthentication(t *testing.T) {
@@ -19,11 +21,26 @@ func TestAuthentication(t *testing.T) {
 	t.Run("Accepts API key", func(t *testing.T) {
 		t.Parallel()
 
-		store := storemock.NewMockStore(gomock.NewController(t))
-		store.EXPECT().ValidateUserAPIKey(mockutil.Context(), "test", "test").Return(true, nil)
+		var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user := authn.GetInfo(r.Context()).(*store.User) // Rretrieve userinfo from context.
+			assert.DeepEqual(t, user, &store.User{
+				ID:       12345,
+				Username: "test",
+				Email:    "test@test.com",
+				Active:   true,
+			})
+		})
 
-		auth := multiAuthenticate(authApiKey(logr.Discard(), store))
-		handler := authn.NewMiddleware(auth).Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		s := storemock.NewMockStore(gomock.NewController(t))
+		s.EXPECT().ValidateUserAPIKey(mockutil.Context(), "test", "test").Return(&store.User{
+			ID:       12345,
+			Username: "test",
+			Email:    "test@test.com",
+			Active:   true,
+		}, nil)
+
+		auth := multiAuthenticate(authApiKey(logr.Discard(), s))
+		handler = authn.NewMiddleware(auth).Wrap(handler)
 
 		req := httptest.NewRequest("GET", "http://example.com/foo", nil)
 		req.Header.Set("Authorization", "ApiKey test:test")
@@ -39,7 +56,7 @@ func TestAuthentication(t *testing.T) {
 		t.Parallel()
 
 		store := storemock.NewMockStore(gomock.NewController(t))
-		store.EXPECT().ValidateUserAPIKey(mockutil.Context(), "test", "12345").Return(false, nil)
+		store.EXPECT().ValidateUserAPIKey(mockutil.Context(), "test", "12345").Return(nil, nil)
 
 		auth := multiAuthenticate(authApiKey(logr.Discard(), store))
 		handler := authn.NewMiddleware(auth).Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))

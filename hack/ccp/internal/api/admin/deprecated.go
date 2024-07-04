@@ -24,7 +24,7 @@ func (s *Server) ApproveJob(ctx context.Context, req *connect.Request[adminv1.Ap
 	}
 
 	jobID := uuid.MustParse(req.Msg.JobId)
-	err := s.ctrl.ResolveDecisionLegacy(jobID, req.Msg.Choice)
+	err := s.ctrl.ResolveDecisionLegacy(ctx, jobID, req.Msg.Choice)
 	if err != nil {
 		s.logger.V(2).Info("Failed to approve job.", "err", err, "jobID", jobID, "choice", req.Msg.Choice)
 		return nil, connect.NewError(connect.CodeUnknown, nil)
@@ -77,7 +77,7 @@ func (s *Server) ApproveTransferByPath(ctx context.Context, req *connect.Request
 		chainID = t.BypassChainID
 	}
 
-	if err := s.ctrl.ResolveDecisionLegacy(jobID, chainID.String()); err != nil {
+	if err := s.ctrl.ResolveDecisionLegacy(ctx, jobID, chainID.String()); err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, fmt.Errorf("unable to resolve decision: %v", err))
 	}
 
@@ -109,7 +109,7 @@ func (s *Server) ApprovePartialReingest(ctx context.Context, req *connect.Reques
 	}
 
 	jobID, _ := uuid.Parse(job.Id)
-	if err := s.ctrl.ResolveDecisionLegacy(jobID, chain.ID.String()); err != nil {
+	if err := s.ctrl.ResolveDecisionLegacy(ctx, jobID, chain.ID.String()); err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, fmt.Errorf("unable to resolve decision: %v", err))
 	}
 

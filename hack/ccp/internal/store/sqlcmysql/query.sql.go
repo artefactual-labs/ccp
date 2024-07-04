@@ -619,9 +619,10 @@ func (q *Queries) ReadUnitVars(ctx context.Context, arg *ReadUnitVarsParams) ([]
 
 const readUserWithKey = `-- name: ReadUserWithKey :one
 
-SELECT auth_user.id, auth_user.username, auth_user.is_active
+SELECT auth_user.id, auth_user.username, auth_user.email, auth_user.is_active, main_userprofile.agent_id
 FROM auth_user
 JOIN tastypie_apikey ON auth_user.id = tastypie_apikey.user_id
+LEFT JOIN main_userprofile ON auth_user.id = main_userprofile.user_id
 WHERE auth_user.username = ? AND tastypie_apikey.key = ? AND auth_user.is_active = 1
 LIMIT 1
 `
@@ -634,14 +635,22 @@ type ReadUserWithKeyParams struct {
 type ReadUserWithKeyRow struct {
 	ID       int32
 	Username string
+	Email    string
 	IsActive bool
+	AgentID  sql.NullInt32
 }
 
 // Authorization
 func (q *Queries) ReadUserWithKey(ctx context.Context, arg *ReadUserWithKeyParams) (*ReadUserWithKeyRow, error) {
 	row := q.queryRow(ctx, q.readUserWithKeyStmt, readUserWithKey, arg.Username, arg.Key)
 	var i ReadUserWithKeyRow
-	err := row.Scan(&i.ID, &i.Username, &i.IsActive)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.IsActive,
+		&i.AgentID,
+	)
 	return &i, err
 }
 

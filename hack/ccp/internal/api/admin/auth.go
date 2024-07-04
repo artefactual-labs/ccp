@@ -44,16 +44,16 @@ func authApiKey(logger logr.Logger, store store.Store) authn.AuthFunc {
 			return nil, errInvalidAuth
 		}
 
-		ok, err := store.ValidateUserAPIKey(ctx, username, key)
+		user, err := store.ValidateUserAPIKey(ctx, username, key)
 		if err != nil {
 			logger.Error(err, "Cannot look up user details.")
 			return nil, errInvalidAuth
 		}
-		if !ok {
+		if user == nil {
 			return nil, errInvalidAuth
 		}
 
-		return username, nil
+		return user, nil
 	}
 }
 

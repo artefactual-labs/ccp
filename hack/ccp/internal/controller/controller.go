@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"connectrpc.com/authn"
 	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -119,7 +121,7 @@ func (c *Controller) Run() error {
 }
 
 // Submit a transfer request.
-func (c *Controller) Submit(req *adminv1.CreatePackageRequest) (*Package, error) {
+func (c *Controller) Submit(ctx context.Context, req *adminv1.CreatePackageRequest) (*Package, error) {
 	// TODO: have NewTransferPackage return a function we can schedule here.
 	var once sync.Once
 	queue := func(pkg *Package) {
@@ -129,7 +131,16 @@ func (c *Controller) Submit(req *adminv1.CreatePackageRequest) (*Package, error)
 		})
 	}
 
-	pkg, err := NewTransferPackage(c.groupCtx, c.logger.WithName("package"), c.store, c.ssclient, c.sharedDir, req, queue)
+	pkg, err := NewTransferPackage( //nolint: contextcheck
+		// ctx is request-scoped, use the group context instead.
+		authn.SetInfo(c.groupCtx, authn.GetInfo(ctx)),
+		c.logger.WithName("package"),
+		c.store,
+		c.ssclient,
+		c.sharedDir,
+		req,
+		queue,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create package: %v", err)
 	}
@@ -390,7 +401,9 @@ func (c *Controller) Decisions() map[uuid.UUID][]*adminv1.Decision {
 	return ret
 }
 
-func (c *Controller) ResolveDecision(id uuid.UUID, pos int) error {
+func (c *Controller) ResolveDecision(ctx context.Context, id uuid.UUID, pos int) (err error) {
+	defer derrors.Add(&err, "ResolveDecision()")
+
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -408,10 +421,14 @@ func (c *Controller) ResolveDecision(id uuid.UUID, pos int) error {
 		return errors.New("decision cannot be found")
 	}
 
+	if err := match.pkg.updateActiveAgent(ctx); err != nil {
+		return fmt.Errorf("update active agent: %v", err)
+	}
+
 	return match.resolveWithPos(pos)
 }
 
-func (c *Controller) ResolveDecisionLegacy(jobID uuid.UUID, choice string) error {
+func (c *Controller) ResolveDecisionLegacy(ctx context.Context, jobID uuid.UUID, choice string) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -427,6 +444,10 @@ func (c *Controller) ResolveDecisionLegacy(jobID uuid.UUID, choice string) error
 
 	if match == nil {
 		return errors.New("package is not awaiting")
+	}
+
+	if err := match.pkg.updateActiveAgent(ctx); err != nil {
+		return fmt.Errorf("update active agent: %v", err)
 	}
 
 	// We attempt to read the choice as an integer describing the position of

@@ -115,9 +115,11 @@ type Store interface {
 	// Archivematica Storage Service associated to this pipeline.
 	ReadStorageServiceConfig(ctx context.Context) (StorageServiceConfig, error)
 
-	// ValidateUserAPIKey confirms that the username with the given API key
-	// exists in the database and is active.
-	ValidateUserAPIKey(ctx context.Context, username, key string) (bool, error)
+	// ValidateUserAPIKey checks if a user with the given username and API key
+	// exists and is active. It returns a pointer to the User if valid, or nil
+	// and an error otherwise. A nil User doesn't necessarily mean the user
+	// doesn't exist; check the error for details.
+	ValidateUserAPIKey(ctx context.Context, username, key string) (*User, error)
 
 	Running() bool
 	Close() error
@@ -216,4 +218,12 @@ type FindAwaitingJobParams struct {
 	Directory *string
 	PackageID *uuid.UUID
 	Group     *string
+}
+
+type User struct {
+	ID       int
+	Username string
+	Email    string
+	Active   bool
+	AgentID  *int
 }

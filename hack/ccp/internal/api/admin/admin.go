@@ -139,7 +139,7 @@ func (s *Server) CreatePackage(ctx context.Context, req *connect.Request[adminv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	pkg, err := s.ctrl.Submit(req.Msg)
+	pkg, err := s.ctrl.Submit(ctx, req.Msg)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, nil)
 	}
@@ -252,7 +252,7 @@ func (s *Server) ResolveDecision(ctx context.Context, req *connect.Request[admin
 	}
 
 	id := uuid.MustParse(req.Msg.Id)
-	err := s.ctrl.ResolveDecision(id, int(req.Msg.Choice.Id))
+	err := s.ctrl.ResolveDecision(ctx, id, int(req.Msg.Choice.Id))
 	if err != nil {
 		s.logger.Error(err, "Failed to resolve awaiting decision.", "id", id)
 		return nil, connect.NewError(connect.CodeUnknown, nil)

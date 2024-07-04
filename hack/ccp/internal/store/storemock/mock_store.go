@@ -1208,10 +1208,10 @@ func (c *MockStoreUpsertTransferCall) DoAndReturn(f func(context.Context, uuid.U
 }
 
 // ValidateUserAPIKey mocks base method.
-func (m *MockStore) ValidateUserAPIKey(ctx context.Context, username, key string) (bool, error) {
+func (m *MockStore) ValidateUserAPIKey(ctx context.Context, username, key string) (*store.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateUserAPIKey", ctx, username, key)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(*store.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1229,19 +1229,19 @@ type MockStoreValidateUserAPIKeyCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockStoreValidateUserAPIKeyCall) Return(arg0 bool, arg1 error) *MockStoreValidateUserAPIKeyCall {
+func (c *MockStoreValidateUserAPIKeyCall) Return(arg0 *store.User, arg1 error) *MockStoreValidateUserAPIKeyCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreValidateUserAPIKeyCall) Do(f func(context.Context, string, string) (bool, error)) *MockStoreValidateUserAPIKeyCall {
+func (c *MockStoreValidateUserAPIKeyCall) Do(f func(context.Context, string, string) (*store.User, error)) *MockStoreValidateUserAPIKeyCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreValidateUserAPIKeyCall) DoAndReturn(f func(context.Context, string, string) (bool, error)) *MockStoreValidateUserAPIKeyCall {
+func (c *MockStoreValidateUserAPIKeyCall) DoAndReturn(f func(context.Context, string, string) (*store.User, error)) *MockStoreValidateUserAPIKeyCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

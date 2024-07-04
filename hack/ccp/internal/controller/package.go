@@ -8,8 +8,10 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	"connectrpc.com/authn"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
@@ -148,7 +150,7 @@ func NewTransferPackage(
 		return nil, err
 	}
 
-	if err := pkg.updateActiveAgent(ctx, "TODO"); err != nil {
+	if err := pkg.updateActiveAgent(ctx); err != nil {
 		return nil, err
 	}
 
@@ -368,8 +370,16 @@ func (p *Package) markAsFailed(ctx context.Context) error {
 	return p.store.UpdatePackageStatus(ctx, p.id, p.packageType(), enums.PackageStatusFailed)
 }
 
-func (p *Package) updateActiveAgent(ctx context.Context, userID string) error {
-	return nil // TODO: we have not implemented auth yet!
+// updateActiveAgent saves the activeAgent variable using the user information
+// that is provided in the context.
+func (p *Package) updateActiveAgent(ctx context.Context) error {
+	info := authn.GetInfo(ctx)
+	user, ok := info.(*store.User)
+	if !ok || user == nil || user.AgentID == nil {
+		return nil
+	}
+
+	return p.saveValue(ctx, "activeAgent", strconv.Itoa(*user.AgentID))
 }
 
 // unit represents logic that is specific to a particular type of package, e.g. Transfer.
