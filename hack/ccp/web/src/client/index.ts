@@ -1,7 +1,6 @@
 import { inject } from 'vue'
 import type { InjectionKey, App } from 'vue'
-import type { Transport } from '@connectrpc/connect'
-import type { PromiseClient } from '@connectrpc/connect'
+import type { Transport, PromiseClient, Interceptor } from '@connectrpc/connect'
 import { AdminService } from '../gen/archivematica/ccp/admin/v1beta1/service_connect'
 import { createPromiseClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -27,10 +26,15 @@ function useAdminServiceClient(): AdminServiceClient {
   return useInject<AdminServiceClient>(adminClientKey)
 }
 
+const authInterceptor: Interceptor = (next) => async (req) => {
+  req.header.set("Authorization", "ApiKey test:test") // TODO
+  return await next(req)
+};
+
 function client(app: App) {
   const loc = window.location
   const baseUrl = `${loc.protocol}//${loc.hostname}:${loc.port}/api`
-  const transport = createConnectTransport({ baseUrl })
+  const transport = createConnectTransport({ baseUrl, interceptors: [authInterceptor] })
   app.provide(transportKey, transport)
 
   const client = createPromiseClient(AdminService, transport)
