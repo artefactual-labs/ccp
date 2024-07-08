@@ -1,3 +1,4 @@
+
 PROJECT := ccp
 MAKEDIR := hack/make
 SHELL   := /bin/bash
@@ -20,6 +21,7 @@ include hack/make/dep_goenum.mk
 include hack/make/dep_golangci_lint.mk
 include hack/make/dep_gotestsum.mk
 include hack/make/dep_mockgen.mk
+include hack/make/dep_oapi_codegen.mk
 include hack/make/dep_sqlc.mk
 include hack/make/dep_tparse.mk
 include hack/make/enums.mk
@@ -30,6 +32,7 @@ TOOLS = $(BUF) \
 	$(GOLANGCI_LINT) \
 	$(GOTESTSUM) \
 	$(MOCKGEN) \
+	$(OAPI_CODEGEN) \
 	$(SQLC) \
 	$(TPARSE)
 
@@ -40,6 +43,7 @@ endef
 
 IGNORED_PACKAGES := \
 	github.com/artefactual/archivematica/hack/ccp/internal/api/gen/% \
+	github.com/artefactual/archivematica/hack/ccp/internal/shim/gen \
 	github.com/artefactual/archivematica/hack/ccp/internal/%/enums \
 	github.com/artefactual/archivematica/hack/ccp/internal/ssclient/ssclientmock \
 	github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql \
@@ -110,7 +114,7 @@ deps:
 	@go mod tidy
 
 gen: # @HELP Generage code.
-gen: gen-mocks gen-sqlc gen-enums gen-buf
+gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web gen-shim
 
 gen-mocks: # @HELP Generate mocks.
 gen-mocks: $(MOCKGEN)
@@ -134,9 +138,18 @@ gen-buf: $(BUF)
 		$(CURDIR)/../../src/dashboard/src/client/gen/archivematica/ccp/admin/v1beta1/*.py \
 		$(CURDIR)/../../src/dashboard/src/client/gen/buf/validate/*.py
 
-gen-ui: # @HELP Generate webui assets.
-gen-ui:
+gen-web: # @HELP Generate webui assets.
+gen-web:
 	npm --prefix=$(CURDIR)/web run build
+
+gen-shim: # @HELP Generate Go server boilerplate from OpenAPIv3 spec.
+gen-shim: SPEC_COMMIT := b0b9af20
+gen-shim: SPEC_URL := https://raw.githubusercontent.com/artefactual-labs/archivematica-api-specification/$(SPEC_COMMIT)/typespec/tsp-output/@typespec/openapi3/openapi.v1.yaml
+gen-shim: $(OAPI_CODEGEN)
+	@echo "Downloading Archivematica API specification ($(SPEC_COMMIT))..."
+	@echo "Full URL: $(SPEC_URL)"
+	curl -Ls -o /tmp/amspec.yml $(SPEC_URL)
+	cd $(CURDIR)/internal/shim && oapi-codegen -config=config.yml /tmp/amspec.yml
 
 push: # @HELP Push new build of CCP to development environment.
 push:

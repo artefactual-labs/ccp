@@ -16,6 +16,7 @@ import (
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
+	"github.com/artefactual/archivematica/hack/ccp/internal/shim"
 	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/webui"
@@ -45,6 +46,9 @@ type Server struct {
 
 	// Admin API.
 	admin *admin.Server
+
+	// Shim API.
+	shim *shim.Server
 
 	// Web UI.
 	webui *webui.Server
@@ -150,6 +154,14 @@ func (s *Server) Run() error {
 		return fmt.Errorf("error running admin API: %v", err)
 	}
 
+	if s.config.shim.Enabled {
+		s.logger.V(1).Info("Creating Archivematica API shim.")
+		s.shim = shim.NewServer(s.logger.WithName("shim"), s.config.shim)
+		if err := s.shim.Run(); err != nil {
+			return fmt.Errorf("error creating shim API: %v", err)
+		}
+	}
+
 	s.logger.V(1).Info("Creating web UI.")
 	s.webui = webui.New(s.logger.WithName("webui"), s.config.webui, s.admin.Addr())
 	if err := s.webui.Run(); err != nil {
@@ -185,6 +197,10 @@ func (s *Server) Close() error {
 
 	if s.admin != nil {
 		errs = errors.Join(errs, s.admin.Close(ctx))
+	}
+
+	if s.shim != nil {
+		errs = errors.Join(errs, s.shim.Close(ctx))
 	}
 
 	if s.webui != nil {
