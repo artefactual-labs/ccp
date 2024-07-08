@@ -17,6 +17,7 @@ issues:
   exclude-dirs:
     - hack
     - proto
+    - internal/shim/gen
   exclude-rules:
     - path: _test\.go
       linters:
@@ -24,14 +25,11 @@ issues:
 
 linters-settings:
   gci:
-    no-inline-comments: true
-    no-prefix-comments: false
     sections:
       - standard
       - default
       - prefix(github.com/artefactual/archivematica/hack/ccp)
-    section-separators:
-      - newLine
+    custom-order: true
   gofumpt:
     extra-rules: true
   gosec:

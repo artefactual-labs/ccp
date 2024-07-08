@@ -39,6 +39,8 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	fs.StringVar(&cfg.ssclient.BaseURL, "ssclient.url", "", "Storage Service API base URL")
 	fs.StringVar(&cfg.ssclient.Username, "ssclient.username", "", "Storage Service API username")
 	fs.StringVar(&cfg.ssclient.Key, "ssclient.key", "", "Storage Service API key")
+	fs.BoolVar(&cfg.shim.Enabled, "shim.enabled", false, "Enable the Archivematica API shim for backward compatibility with older clients.")
+	fs.StringVar(&cfg.shim.Addr, "shim.addr", "", "Archivematica API shim listen address")
 	fs.StringVar(&cfg.metrics.Addr, "metrics.addr", "", "Prometheus HTTP API listen address")
 
 	rootConfig.RegisterFlags(fs)
