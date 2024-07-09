@@ -156,7 +156,7 @@ func (s *Server) Run() error {
 
 	if s.config.shim.Enabled {
 		s.logger.V(1).Info("Creating Archivematica API shim.")
-		s.shim = shim.NewServer(s.logger.WithName("shim"), s.config.shim)
+		s.shim = shim.NewServer(s.logger.WithName("shim"), s.config.shim, s.store)
 		if err := s.shim.Run(); err != nil {
 			return fmt.Errorf("error creating shim API: %v", err)
 		}

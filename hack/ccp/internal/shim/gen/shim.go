@@ -2324,6 +2324,18 @@ func (response ValidateCreate400JSONResponse) VisitValidateCreateResponse(w http
 	return json.NewEncoder(w).Encode(response.union)
 }
 
+type ValidateCreate404JSONResponse struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+}
+
+func (response ValidateCreate404JSONResponse) VisitValidateCreateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -3252,8 +3264,8 @@ var swaggerSpec = []string{
 	"r5ZwbfxaOWHK7I04lDNEXB4rHZYS+VARbhL5IL+WQ2rpKrWDdd2b7M2TK6l6n+fpnVTLelObXmCFTkcf",
 	"JCJTQplUCEIXfG0WJCiTQRFxALJ7x+7YTZ5ZmZMgBhSSBXIBcaZjjsEd66A/+cOfAxsgx25IlbYdfnJF",
 	"F6JmHPW7BtIlfrrDxiHJtstqkeKf+YDNupGRZWcVqb/8K9GbOjdkurs8Of9fHR8KCer/YjXp/LQqqtkd",
-	"WS5lRCzK6fAXTla2unHt2RW43X2Kbe+207Ft0zz234RY3j+f0hZuJzO7Kt5L9sf98n757wAAAP//CLMK",
-	"0RdjAAA=",
+	"WS5lRCzK6fAXTla2unHt2RW43X2Kbe+207Ft0zz234RY3j9bqWxPLXmvx361vG6kcCmbYWbxOrY/7pf3",
+	"y38HAAD//50zbJkOZAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

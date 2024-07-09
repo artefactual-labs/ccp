@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/ikawaha/httpcheck v1.12.3
 	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/oapi-codegen/runtime v1.1.1
@@ -83,6 +84,8 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/itchyny/gojq v0.12.16 // indirect
+	github.com/itchyny/timefmt-go v0.1.6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

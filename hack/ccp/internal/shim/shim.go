@@ -9,27 +9,35 @@ import (
 	"github.com/go-logr/logr"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/shim/gen"
+	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 )
 
 type Server struct {
 	logger logr.Logger
 	config Config
+	store  store.Store
 	server *http.Server
 	ln     net.Listener
 }
 
 var _ gen.StrictServerInterface = (*Server)(nil)
 
-func NewServer(logger logr.Logger, config Config) *Server {
+func NewServer(logger logr.Logger, config Config, store store.Store) *Server {
 	return &Server{
 		logger: logger,
 		config: config,
+		store:  store,
 	}
 }
 
 func (s *Server) Run() error {
+	middleware := []gen.StrictMiddlewareFunc{
+		infoMiddleware(s.store),
+		contextMiddleware,
+	}
+
 	s.server = &http.Server{
-		Handler:           gen.Handler(gen.NewStrictHandler(s, []gen.StrictMiddlewareFunc{})),
+		Handler:           gen.Handler(gen.NewStrictHandler(s, middleware)),
 		ReadHeaderTimeout: time.Second,
 		ReadTimeout:       5 * time.Minute,
 		WriteTimeout:      5 * time.Minute,
@@ -167,7 +175,25 @@ func (s *Server) TasksRead(ctx context.Context, request gen.TasksReadRequestObje
 }
 
 func (s *Server) ValidateCreate(ctx context.Context, request gen.ValidateCreateRequestObject) (gen.ValidateCreateResponseObject, error) {
-	return nil, nil
+	validator, err := loadValidator(request.Validator)
+	if err != nil {
+		return gen.ValidateCreate404JSONResponse{
+			Error:   true,
+			Message: err.Error(),
+		}, nil
+	}
+
+	if err := validateContentType(requestFromContext(ctx)); err != nil {
+		return nil, err
+	}
+
+	err = validator.validate(request.Body)
+	if err != nil {
+		// TODO: gen.ValidateCreate400JSONResponse doesn't seem workable atm.
+		return nil, err
+	}
+
+	return gen.ValidateCreate200JSONResponse{Valid: true}, nil
 }
 
 func (s *Server) Close(ctx context.Context) error {
