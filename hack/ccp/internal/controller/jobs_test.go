@@ -21,9 +21,22 @@ import (
 func createJob(t *testing.T, linkID string) (*job, *storemock.MockStore) {
 	t.Helper()
 
+	return createJobWithHandlers(t, linkID, nil)
+}
+
+func createJobWithHandlers(t *testing.T, linkID string, handlers map[string]gearmintest.Handler) (*job, *storemock.MockStore) {
+	t.Helper()
+
 	tmpDir := fs.NewDir(t, "ccp", fs.WithDir("sharedDir/tmp/pkg"))
 
-	gearmin := gearmintest.Server(t, map[string]gearmintest.Handler{"hello": func(job worker.Job) ([]byte, error) { return []byte("hi!"), nil }})
+	if handlers == nil {
+		handlers = map[string]gearmintest.Handler{
+			"hello": func(job worker.Job) ([]byte, error) {
+				return []byte("hi!"), nil
+			},
+		}
+	}
+	gearmin := gearmintest.Server(t, handlers)
 	wf, _ := workflow.Default()
 	ln := wf.Links[uuid.MustParse(linkID)]
 	store := storemock.NewMockStore(gomock.NewController(t))
