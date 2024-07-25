@@ -26,8 +26,6 @@ const (
 	// UseDumps attempts to configure the MySQL service using the database dumps
 	// previously generated.
 	UseDumps DatabaseExecutionMode = "USE_DUMPS"
-	// GenerateDumps produces new database dumps instead of running the tests.
-	GenerateDumps DatabaseExecutionMode = "GENERATE_DUMPS"
 	// ForceDrop drops the existing databases forcing the application to
 	// recreate them using Django migrations.
 	ForceDrop DatabaseExecutionMode = "FORCE_DROP"
@@ -36,12 +34,15 @@ const (
 func (m *CCP) GenerateDumps(ctx context.Context) (*dagger.Directory, error) {
 	mysql := m.Build().MySQLContainer().AsService()
 
-	storage, err := m.bootstrapStorage(ctx, mysql, GenerateDumps)
+	// We don't need ForceDrop since we're using a fresh MySQL instance.
+	mode := UseCached
+
+	storage, err := m.bootstrapStorage(ctx, mysql, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = m.bootstrapDashboard(ctx, mysql, storage, GenerateDumps)
+	_, err = m.bootstrapDashboard(ctx, mysql, storage, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +119,8 @@ func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMod
 		WithEnvVariable("SS_DB_URL", "mysql://root:12345@mysql/"+ssDBName).
 		WithExposedPort(8000)
 
-	if _, err := createDB(ctx, mysql, ssDBName, dbMode); err != nil {
+	drop := dbMode != UseCached
+	if _, err := createDB(ctx, mysql, ssDBName, drop); err != nil {
 		return nil, err
 	}
 
@@ -148,7 +150,8 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_SEARCH_ENABLED", "false").
 		WithExposedPort(8000)
 
-	if _, err := createDB(ctx, mysql, mcpDBName, dbMode); err != nil {
+	drop := dbMode != UseCached
+	if _, err := createDB(ctx, mysql, mcpDBName, drop); err != nil {
 		return nil, err
 	}
 
@@ -166,8 +169,8 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 	return dashboardCtr.AsService(), nil
 }
 
-func createDB(ctx context.Context, mysql *dagger.Service, dbname string, dbMode DatabaseExecutionMode) (string, error) {
-	if dbMode == GenerateDumps || dbMode == ForceDrop {
+func createDB(ctx context.Context, mysql *dagger.Service, dbname string, drop bool) (string, error) {
+	if drop {
 		if ret, err := mysqlCommand(ctx, mysql, "DROP DATABASE IF EXISTS "+dbname); err != nil {
 			return ret, err
 		}
