@@ -157,7 +157,7 @@ func (e *env) runMySQL() {
 		mysql.WithDatabase("MCP"),
 		mysql.WithUsername("root"),
 		mysql.WithPassword("12345"),
-		mysql.WithScripts("data/mcp.sql.bz2"),
+		mysql.WithScripts("data/MCP.sql.bz2"),
 		testcontainers.WithImage("mysql:8.4.0"),
 		testcontainers.CustomizeRequestOption(func(req *testcontainers.GenericContainerRequest) error {
 			req.LogConsumerCfg = &testcontainers.LogConsumerConfig{

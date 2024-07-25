@@ -1,11 +1,23 @@
 package main
 
-func (m *CCP) Lint() *Container {
-	return dag.GolangciLint(GolangciLintOpts{
+import "dagger/ccp/internal/dagger"
+
+func (m *CCP) Lint() *Lint {
+	return &Lint{
+		Source: m.Source,
+	}
+}
+
+type Lint struct {
+	Source *dagger.Directory
+}
+
+func (m *Lint) Go() *dagger.Container {
+	return dag.GolangciLint(dagger.GolangciLintOpts{
 		Version:   golangciLintVersion,
 		GoVersion: goVersion,
 	}).
-		Run(m.Source, GolangciLintRunOpts{
+		Run(m.Source, dagger.GolangciLintRunOpts{
 			Verbose: true,
 		})
 }
