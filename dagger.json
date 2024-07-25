@@ -1,0 +1,27 @@
+{
+  "name": "CCP",
+  "sdk": "go",
+  "dependencies": [
+    {
+      "name": "go",
+      "source": "github.com/sagikazarmark/daggerverse/go@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
+    },
+    {
+      "name": "golangci-lint",
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
+    }
+  ],
+  "source": "hack/ccp/hack/dagger",
+  "engineVersion": "v0.12.2",
+  "views": [
+    {
+      "name": "default",
+      "patterns": [
+        "!**/.git",
+        "!**/node_modules",
+        "!hack/submodules/archivematica-acceptance-tests",
+        "!hack/submodules/archivematica-sampledata"
+      ]
+    }
+  ]
+}
