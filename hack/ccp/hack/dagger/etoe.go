@@ -34,15 +34,7 @@ const (
 func (m *CCP) GenerateDumps(ctx context.Context) (*dagger.Directory, error) {
 	mysql := m.Build().MySQLContainer().AsService()
 
-	// We don't need ForceDrop since we're using a fresh MySQL instance.
-	mode := UseCached
-
-	storage, err := m.bootstrapStorage(ctx, mysql, mode)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = m.bootstrapDashboard(ctx, mysql, storage, mode)
+	_, _, err := m.bootstrapAM(ctx, mysql, UseCached) // ForceDrop not needed since it's a fresh MySQL instance.
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +53,7 @@ func (m *CCP) Etoe(
 	dbMode DatabaseExecutionMode,
 ) error {
 	mysql := m.Build().MySQLContainer().
-		WithMountedCache("/var/lib/mysql", dag.CacheVolume("mysql"), dagger.ContainerWithMountedCacheOpts{}).
+		WithMountedCache("/var/lib/mysql", dag.CacheVolume("mysql")).
 		AsService()
 
 	storage, err := m.bootstrapStorage(ctx, mysql, dbMode)
@@ -74,11 +66,11 @@ func (m *CCP) Etoe(
 		return err
 	}
 
-	// ccp := m.bootstrapCCP(mysql, storage, dashboard)
+	ccp := m.bootstrapCCP(mysql, storage)
 
 	// TODO:
 	// - Bootstrap CCP.
-	// - Bootstrap Dashboard and MCPClient.
+	// - Bootstrap MCPClient.
 
 	var args []string
 	{
@@ -95,8 +87,8 @@ func (m *CCP) Etoe(
 			Container().
 			WithServiceBinding("mysql", mysql).
 			WithServiceBinding("dashboard", dashboard).
-			WithServiceBinding("storage", storage),
-		// WithServiceBinding("ccp", ccp),
+			WithServiceBinding("storage", storage).
+			WithServiceBinding("ccp", ccp),
 	}).
 		Exec(args).
 		Stdout(ctx)
@@ -104,12 +96,25 @@ func (m *CCP) Etoe(
 	return nil
 }
 
-func (m *CCP) bootstrapCCP(mysql, dashboard, storage *dagger.Service) *dagger.Service {
+func (m *CCP) bootstrapCCP(mysql, storage *dagger.Service) *dagger.Service {
 	return m.Build().CCPImage().
 		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("dashboard", dashboard).
 		WithServiceBinding("storage", storage).
 		AsService()
+}
+
+func (m *CCP) bootstrapAM(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (storage *dagger.Service, dashboard *dagger.Service, err error) {
+	storage, err = m.bootstrapStorage(ctx, mysql, dbMode)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dashboard, err = m.bootstrapDashboard(ctx, mysql, storage, dbMode)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return storage, dashboard, nil
 }
 
 func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
@@ -120,19 +125,20 @@ func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMod
 		WithExposedPort(8000)
 
 	drop := dbMode != UseCached
-	if _, err := createDB(ctx, mysql, ssDBName, drop); err != nil {
+	if err := createDB(ctx, mysql, ssDBName, drop); err != nil {
 		return nil, err
 	}
 
 	if dbMode == UseDumps {
 		dumpFile := m.Source.File(filepath.Join(dumpsDir, fmt.Sprintf("%s.sql.bz2", ssDBName)))
-		if _, err := loadDump(ctx, mysql, ssDBName, dumpFile); err != nil {
+		if err := loadDump(ctx, mysql, ssDBName, dumpFile); err != nil {
 			return nil, err
 		}
-	} else {
-		if _, err := bootstrapSSDB(ctx, storageCtr); err != nil {
-			return nil, err
-		}
+	}
+
+	onlyMigrate := dbMode == UseDumps || dbMode == UseCached
+	if err := bootstrapSSDB(ctx, storageCtr, onlyMigrate); err != nil {
+		return nil, err
 	}
 
 	return storageCtr.AsService(), nil
@@ -151,57 +157,62 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 		WithExposedPort(8000)
 
 	drop := dbMode != UseCached
-	if _, err := createDB(ctx, mysql, mcpDBName, drop); err != nil {
+	if err := createDB(ctx, mysql, mcpDBName, drop); err != nil {
 		return nil, err
 	}
 
 	if dbMode == UseDumps {
 		dumpFile := m.Source.File(filepath.Join(dumpsDir, fmt.Sprintf("%s.sql.bz2", mcpDBName)))
-		if _, err := loadDump(ctx, mysql, mcpDBName, dumpFile); err != nil {
+		if err := loadDump(ctx, mysql, mcpDBName, dumpFile); err != nil {
 			return nil, err
 		}
-	} else {
-		if _, err := bootstrapMCPDB(ctx, dashboardCtr); err != nil {
-			return nil, err
-		}
+	}
+
+	onlyMigrate := dbMode == UseDumps || dbMode == UseCached
+	if err := bootstrapMCPDB(ctx, dashboardCtr, onlyMigrate); err != nil {
+		return nil, err
 	}
 
 	return dashboardCtr.AsService(), nil
 }
 
-func createDB(ctx context.Context, mysql *dagger.Service, dbname string, drop bool) (string, error) {
+func createDB(ctx context.Context, mysql *dagger.Service, dbname string, drop bool) error {
 	if drop {
-		if ret, err := mysqlCommand(ctx, mysql, "DROP DATABASE IF EXISTS "+dbname); err != nil {
-			return ret, err
+		if err := mysqlCommand(ctx, mysql, "DROP DATABASE IF EXISTS "+dbname); err != nil {
+			return err
 		}
 	}
 
 	return mysqlCommand(ctx, mysql, "CREATE DATABASE IF NOT EXISTS "+dbname)
 }
 
-func mysqlCommand(ctx context.Context, mysql *dagger.Service, cmd string) (string, error) {
-	return dag.Container().
+func mysqlCommand(ctx context.Context, mysql *dagger.Service, cmd string) error {
+	_, err := dag.Container().
 		From(mysqlImage).
-		WithEnvVariable("CACHEBUSTER", time.Now().String()).
+		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano)).
 		WithServiceBinding("mysql", mysql).
 		WithExec([]string{"mysql", "-hmysql", "-uroot", "-p12345", "-e", cmd}).
-		Stdout(ctx)
+		Sync(ctx)
+
+	return err
 }
 
-func loadDump(ctx context.Context, mysql *dagger.Service, dbname string, dump *dagger.File) (string, error) {
-	return dag.Container().
+func loadDump(ctx context.Context, mysql *dagger.Service, dbname string, dump *dagger.File) error {
+	_, err := dag.Container().
 		From(mysqlImage).
-		WithEnvVariable("CACHEBUSTER", time.Now().String()).
+		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano)).
 		WithServiceBinding("mysql", mysql).
 		WithFile("/tmp/dump.sql.bz2", dump).
 		WithExec([]string{"/bin/sh", "-c", "bunzip2 < /tmp/dump.sql.bz2 | mysql -hmysql -uroot -p12345 " + dbname}).
-		Stdout(ctx)
+		Sync(ctx)
+
+	return err
 }
 
 func dumpDB(mysql *dagger.Service, dbs ...string) (*dagger.Directory, error) {
 	ctr := dag.Container().
 		From(mysqlImage).
-		WithEnvVariable("CACHEBUSTER", time.Now().String()).
+		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano)).
 		WithServiceBinding("mysql", mysql).
 		WithExec([]string{"mkdir", "/tmp/dumps"}).
 		WithWorkdir("/tmp/dumps")
@@ -216,20 +227,24 @@ func dumpDB(mysql *dagger.Service, dbs ...string) (*dagger.Directory, error) {
 	return ctr.Directory("/tmp/dumps"), nil
 }
 
-func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container) (string, error) {
-	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().String())
+func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool) error {
+	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
 
-	if ret, err := ctr.
+	if _, err := ctr.
 		WithExec([]string{
 			"/src/src/dashboard/src/manage.py",
 			"migrate",
 			"--noinput",
 		}).
-		Stdout(ctx); err != nil {
-		return ret, err
+		Sync(ctx); err != nil {
+		return err
 	}
 
-	if ret, err := ctr.
+	if onlyMigrate {
+		return nil
+	}
+
+	if _, err := ctr.
 		WithExec([]string{
 			"/src/src/dashboard/src/manage.py",
 			"install",
@@ -244,27 +259,31 @@ func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container) (string, error) 
 			`--ss-api-key="test"`,
 			`--site-url=http://dashboard:8000`,
 		}).
-		Stdout(ctx); err != nil {
-		return ret, err
+		Sync(ctx); err != nil {
+		return err
 	}
 
-	return "", nil
+	return nil
 }
 
-func bootstrapSSDB(ctx context.Context, ctr *dagger.Container) (string, error) {
-	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().String())
+func bootstrapSSDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool) error {
+	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
 
-	if ret, err := ctr.
+	if _, err := ctr.
 		WithExec([]string{
 			"/src/storage_service/manage.py",
 			"migrate",
 			"--noinput",
 		}).
-		Stdout(ctx); err != nil {
-		return ret, err
+		Sync(ctx); err != nil {
+		return err
 	}
 
-	if ret, err := ctr.
+	if onlyMigrate {
+		return nil
+	}
+
+	if _, err := ctr.
 		WithExec([]string{
 			"/src/storage_service/manage.py",
 			"create_user",
@@ -274,31 +293,9 @@ func bootstrapSSDB(ctx context.Context, ctr *dagger.Container) (string, error) {
 			`--api-key="test"`,
 			`--superuser`,
 		}).
-		Stdout(ctx); err != nil {
-		return ret, err
+		Sync(ctx); err != nil {
+		return err
 	}
-
-	return "", nil
-}
-
-func (m *CCP) worker(mysql *dagger.Service) *dagger.Service {
-	image := m.Build().WorkerImage()
-
-	image.
-		WithServiceBinding("mysql", mysql).
-		WithEnvVariable("X", "Y").
-		AsService()
-
-	return nil
-}
-
-func (m *CCP) storage(mysql *dagger.Service) *dagger.Service {
-	image := m.Build().StorageImage()
-
-	image.
-		WithServiceBinding("mysql", mysql).
-		WithEnvVariable("X", "Y").
-		AsService()
 
 	return nil
 }

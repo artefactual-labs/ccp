@@ -352,7 +352,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				dag.TypeDef().WithEnum("DatabaseExecutionMode", dagger.TypeDefWithEnumOpts{Description: "DatabaseExecutionMode defines the different modes in which the e2e tests can\noperate with the application databases."}).
 					WithEnumValue("USE_CACHED", dagger.TypeDefWithEnumValueOpts{Description: "UseCached is the default mode that relies on whatever is the existing\nMySQL service state."}).
 					WithEnumValue("USE_DUMPS", dagger.TypeDefWithEnumValueOpts{Description: "UseDumps attempts to configure the MySQL service using the database dumps\npreviously generated."}).
-					WithEnumValue("GENERATE_DUMPS", dagger.TypeDefWithEnumValueOpts{Description: "GenerateDumps produces new database dumps instead of running the tests."}).
 					WithEnumValue("FORCE_DROP", dagger.TypeDefWithEnumValueOpts{Description: "ForceDrop drops the existing databases forcing the application to\nrecreate them using Django migrations."})).
 			WithObject(
 				dag.TypeDef().WithObject("Lint").
