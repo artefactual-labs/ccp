@@ -26,6 +26,15 @@ var (
 	}
 )
 
+var (
+	transferSourceDir                = "/home"
+	transferSourceDirVolume          = dag.CacheVolume("transfers")
+	transferSourceDirVolumeMountOpts = dagger.ContainerWithMountedCacheOpts{
+		Sharing: dagger.Shared,
+		Owner:   "1000:1000",
+	}
+)
+
 // DatabaseExecutionMode defines the different modes in which the e2e tests can
 // operate with the application databases.
 type DatabaseExecutionMode string
@@ -45,7 +54,8 @@ const (
 func (m *CCP) GenerateDumps(ctx context.Context) (*dagger.Directory, error) {
 	mysql := m.Build().MySQLContainer().AsService()
 
-	_, _, err := m.bootstrapAM(ctx, mysql, UseCached) // ForceDrop not needed since it's a fresh MySQL instance.
+	// ForceDrop ensures that the app is migrated and installed.
+	_, _, err := m.bootstrapAM(ctx, mysql, ForceDrop)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +108,8 @@ func (m *CCP) Etoe(
 			WithServiceBinding("storage", storage).
 			WithServiceBinding("ccp", ccp).
 			WithServiceBinding("worker", worker).
-			WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts),
+			WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
+			WithEnvVariable("CCP_E2E_ENABLED", "yes"),
 	}).
 		Exec(args).
 		Stdout(ctx)
@@ -146,6 +157,7 @@ func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMod
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "storage_service.settings.local").
 		WithEnvVariable("SS_DB_URL", "mysql://root:12345@mysql/"+ssDBName).
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
+		WithMountedCache(transferSourceDir, transferSourceDirVolume, transferSourceDirVolumeMountOpts).
 		WithExposedPort(8000)
 
 	drop := dbMode != UseCached
