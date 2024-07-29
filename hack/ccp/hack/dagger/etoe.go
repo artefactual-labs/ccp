@@ -12,7 +12,7 @@ import (
 const (
 	mcpDBName = "MCP"
 	ssDBName  = "SS"
-	dumpsDir  = "hack/ccp/integration/data"
+	dumpsDir  = "hack/ccp/e2e/testdata/dumps"
 )
 
 // Options for the shared Archivematica directory that we provisiong using
@@ -108,7 +108,6 @@ func (m *CCP) Etoe(
 
 func (m *CCP) bootstrapCCP(mysql, storage *dagger.Service) *dagger.Service {
 	return m.Build().CCPImage().
-		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithEnvVariable("CCP_DEBUG", "true").
 		WithEnvVariable("CCP_V", "10").
 		WithEnvVariable("CCP_SHARED_DIR", sharedDir).
@@ -123,6 +122,7 @@ func (m *CCP) bootstrapCCP(mysql, storage *dagger.Service) *dagger.Service {
 		WithEnvVariable("CCP_METRICS_ADDR", ":7999").
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("storage", storage).
+		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		AsService()
 }
 
@@ -170,8 +170,6 @@ func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMod
 
 func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
 	dashboardCtr := m.Build().DashboardImage().
-		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("storage", storage).
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.local").
 		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_USER", "root").
 		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_PASSWORD", "12345").
@@ -179,6 +177,8 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_DATABASE", mcpDBName).
 		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_SEARCH_ENABLED", "false").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
+		WithServiceBinding("mysql", mysql).
+		WithServiceBinding("storage", storage).
 		WithExposedPort(8000)
 
 	drop := dbMode != UseCached
@@ -203,10 +203,6 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 
 func (m *CCP) bootstrapWorker(mysql, storage, ccp *dagger.Service) *dagger.Service {
 	return m.Build().WorkerImage().
-		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("storage", storage).
-		WithServiceBinding("ccp", ccp).
-		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithEnvVariable("DJANGO_SECRET_KEY", "12345").
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_USER", "root").
@@ -215,6 +211,10 @@ func (m *CCP) bootstrapWorker(mysql, storage, ccp *dagger.Service) *dagger.Servi
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_MCPARCHIVEMATICASERVER", "ccp:4730").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_SEARCH_ENABLED", "false").
+		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
+		WithServiceBinding("mysql", mysql).
+		WithServiceBinding("storage", storage).
+		WithServiceBinding("ccp", ccp).
 		AsService()
 }
 
