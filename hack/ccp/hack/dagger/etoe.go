@@ -302,15 +302,15 @@ func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool
 		WithExec([]string{
 			"/src/src/dashboard/src/manage.py",
 			"install",
-			`--username="test"`,
-			`--password="test"`,
-			`--email="test@test.com"`,
-			`--org-name="test"`,
-			`--org-id="test"`,
-			`--api-key="test"`,
+			`--username=test`,
+			`--password=test`,
+			`--email=test@test.com`,
+			`--org-name=test`,
+			`--org-id=test`,
+			`--api-key=test`,
 			`--ss-url=http://storage:8000`,
-			`--ss-user="test"`,
-			`--ss-api-key="test"`,
+			`--ss-user=test`,
+			`--ss-api-key=test`,
 			`--site-url=http://dashboard:8000`,
 		}).
 		Sync(ctx); err != nil {
@@ -341,10 +341,10 @@ func bootstrapSSDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool)
 		WithExec([]string{
 			"/src/storage_service/manage.py",
 			"create_user",
-			`--username="test"`,
-			`--password="test"`,
-			`--email="test@test.com"`,
-			`--api-key="test"`,
+			`--username=test`,
+			`--password=test`,
+			`--email=test@test.com`,
+			`--api-key=test`,
 			`--superuser`,
 		}).
 		Sync(ctx); err != nil {

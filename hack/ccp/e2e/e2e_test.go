@@ -34,7 +34,11 @@ func TestServerCreatePackage(t *testing.T) {
 	t.Run("Test", func(t *testing.T) {
 		client := createClient(t)
 
-		req := &connect.Request[adminv1.ListPackagesRequest]{}
+		req := &connect.Request[adminv1.ListPackagesRequest]{
+			Msg: &adminv1.ListPackagesRequest{
+				Type: adminv1.PackageType_PACKAGE_TYPE_SIP,
+			},
+		}
 		req.Header().Set("Authorization", "ApiKey test:test")
 
 		resp, err := client.ListPackages(context.Background(), req)
