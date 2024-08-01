@@ -131,6 +131,9 @@ func TestOutputClientScriptJob(t *testing.T) {
 				},
 			},
 			cmp.AllowUnexported(choice{}),
+			cmpopts.SortSlices(func(x, y choice) bool {
+				return x.label > y.label
+			}),
 		)
 	})
 }
