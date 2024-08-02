@@ -2,16 +2,12 @@ import uuid
 from contextlib import ExitStack as does_not_raise
 
 import pytest
-from client.job import Job
 from create_mets_v2 import createDMDIDsFromCSVMetadata
 from create_mets_v2 import main
 from lxml import etree
-from main.models import SIP
 from main.models import DublinCore
-from main.models import Event
 from main.models import File
 from main.models import MetadataAppliesToType
-from main.models import RightsStatement
 from main.models import SIPArrange
 from namespaces import NSMAP
 
@@ -43,21 +39,8 @@ def test_createDMDIDsFromCSVMetadata_finds_non_ascii_paths(mocker):
 
 
 @pytest.fixture()
-def job():
-    return Job("stub", "stub", [])
-
-
-@pytest.fixture()
-def sip_path(tmp_path):
-    sip_path = tmp_path / "pictures3-5904fdd7-85df-4d7e-99be-2d3bceba7f7a"
-    sip_path.mkdir()
-
-    return sip_path
-
-
-@pytest.fixture()
-def objects_path(sip_path):
-    objects_path = sip_path / "objects"
+def objects_path(sip_directory_path):
+    objects_path = sip_directory_path / "objects"
     objects_path.mkdir()
 
     return objects_path
@@ -72,16 +55,16 @@ def empty_dir_path(objects_path):
 
 
 @pytest.fixture()
-def metadata_csv(sip, sip_path, objects_path):
+def metadata_csv(sip, sip_directory_path, objects_path):
     (objects_path / "metadata").mkdir()
     metadata_csv = objects_path / "metadata" / "metadata.csv"
     metadata_csv.write_text("Filename,dc.title\nobjects/file1,File 1")
 
     originallocation = "".join(
-        [r"%transferDirectory%", str(metadata_csv.relative_to(sip_path))],
+        [r"%transferDirectory%", str(metadata_csv.relative_to(sip_directory_path))],
     )
     currentlocation = "".join(
-        [r"%SIPDirectory%", str(metadata_csv.relative_to(sip_path))],
+        [r"%SIPDirectory%", str(metadata_csv.relative_to(sip_directory_path))],
     )
     file_obj = File.objects.create(
         uuid=uuid.uuid4(),
@@ -95,15 +78,6 @@ def metadata_csv(sip, sip_path, objects_path):
     )
 
     return file_obj
-
-
-@pytest.fixture()
-def sip(db, sip_path, objects_path):
-    return SIP.objects.create(
-        uuid=uuid.uuid4(),
-        sip_type="SIP",
-        currentpath=str(sip_path),
-    )
 
 
 @pytest.fixture()
@@ -126,54 +100,25 @@ def file_path(objects_path):
 
 
 @pytest.fixture()
-def file_obj(db, sip, sip_path, file_path):
-    originallocation = "".join(
-        [r"%transferDirectory%", str(file_path.relative_to(sip_path))],
+def sip_file(sip_file, sip_directory_path, file_path):
+    sip_file.originallocation = (
+        f"%transferDirectory%{file_path.relative_to(sip_directory_path)}".encode()
     )
-    currentlocation = "".join(
-        [r"%SIPDirectory%", str(file_path.relative_to(sip_path))],
+    sip_file.currentlocation = (
+        f"%SIPDirectory%{file_path.relative_to(sip_directory_path)}".encode()
     )
-    file_obj = File.objects.create(
-        uuid=uuid.uuid4(),
-        sip=sip,
-        originallocation=originallocation.encode(),
-        currentlocation=currentlocation.encode(),
-        size=113318,
-        filegrpuse="original",
-        checksum="35e0cc683d75704fc5b04fc3633f6c654e10cd3af57471271f370309c7ff9dba",
-        checksumtype="sha256",
-    )
+    sip_file.save()
 
-    Event.objects.create(
-        event_id=uuid.uuid4(),
-        file_uuid=file_obj,
-        event_type="message digest calculation",
-        event_detail='program="python"; module="hashlib.sha256()"',
-        event_outcome_detail="35e0cc683d75704fc5b04fc3633f6c654e10cd3af57471271f370309c7ff9dba",
-    )
-
-    rights = RightsStatement.objects.create(
-        metadataappliestotype_id=MetadataAppliesToType.FILE_TYPE,
-        metadataappliestoidentifier=file_obj.uuid,
-        rightsstatementidentifiertype="UUID",
-        rightsstatementidentifiervalue=str(uuid.uuid4()),
-    )
-    rights_granted = rights.rightsstatementrightsgranted_set.create(
-        act="Disseminate", startdate="2001-01-01", enddateopen=True
-    )
-    rights_granted.restrictions.create(restriction="Allow")
-    rights_granted.notes.create(rightsgrantednote="A grant note")
-    rights_granted.notes.create(rightsgrantednote="Another grant note")
-
-    return file_obj
+    return sip_file
 
 
-def test_simple_mets(job, sip_path, sip, file_obj):
-    mets_path = sip_path / f"METS.{sip.uuid}.xml"
+@pytest.mark.django_db
+def test_simple_mets(mcp_job, sip_directory_path, sip, sip_file):
+    mets_path = sip_directory_path / f"METS.{sip.uuid}.xml"
     main(
-        job,
+        mcp_job,
         sipType="SIP",
-        baseDirectoryPath=sip.currentpath,
+        baseDirectoryPath=str(sip_directory_path),
         XMLFile=str(mets_path),
         sipUUID=sip.pk,
         includeAmdSec=False,
@@ -199,12 +144,15 @@ def test_simple_mets(job, sip_path, sip, file_obj):
     assert "physical" in structmap_types
 
 
-def test_aip_mets_includes_dublincore(job, sip_path, sip, sip_dublincore, file_obj):
-    mets_path = sip_path / f"METS.{sip.uuid}.xml"
+@pytest.mark.django_db
+def test_aip_mets_includes_dublincore(
+    mcp_job, sip_directory_path, sip, sip_dublincore, sip_file
+):
+    mets_path = sip_directory_path / f"METS.{sip.uuid}.xml"
     main(
-        job,
+        mcp_job,
         sipType="SIP",
-        baseDirectoryPath=sip.currentpath,
+        baseDirectoryPath=str(sip_directory_path),
         XMLFile=str(mets_path),
         sipUUID=sip.pk,
         includeAmdSec=True,
@@ -231,14 +179,15 @@ def test_aip_mets_includes_dublincore(job, sip_path, sip, sip_dublincore, file_o
     assert dublincore[2].text == "23456"
 
 
+@pytest.mark.django_db
 def test_aip_mets_includes_dublincore_via_metadata_csv(
-    job, sip_path, sip, file_obj, metadata_csv
+    mcp_job, sip_directory_path, sip, sip_file, metadata_csv
 ):
-    mets_path = sip_path / f"METS.{sip.uuid}.xml"
+    mets_path = sip_directory_path / f"METS.{sip.uuid}.xml"
     main(
-        job,
+        mcp_job,
         sipType="SIP",
-        baseDirectoryPath=sip.currentpath,
+        baseDirectoryPath=str(sip_directory_path),
         XMLFile=str(mets_path),
         sipUUID=sip.pk,
         includeAmdSec=True,
@@ -261,14 +210,15 @@ def test_aip_mets_includes_dublincore_via_metadata_csv(
     assert dublincore[0].text == "File 1"
 
 
+@pytest.mark.django_db
 def test_aip_mets_normative_directory_structure(
-    job, sip_path, sip, file_obj, metadata_csv, empty_dir_path
+    mcp_job, sip_directory_path, sip, sip_file, metadata_csv, empty_dir_path
 ):
-    mets_path = sip_path / f"METS.{sip.uuid}.xml"
+    mets_path = sip_directory_path / f"METS.{sip.uuid}.xml"
     main(
-        job,
+        mcp_job,
         sipType="SIP",
-        baseDirectoryPath=sip.currentpath,
+        baseDirectoryPath=str(sip_directory_path),
         XMLFile=str(mets_path),
         sipUUID=sip.pk,
         includeAmdSec=True,
@@ -282,7 +232,7 @@ def test_aip_mets_normative_directory_structure(
     assert (
         normative_structmap[0]
         .xpath(
-            ".//mets:div[@LABEL='pictures3-5904fdd7-85df-4d7e-99be-2d3bceba7f7a']",
+            f".//mets:div[@LABEL='{sip_directory_path.name}']",
             namespaces=NSMAP,
         )[0]
         .get("DMDID")
@@ -302,6 +252,7 @@ def test_aip_mets_normative_directory_structure(
     )
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "fail_on_error, errors, expectation",
     [
@@ -313,7 +264,15 @@ def test_aip_mets_normative_directory_structure(
     ],
 )
 def test_xml_validation_fail_on_error(
-    mocker, settings, job, sip_path, sip, file_obj, fail_on_error, errors, expectation
+    mocker,
+    settings,
+    mcp_job,
+    sip_directory_path,
+    sip,
+    sip_file,
+    fail_on_error,
+    errors,
+    expectation,
 ):
     mock_mets = mocker.Mock(
         **{
@@ -329,10 +288,10 @@ def test_xml_validation_fail_on_error(
         settings.XML_VALIDATION_FAIL_ON_ERROR = fail_on_error
     with expectation:
         main(
-            job,
+            mcp_job,
             sipType="SIP",
-            baseDirectoryPath=sip.currentpath,
-            XMLFile=str(sip_path / "METS.xml"),
+            baseDirectoryPath=str(sip_directory_path),
+            XMLFile=str(sip_directory_path / "METS.xml"),
             sipUUID=sip.pk,
             includeAmdSec=False,
             createNormativeStructmap=False,
@@ -340,29 +299,29 @@ def test_xml_validation_fail_on_error(
     if errors:
         assert (
             "Error(s) processing and/or validating XML metadata:\n\t- xml_validation_error"
-            in job.get_stderr()
+            in mcp_job.get_stderr()
         )
 
 
 @pytest.fixture
-def arranged_sip(db, tmp_path):
-    # Create an arranged SIP.
+def arranged_sip_path(tmp_path):
     sip_path = tmp_path / "sip"
     sip_path.mkdir()
-    sip = SIP.objects.create(
-        sip_type="SIP",
-        currentpath=str(sip_path),
-    )
 
+    return sip_path
+
+
+@pytest.fixture
+def create_arrangement(sip, arranged_sip_path):
     # Create the directory structure representing the new arrangement.
-    objects_path = sip_path / "objects"
+    objects_path = arranged_sip_path / "objects"
     objects_path.mkdir()
     SIPArrange.objects.create(sip=sip, arrange_path=b".")
 
     for path, level_of_description in [
-        ((sip_path / "objects" / "subdir"), "Series"),
-        ((sip_path / "objects" / "subdir" / "first"), "Subseries"),
-        ((sip_path / "objects" / "subdir" / "second"), "Subseries"),
+        ((arranged_sip_path / "objects" / "subdir"), "Series"),
+        ((arranged_sip_path / "objects" / "subdir" / "first"), "Subseries"),
+        ((arranged_sip_path / "objects" / "subdir" / "second"), "Subseries"),
     ]:
         path.mkdir()
         SIPArrange.objects.create(
@@ -373,15 +332,15 @@ def arranged_sip(db, tmp_path):
 
     # Add files to the arrangement.
     for path in [
-        (sip_path / "objects" / "file1"),
-        (sip_path / "objects" / "subdir" / "file2"),
-        (sip_path / "objects" / "subdir" / "first" / "file3"),
-        (sip_path / "objects" / "subdir" / "second" / "file4"),
+        (arranged_sip_path / "objects" / "file1"),
+        (arranged_sip_path / "objects" / "subdir" / "file2"),
+        (arranged_sip_path / "objects" / "subdir" / "first" / "file3"),
+        (arranged_sip_path / "objects" / "subdir" / "second" / "file4"),
     ]:
         path.touch()
         f = File.objects.create(
-            originallocation=f"%TransferDirectory%{path.relative_to(sip_path)}".encode(),
-            currentlocation=f"%SIPDirectory%{path.relative_to(sip_path)}".encode(),
+            originallocation=f"%TransferDirectory%{path.relative_to(arranged_sip_path)}".encode(),
+            currentlocation=f"%SIPDirectory%{path.relative_to(arranged_sip_path)}".encode(),
             sip=sip,
             filegrpuse="original",
         )
@@ -392,18 +351,19 @@ def arranged_sip(db, tmp_path):
             file_uuid=f.uuid,
         )
 
-    return sip
 
-
-def test_structmap_is_created_from_sip_arrangement(job, arranged_sip):
-    mets_path = f"{arranged_sip.currentpath}/METS.{arranged_sip.uuid}.xml"
+@pytest.mark.django_db
+def test_structmap_is_created_from_sip_arrangement(
+    mcp_job, create_arrangement, arranged_sip_path, sip
+):
+    mets_path = f"{arranged_sip_path}/METS.{sip.uuid}.xml"
 
     main(
-        job,
+        mcp_job,
         sipType="SIP",
-        baseDirectoryPath=arranged_sip.currentpath,
+        baseDirectoryPath=(arranged_sip_path),
         XMLFile=mets_path,
-        sipUUID=arranged_sip.pk,
+        sipUUID=sip.pk,
         includeAmdSec=False,
         createNormativeStructmap=False,
     )

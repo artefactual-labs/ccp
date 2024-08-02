@@ -3,55 +3,55 @@ import shutil
 
 import pytest
 import restructure_dip_for_content_dm_upload
-from client.job import Job
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.fixture
-def job():
-    return Job("stub", "stub", [])
+def dip_directory_path(tmp_path):
+    result = tmp_path / "dip"
+    result.mkdir()
+    (result / "objects").mkdir()
 
-
-@pytest.fixture
-def dip_directory(tmpdir):
     shutil.copy(
         os.path.join(THIS_DIR, "fixtures", "mets_sip_dc.xml"),
-        str(tmpdir / "METS.a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3.xml"),
+        result / "METS.a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3.xml",
     )
-    (tmpdir / "objects").mkdir()
 
-    return tmpdir
+    return result
 
 
 @pytest.fixture
-def dip_directory_optional_dc_columns(tmpdir):
+def dip_directory_with_optional_dc_columns_path(tmp_path):
+    result = tmp_path / "dip"
+    result.mkdir()
+    (result / "objects").mkdir()
+
     shutil.copy(
         os.path.join(THIS_DIR, "fixtures", "mets_sip_dc_with_optional_columns.xml"),
-        str(tmpdir / "METS.a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3.xml"),
+        result / "METS.a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3.xml",
     )
-    (tmpdir / "objects").mkdir()
 
-    return tmpdir
+    return result
 
 
-def test_restructure_dip_for_content_dm_upload(job, dip_directory):
-    job.args = (
+def test_restructure_dip_for_content_dm_upload(mcp_job, dip_directory_path):
+    mcp_job.args = (
         None,
         "--uuid=a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3",
-        f"--dipDir={dip_directory}",
+        f"--dipDir={dip_directory_path}",
     )
-    jobs = [job]
+    jobs = [mcp_job]
 
     restructure_dip_for_content_dm_upload.call(jobs)
     csv_data = (
-        (dip_directory / "objects/compound.txt")
+        (dip_directory_path / "objects/compound.txt")
         .read_text(encoding="utf-8")
         .splitlines()
     )
 
-    assert not job.error
-    assert job.get_exit_code() == 0
+    assert not mcp_job.error
+    assert mcp_job.get_exit_code() == 0
     assert (
         csv_data[0]
         == "Directory name	title	creator	subject	description	publisher	contributor	date	type	format	identifier	source	relation	language	rights	isPartOf	AIP UUID	file UUID"
@@ -63,24 +63,24 @@ def test_restructure_dip_for_content_dm_upload(job, dip_directory):
 
 
 def test_restructure_dip_for_content_dm_upload_with_optional_dc_columns(
-    job, dip_directory_optional_dc_columns
+    mcp_job, dip_directory_with_optional_dc_columns_path
 ):
-    job.args = (
+    mcp_job.args = (
         None,
         "--uuid=a2f1f249-7bd4-4f52-8f1a-84319cb1b6d3",
-        f"--dipDir={dip_directory_optional_dc_columns}",
+        f"--dipDir={dip_directory_with_optional_dc_columns_path}",
     )
-    jobs = [job]
+    jobs = [mcp_job]
 
     restructure_dip_for_content_dm_upload.call(jobs)
     csv_data = (
-        (dip_directory_optional_dc_columns / "objects/compound.txt")
+        (dip_directory_with_optional_dc_columns_path / "objects/compound.txt")
         .read_text(encoding="utf-8")
         .splitlines()
     )
 
-    assert not job.error
-    assert job.get_exit_code() == 0
+    assert not mcp_job.error
+    assert mcp_job.get_exit_code() == 0
 
     assert (
         csv_data[0]

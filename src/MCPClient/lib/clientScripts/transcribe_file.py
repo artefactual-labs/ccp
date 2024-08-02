@@ -79,7 +79,7 @@ def insert_file_into_database(
 def fetch_rules_for(file_):
     try:
         format = FileFormatVersion.objects.get(file_uuid=file_)
-        return FPRule.objects.filter(
+        return FPRule.active.filter(
             format=format.format_version, purpose="transcription"
         )
     except (FileFormatVersion.DoesNotExist, ValidationError):
@@ -143,7 +143,7 @@ def main(job, task_uuid, file_uuid):
             (script,) = rd.replace(script)
             args = []
         else:
-            args = rd.to_gnu_options
+            args = rd.to_gnu_options()
 
         exitstatus, stdout, stderr = executeOrRun(
             rule.command.script_type, script, arguments=args, capture_output=True
