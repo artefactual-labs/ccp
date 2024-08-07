@@ -153,12 +153,12 @@ func (e *env) lookUpUser() {
 func (e *env) runMySQL() {
 	e.t.Log("Running MySQL server...")
 
-	container, err := mysql.RunContainer(e.ctx,
+	container, err := mysql.Run(e.ctx,
+		"mysql:8.4.0",
 		mysql.WithDatabase("MCP"),
 		mysql.WithUsername("root"),
 		mysql.WithPassword("12345"),
 		mysql.WithScripts("data/MCP.sql.bz2"),
-		testcontainers.WithImage("mysql:8.4.0"),
 		testcontainers.CustomizeRequestOption(func(req *testcontainers.GenericContainerRequest) error {
 			req.LogConsumerCfg = &testcontainers.LogConsumerConfig{
 				Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
