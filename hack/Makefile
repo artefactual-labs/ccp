@@ -95,7 +95,7 @@ build:  # Build Compose services.
 		--build-arg USER_ID=$(CALLER_UID) \
 		--build-arg GROUP_ID=$(CALLER_GID)
 
-bootstrap: bootstrap-storage-service bootstrap-dashboard-db bootstrap-dashboard-frontend  ## Full bootstrap.
+bootstrap: bootstrap-storage-service bootstrap-db  ## Full bootstrap.
 
 bootstrap-storage-service:  ## Bootstrap Storage Service (new database).
 	$(call create_db,SS)
@@ -129,13 +129,13 @@ makemigrations-ss:
 			archivematica-storage-service \
 				makemigrations
 
-manage-dashboard:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
+manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
 	docker compose run \
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/dashboard/src/manage.py \
-			archivematica-dashboard \
+		--entrypoint /src/src/MCPClient/lib/manage.py \
+			archivematica-mcp-client \
 				$(ARG)
 
 manage-ss:  ## Run Django /manage.py on Storage Service, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG='shell --help'`
@@ -147,19 +147,19 @@ manage-ss:  ## Run Django /manage.py on Storage Service, suppling <command> [opt
 			archivematica-storage-service \
 				$(ARG)
 
-bootstrap-dashboard-db:  ## Bootstrap Dashboard (new database).
+bootstrap-db:  ## Bootstrap Dashboard (new database).
 	$(call create_db,MCP)
 	docker compose run \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/dashboard/src/manage.py \
-			archivematica-dashboard \
+		--entrypoint /src/src/MCPClient/lib/manage.py \
+			archivematica-mcp-client \
 				migrate --noinput
 	docker compose run \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/dashboard/src/manage.py \
-			archivematica-dashboard \
+		--entrypoint /src/src/MCPClient/lib/manage.py \
+			archivematica-mcp-client \
 				install \
 					--username="test" \
 					--password="test" \
@@ -172,23 +172,8 @@ bootstrap-dashboard-db:  ## Bootstrap Dashboard (new database).
 					--ss-api-key="test" \
 					--site-url="http://archivematica-dashboard:8000"
 
-bootstrap-dashboard-frontend:  ## Build front-end assets.
-	docker build \
-		-t archivematica-dashboard-frontend-builder \
-		-f $(CURDIR)/Dockerfile \
-		--build-arg TARGET=archivematica-dashboard-frontend-builder \
-			../
-	docker run \
-		-e HOME=/tmp/npm-config \
-		--rm \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--volume "$(SRCDIR)/dashboard:/src/src/dashboard" \
-		--entrypoint npm \
-			archivematica-dashboard-frontend-builder \
-				install --no-package-lock
-
-restart-am-services:  ## Restart Archivematica services: MCPServer, MCPClient, Dashboard and Storage Service.
-	docker compose restart --no-deps archivematica-mcp-client archivematica-dashboard archivematica-storage-service
+restart-am-services:  ## Restart Archivematica services: MCPServer, MCPClient and Storage Service.
+	docker compose restart --no-deps archivematica-mcp-client archivematica-storage-service
 
 compile-requirements-am:  ## Run pip-compile for Archivematica
 	docker compose run --workdir /src \
@@ -196,7 +181,7 @@ compile-requirements-am:  ## Run pip-compile for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-mcp-server \
+		--entrypoint bash archivematica-mcp-client \
 			-c "make pip-compile"
 
 upgrade-requirements-am:  ## Run pip-upgrade for Archivematica
@@ -205,7 +190,7 @@ upgrade-requirements-am:  ## Run pip-upgrade for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-mcp-server \
+		--entrypoint bash archivematica-mcp-client \
 			-c "make pip-upgrade"
 
 compile-requirements-ss:  ## Run pip-compile for Storage Service
@@ -226,26 +211,6 @@ upgrade-requirements-ss:  ## Run pip-upgrade for Storage Service
 		--entrypoint bash archivematica-storage-service \
 			-c "make pip-upgrade"
 
-define amauat_make
-	docker compose \
-		-f docker-compose.yml \
-		-f docker-compose.acceptance-tests.yml \
-		run \
-			--workdir /src \
-			-e XDG_CACHE_HOME=/tmp/pip-cache \
-			--rm \
-			--no-deps \
-			--user $(CALLER_UID):$(CALLER_GID) \
-			--entrypoint bash archivematica-acceptance-tests \
-				-c "make $(1)"
-endef
-
-compile-requirements-amauat: test-at-build  ## Run pip-compile for AMAUATs
-	$(call amauat_make,pip-compile)
-
-upgrade-requirements-amauat: test-at-build  ## Run pip-upgrade for AMAUATs
-	$(call amauat_make,pip-upgrade)
-
 db:  ## Connect to the MySQL server using the CLI.
 	docker compose exec mysql mysql -hlocalhost -uroot -p12345
 
@@ -260,7 +225,7 @@ flush: flush-shared-dir bootstrap restart-am-services  ## Delete ALL user data.
 flush-shared-dir-mcp-configs:  ## Delete processing configurations - it restarts MCPServer.
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/defaultProcessingMCP.xml
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/automatedProcessingMCP.xml
-	docker compose restart --no-deps archivematica-mcp-server
+	docker compose restart --no-deps archivematica-ccp
 
 flush-shared-dir:  ## Delete contents of the shared directory data volume.
 	rm -rf ${AM_PIPELINE_DATA}/*
@@ -333,84 +298,6 @@ __TOXENVS_ALL := $(__TOXENVS_MCPSERVER) $(__TOXENVS_MCPCLIENT) $(__TOXENVS_DASHB
 test-all: start-mysql  ## Run all tests.
 	$(call grant_all_on_dbs,$(__TEST_DBS_MCPSERVER) $(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_DASHBOARD) $(__TEST_DBS_STORAGE_SERVICE) $(__TEST_DBS_ARCHIVEMATICA_COMMON))
 	$(call run_toxenvs,$(__TOXENVS_ALL))
-
-test-at-build:  ## AMAUAT: build image.
-	$(call compose_amauat, \
-		build --build-arg USER_ID=$(CALLER_UID) --build-arg GROUP_ID=$(CALLER_GID) archivematica-acceptance-tests)
-
-test-at-check: test-at-build  ## AMAUAT: test browsers.
-	$(call compose_amauat, \
-		run --rm --no-deps archivematica-acceptance-tests /home/archivematica/acceptance-tests/simplebrowsertest.py)
-
-define AT_HELP
-
-   Archivematica acceptance tests (Listing).
-
-   The most effective way to run these tests is to run them by tag. For
-   example:
-
-      $ make test-at-behave TAGS=aip-encrypt BROWSER=Firefox
-      $ make test-at-behave TAGS=black-box
-
-   Commonly used acceptance tests in the Archivematica suite:
-
-      * aip-encrypt        :Tests the encryption of AIPs.
-      * aip-encrypt-mirror :Tests the replication of encrypted AIPs.
-      * black-box          :Test Archivematica without Selenium web-driver.
-      * icc                :Conformance check feature on ingest.
-      * ipc                :Policy check feature on ingest.
-      * picc               :Policy check feature for preservation derivatives.
-      * tpc                :Policy check feature on transfer.
-      * uuids-dirs         :Tests whether UUIDs are assigned to AIP sub-DIRs.
-
-endef
-
-export AT_HELP
-test-at-help:  ## AMAUAT: list commonly used acceptance test tags.
-	@echo "$$AT_HELP"
-
-TAGS ?= black-box
-BROWSER ?= Firefox
-test-at-behave: test-at-build  ## AMAUAT: run behave, default is `make test-at-behave TAGS=black-box BROWSER=Firefox`.
-	$(call compose_amauat, \
-		run --rm -e HEADLESS=1 --no-deps archivematica-acceptance-tests behave \
-			--no-capture --no-capture-stderr --no-logcapture \
-			$(subst $(SPACE), --tags=,$(SPACE)$(TAGS)) --no-skipped -v --stop \
-			-D driver_name=$(BROWSER) \
-			-D ssh_accessible=no \
-			-D am_url=http://nginx/ \
-			-D am_username=test \
-			-D am_password=test \
-			-D am_api_key=test \
-			-D am_version=1.8 \
-			-D ss_url=http://nginx:8000/ \
-			-D ss_username=test \
-			-D ss_password=test \
-			-D ss_api_key=test \
-			-D transfer_source_path=archivematica/archivematica-sampledata/TestTransfers/acceptance-tests \
-			-D home=archivematica)
-
-test-at-black-box: TAGS=black-box  ## AMAUAT: run the black-box automation tests.
-test-at-black-box: test-at-behave
-
-test-frontend:  ## Run Dashboard JS tests.
-	docker build \
-		-t archivematica-dashboard-testing \
-		-f $(CURDIR)/Dockerfile \
-		--build-arg TARGET=archivematica-dashboard-testing \
-			../
-	docker run \
-		-e HOME=/tmp/npm-config \
-		--rm \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--volume "$(SRCDIR)/dashboard:/src/src/dashboard" \
-		--entrypoint npm \
-			archivematica-dashboard-testing \
-				install
-	docker run \
-		--rm \
-		--volume "$(SRCDIR)/dashboard/frontend:/src/src/dashboard/frontend" \
-			archivematica-dashboard-testing
 
 stop:  # Stop all containers.
 	$(call compose_all, stop)

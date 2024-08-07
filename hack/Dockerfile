@@ -1,9 +1,8 @@
-ARG TARGET=archivematica-mcp-server
+ARG TARGET=archivematica-mcp-client
 ARG UBUNTU_VERSION=22.04
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG PYTHON_VERSION=3.9
-ARG NODE_VERSION=20
 ARG PYENV_DIR=/pyenv
 ARG SELENIUM_DIR=/selenium
 ARG MEDIAAREA_VERSION=1.0-24
@@ -77,72 +76,6 @@ RUN set -ex \
 	&& pyenv exec python3 -m pip install --upgrade pip setuptools \
 	&& pyenv exec python3 -m pip install --requirement /src/requirements-dev.txt \
 	&& pyenv rehash
-
-# -----------------------------------------------------------------------------
-
-FROM base-builder AS browsers-builder
-
-ARG SELENIUM_DIR=/selenium
-
-RUN set -ex \
-	&& apt-get update \
-	&& apt-get install -y --no-install-recommends \
-		jq \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
-
-RUN set -ex \
-	&& SELENIUM_CACHE=${SELENIUM_DIR}/cache \
-	&& SELENIUM_BIN=${SELENIUM_DIR}/bin \
-	&& mkdir -p $SELENIUM_CACHE $SELENIUM_BIN \
-	&& curl -o $SELENIUM_BIN/selenium-manager -L https://github.com/SeleniumHQ/selenium/raw/selenium-4.16.0/common/manager/linux/selenium-manager \
-	&& chmod +x $SELENIUM_BIN/selenium-manager \
-	&& CHROME_OUTPUT=$($SELENIUM_BIN/selenium-manager --cache-path $SELENIUM_CACHE --browser chrome --output JSON) \
-	&& FIREFOX_OUTPUT=$($SELENIUM_BIN/selenium-manager --cache-path $SELENIUM_CACHE --browser firefox --output JSON) \
-	&& ln -s $(echo $CHROME_OUTPUT | jq -r '.result.browser_path') $SELENIUM_BIN/google-chrome \
-	&& ln -s $(echo $CHROME_OUTPUT | jq -r '.result.driver_path') $SELENIUM_BIN/chromedriver \
-	&& ln -s $(echo $FIREFOX_OUTPUT | jq -r '.result.browser_path') $SELENIUM_BIN/firefox \
-	&& ln -s $(echo $FIREFOX_OUTPUT | jq -r '.result.driver_path') $SELENIUM_BIN/geckodriver
-
-# -----------------------------------------------------------------------------
-
-FROM node:${NODE_VERSION} AS archivematica-dashboard-frontend-builder
-
-COPY --link src/dashboard/frontend /src/src/dashboard/frontend
-
-WORKDIR /src/src/dashboard/frontend
-
-RUN set ex \
-	&& npm install --no-package-lock
-
-# -----------------------------------------------------------------------------
-
-FROM node:${NODE_VERSION} AS archivematica-dashboard-testing
-
-ARG SELENIUM_DIR=/selenium
-ENV PATH=${SELENIUM_DIR}/bin:$PATH
-
-RUN set -ex \
-	&& apt-get update \
-	&& apt-get -y --no-install-recommends install \
-		libasound2 \
-		libdbus-glib-1-2 \
-		libdrm2 \
-		libgbm1 \
-		libglib2.0-0 \
-		libgtk-3-0 \
-		libnss3 \
-		libx11-xcb1 \
-		libxcb1 \
-		libxtst6 \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
-
-COPY --chown=${USER_ID}:${GROUP_ID} --from=browsers-builder --link ${SELENIUM_DIR} ${SELENIUM_DIR}
-COPY --chown=${USER_ID}:${GROUP_ID} --from=archivematica-dashboard-frontend-builder --link /src/src/dashboard/frontend/node_modules /src/src/dashboard/frontend/node_modules
-COPY --link src/dashboard/frontend /src/src/dashboard/frontend
-
-WORKDIR /src/src/dashboard/frontend
-
-ENTRYPOINT ["npm", "run", "test-single-run"]
 
 # -----------------------------------------------------------------------------
 
@@ -224,7 +157,7 @@ COPY --chown=${USER_ID}:${GROUP_ID} --link . /src
 FROM base AS archivematica-mcp-client
 
 ENV DJANGO_SETTINGS_MODULE=settings.common
-ENV PYTHONPATH=/src/src/MCPClient/lib/:/src/src/MCPClient/lib/clientScripts:/src/src/archivematicaCommon/lib/:/src/src/dashboard/src/
+ENV PYTHONPATH=/src/src/MCPClient/lib/:/src/src/MCPClient/lib/clientScripts:/src/src/archivematicaCommon/lib/
 ENV ARCHIVEMATICA_MCPCLIENT_ARCHIVEMATICACLIENTMODULES=/src/src/MCPClient/lib/archivematicaClientModules
 ENV ARCHIVEMATICA_MCPCLIENT_CLIENTASSETSDIRECTORY=/src/src/MCPClient/lib/assets/
 ENV ARCHIVEMATICA_MCPCLIENT_CLIENTSCRIPTSDIRECTORY=/src/src/MCPClient/lib/clientScripts/
@@ -235,56 +168,6 @@ COPY --link src/archivematicaCommon/lib/externals/fido/ /usr/lib/archivematica/a
 COPY --link src/archivematicaCommon/lib/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
 ENTRYPOINT ["pyenv", "exec", "python3", "/src/src/MCPClient/lib/archivematicaClient.py"]
-
-# -----------------------------------------------------------------------------
-
-FROM base AS archivematica-mcp-server
-
-ENV DJANGO_SETTINGS_MODULE=settings.common
-ENV PYTHONPATH=/src/src/MCPServer/lib/:/src/src/archivematicaCommon/lib/:/src/src/dashboard/src/
-
-ENTRYPOINT ["pyenv", "exec", "python3", "/src/src/MCPServer/lib/archivematicaMCP.py"]
-
-# -----------------------------------------------------------------------------
-
-FROM base AS archivematica-dashboard
-
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-ARG PYTHON_VERSION=3.9
-
-USER root
-
-RUN set -ex \
-	&& internalDirs=' \
-		/src/src/dashboard/frontend \
-		/src/src/dashboard/src/static \
-		/src/src/dashboard/src/media \
-	' \
-	&& mkdir -p $internalDirs \
-	&& chown -R archivematica $internalDirs
-
-USER archivematica
-
-COPY --chown=${USER_ID}:${GROUP_ID} --from=archivematica-dashboard-frontend-builder --link /src/src/dashboard/src/media/js/ /src/src/dashboard/src/media/js
-
-WORKDIR /src/src/dashboard/src
-
-ENV DJANGO_SETTINGS_MODULE=settings.local
-ENV PYTHONPATH=/src/src/dashboard/src/:/src/src/archivematicaCommon/lib/
-ENV AM_GUNICORN_BIND=0.0.0.0:8000
-ENV AM_GUNICORN_CHDIR=/src/src/dashboard/src
-ENV FORWARDED_ALLOW_IPS=*
-
-RUN set -ex \
-	&& ./manage.py collectstatic --noinput --clear \
-	&& ./manage.py compilemessages
-
-ENV DJANGO_SETTINGS_MODULE=settings.production
-
-EXPOSE 8000
-
-ENTRYPOINT ["pyenv", "exec", "python3", "-m", "gunicorn", "--config=/src/src/dashboard/install/dashboard.gunicorn-config.py", "wsgi:application"]
 
 # -----------------------------------------------------------------------------
 

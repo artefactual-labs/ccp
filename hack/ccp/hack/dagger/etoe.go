@@ -181,13 +181,13 @@ func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMod
 }
 
 func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
-	dashboardCtr := m.Build().DashboardImage().
-		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.local").
-		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_USER", "root").
-		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_PASSWORD", "12345").
-		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_HOST", "mysql").
-		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_CLIENT_DATABASE", mcpDBName).
-		WithEnvVariable("ARCHIVEMATICA_DASHBOARD_SEARCH_ENABLED", "false").
+	dashboardCtr := m.Build().WorkerImage().
+		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_USER", "root").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_PASSWORD", "12345").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST", "mysql").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_SEARCH_ENABLED", "false").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("storage", storage).
@@ -286,7 +286,7 @@ func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool
 
 	if _, err := ctr.
 		WithExec([]string{
-			"/src/src/dashboard/src/manage.py",
+			"/src/src/MCPClient/lib/manage.py",
 			"migrate",
 			"--noinput",
 		}).
@@ -300,7 +300,7 @@ func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool
 
 	if _, err := ctr.
 		WithExec([]string{
-			"/src/src/dashboard/src/manage.py",
+			"/src/src/MCPClient/lib/manage.py",
 			"install",
 			`--username=test`,
 			`--password=test`,

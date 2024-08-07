@@ -310,10 +310,8 @@ INSTALLED_APPS = (
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "components.accounts",
     "main",
-    "components.mcp",
-    "components.administration",
+    "legacy.administration",
     "fpr",
     # Only needed because archivematicaClient calls django.setup()
     # which imports the ApiAccess model through the helpers module of

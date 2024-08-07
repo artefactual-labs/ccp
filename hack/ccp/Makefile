@@ -154,7 +154,7 @@ gen-shim: $(OAPI_CODEGEN)
 push: # @HELP Push new build of CCP to development environment.
 push:
 	docker compose up -d --force-recreate --build --no-deps archivematica-ccp
-	docker compose restart --no-deps archivematica-mcp-client archivematica-dashboard
+	docker compose restart --no-deps archivematica-mcp-client
 
 help: # @HELP Print this message.
 help:

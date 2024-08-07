@@ -72,7 +72,7 @@ func (r *CCP) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-func (r Build) MarshalJSON() ([]byte, error) {
+func (r Lint) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Source *dagger.Directory
 	}
@@ -80,7 +80,7 @@ func (r Build) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&concrete)
 }
 
-func (r *Build) UnmarshalJSON(bs []byte) error {
+func (r *Lint) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Source *dagger.Directory
 	}
@@ -92,7 +92,7 @@ func (r *Build) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-func (r Lint) MarshalJSON() ([]byte, error) {
+func (r Build) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Source *dagger.Directory
 	}
@@ -100,7 +100,7 @@ func (r Lint) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&concrete)
 }
 
-func (r *Lint) UnmarshalJSON(bs []byte) error {
+func (r *Build) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Source *dagger.Directory
 	}
@@ -196,13 +196,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
 			return (*Build).WorkerImage(&parent), nil
-		case "DashboardImage":
-			var parent Build
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Build).DashboardImage(&parent), nil
 		case "StorageImage":
 			var parent Build
 			err = json.Unmarshal(parentJSON, &parent)
@@ -229,13 +222,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 		}
 	case "CCP":
 		switch fnName {
-		case "Build":
-			var parent CCP
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*CCP).Build(&parent), nil
 		case "GenerateDumps":
 			var parent CCP
 			err = json.Unmarshal(parentJSON, &parent)
@@ -271,6 +257,13 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
 			return (*CCP).Lint(&parent), nil
+		case "Build":
+			var parent CCP
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*CCP).Build(&parent), nil
 		case "":
 			var parent CCP
 			err = json.Unmarshal(parentJSON, &parent)
@@ -312,9 +305,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			WithObject(
 				dag.TypeDef().WithObject("CCP").
 					WithFunction(
-						dag.Function("Build",
-							dag.TypeDef().WithObject("Build"))).
-					WithFunction(
 						dag.Function("GenerateDumps",
 							dag.TypeDef().WithObject("Directory"))).
 					WithFunction(
@@ -322,22 +312,33 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
 							WithDescription("Run the e2e tests.\n\nThis function configures").
 							WithArg("test", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true)).
-							WithArg("dbMode", dag.TypeDef().WithEnum("DatabaseExecutionMode"), dagger.FunctionWithArgOpts{DefaultValue: dagger.JSON("\"USE_CACHED\"")})).
+							WithArg("dbMode", dag.TypeDef().WithEnum("DatabaseExecutionMode"), dagger.FunctionWithArgOpts{DefaultValue: dagger.JSON("\"USE_DUMPS\"")})).
 					WithFunction(
 						dag.Function("Lint",
 							dag.TypeDef().WithObject("Lint"))).
+					WithFunction(
+						dag.Function("Build",
+							dag.TypeDef().WithObject("Build"))).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("CCP")).
 							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Project source directory."}).
 							WithArg("ref", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Checkout the repository (at the designated ref) and use it as the source\ndirectory instead of the local one."}))).
+			WithEnum(
+				dag.TypeDef().WithEnum("DatabaseExecutionMode", dagger.TypeDefWithEnumOpts{Description: "DatabaseExecutionMode defines the different modes in which the e2e tests can\noperate with the application databases."}).
+					WithEnumValue("USE_DUMPS", dagger.TypeDefWithEnumValueOpts{Description: "UseDumps attempts to configure the MySQL service using the database dumps\npreviously generated."}).
+					WithEnumValue("USE_CACHED", dagger.TypeDefWithEnumValueOpts{Description: "UseCached is the default mode that relies on whatever is the existing\nMySQL service state."}).
+					WithEnumValue("FORCE_DROP", dagger.TypeDefWithEnumValueOpts{Description: "ForceDrop drops the existing databases forcing the application to\nrecreate them using Django migrations."})).
+			WithObject(
+				dag.TypeDef().WithObject("Lint").
+					WithFunction(
+						dag.Function("Go",
+							dag.TypeDef().WithObject("Container"))).
+					WithField("Source", dag.TypeDef().WithObject("Directory"))).
 			WithObject(
 				dag.TypeDef().WithObject("Build").
 					WithFunction(
 						dag.Function("WorkerImage",
-							dag.TypeDef().WithObject("Container"))).
-					WithFunction(
-						dag.Function("DashboardImage",
 							dag.TypeDef().WithObject("Container"))).
 					WithFunction(
 						dag.Function("StorageImage",
@@ -347,18 +348,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							dag.TypeDef().WithObject("Container"))).
 					WithFunction(
 						dag.Function("MySQLContainer",
-							dag.TypeDef().WithObject("Container")))).
-			WithEnum(
-				dag.TypeDef().WithEnum("DatabaseExecutionMode", dagger.TypeDefWithEnumOpts{Description: "DatabaseExecutionMode defines the different modes in which the e2e tests can\noperate with the application databases."}).
-					WithEnumValue("USE_CACHED", dagger.TypeDefWithEnumValueOpts{Description: "UseCached is the default mode that relies on whatever is the existing\nMySQL service state."}).
-					WithEnumValue("USE_DUMPS", dagger.TypeDefWithEnumValueOpts{Description: "UseDumps attempts to configure the MySQL service using the database dumps\npreviously generated."}).
-					WithEnumValue("FORCE_DROP", dagger.TypeDefWithEnumValueOpts{Description: "ForceDrop drops the existing databases forcing the application to\nrecreate them using Django migrations."})).
-			WithObject(
-				dag.TypeDef().WithObject("Lint").
-					WithFunction(
-						dag.Function("Go",
-							dag.TypeDef().WithObject("Container"))).
-					WithField("Source", dag.TypeDef().WithObject("Directory"))), nil
+							dag.TypeDef().WithObject("Container")))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

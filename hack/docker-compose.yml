@@ -112,38 +112,6 @@ services:
       - "archivematica-ccp"
       - "archivematica-storage-service"
 
-  archivematica-dashboard:
-    build:
-      context: "../"
-      dockerfile: "hack/Dockerfile"
-      args:
-        TARGET: "archivematica-dashboard"
-        USER_ID: ${USER_ID:-1000}
-        GROUP_ID: ${GROUP_ID:-1000}
-        UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}
-        PYTHON_VERSION: ${PYTHON_VERSION:-3.9}
-    environment:
-      FORWARDED_ALLOW_IPS: "*"
-      AM_GUNICORN_ACCESSLOG: "/dev/null"
-      AM_GUNICORN_RELOAD: "true"
-      AM_GUNICORN_RELOAD_ENGINE: "auto"
-      DJANGO_SETTINGS_MODULE: "settings.local"
-      ARCHIVEMATICA_DASHBOARD_DASHBOARD_GEARMAN_SERVER: "archivematica-ccp:8000"
-      ARCHIVEMATICA_DASHBOARD_DASHBOARD_PROMETHEUS_ENABLED: "1"
-      ARCHIVEMATICA_DASHBOARD_POLLING_INTERVAL: "3"
-      ARCHIVEMATICA_DASHBOARD_CLIENT_USER: "archivematica"
-      ARCHIVEMATICA_DASHBOARD_CLIENT_PASSWORD: "demo"
-      ARCHIVEMATICA_DASHBOARD_CLIENT_HOST: "mysql"
-      ARCHIVEMATICA_DASHBOARD_CLIENT_DATABASE: "MCP"
-      ARCHIVEMATICA_DASHBOARD_SEARCH_ENABLED: "false"
-    volumes:
-      - "../:/src"
-      - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
-    links:
-      - "mysql"
-      - "archivematica-ccp"
-      - "archivematica-storage-service"
-
   archivematica-storage-service:
     build:
       context: "submodules/archivematica-storage-service"

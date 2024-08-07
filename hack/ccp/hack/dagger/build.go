@@ -20,13 +20,6 @@ func (m *Build) WorkerImage() *dagger.Container {
 	})
 }
 
-func (m *Build) DashboardImage() *dagger.Container {
-	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
-		Dockerfile: "hack/Dockerfile",
-		Target:     "archivematica-dashboard",
-	})
-}
-
 func (m *Build) StorageImage() *dagger.Container {
 	return m.Source.Directory("hack/submodules/archivematica-storage-service").
 		DockerBuild()
