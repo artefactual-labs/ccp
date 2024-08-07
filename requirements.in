@@ -6,7 +6,6 @@ git+https://github.com/artefactual-labs/bagit-python.git@4b8fde73b4e631461bfd7ad
 clamd
 django-autoslug
 django-tastypie
-elasticsearch>=6.0.0,<7.0.0
 git+https://github.com/artefactual-labs/python-gearman.git@b68efc868c7a494dd6a2d2e820fb098a6da9f797#egg=gearman3
 importlib-metadata
 lxml

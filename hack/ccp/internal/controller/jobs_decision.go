@@ -320,9 +320,6 @@ func (l *nextChainDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error
 		if !ok {
 			continue
 		}
-		if !workflow.ChoiceAvailable(l.j.wl, ch) {
-			continue
-		}
 		c.label = ch.Description.String()
 		c.nextLink = item
 		choices = append(choices, c)

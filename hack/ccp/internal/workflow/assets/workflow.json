@@ -528,16 +528,6 @@
       },
       "link_id": "2d32235c-02d4-4686-88a6-96f4d6c7b1c3"
     },
-    "7065d256-2f47-4b7d-baec-2c4699626121": {
-      "description": {
-        "en": "Send to backlog",
-        "fr": "Envoyer au backlog",
-        "no": "Send til feillogg",
-        "pt_BR": "Enviar para o backlog",
-        "sv": "Skicka till backlogg"
-      },
-      "link_id": "7e6330c6-0280-4b25-8bf8-4b8143b69bde"
-    },
     "76befd52-14c3-44f9-838f-15a4e01624b0": {
       "description": {
         "en": "No",
@@ -2752,7 +2742,7 @@
       "exit_codes": {
         "0": {
           "job_status": "Completed successfully",
-          "link_id": "48703fad-dc44-4c8e-8f47-933df3ef6179"
+          "link_id": "d5a2ef60-a757-483c-a71a-ccbffe6b80da"
         }
       },
       "fallback_job_status": "Failed",
@@ -4572,41 +4562,6 @@
         "no": "Prosesser innsendingsdokumentasjon",
         "pt_BR": "Processar documentação de submissão",
         "sv": "Bearbeta leveransdokumentation"
-      }
-    },
-    "48703fad-dc44-4c8e-8f47-933df3ef6179": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPUUID%\" \"%SIPName%\" \"%SIPDirectory%\" \"%SIPType%\" \"%AIPsStore%\" ",
-        "execute": "indexAIP_v0.0"
-      },
-      "description": {
-        "en": "Index AIP",
-        "es": "Indexar AIP",
-        "fr": "Indexer l'AIP",
-        "pt_BR": "Índice AIP",
-        "sv": "Indexera AIP"
-      },
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully",
-          "link_id": "b7cf0d9a-504f-4f4e-9930-befa817d67ff"
-        },
-        "179": {
-          "job_status": "Failed",
-          "link_id": "b7cf0d9a-504f-4f4e-9930-befa817d67ff"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "7d728c39-395f-4892-8193-92f086c0546f",
-      "group": {
-        "en": "Store AIP",
-        "fr": "Stocker l’AIP",
-        "ja": "AIPを蓄える",
-        "no": "Lagre AIP",
-        "pt_BR": "Armazenar AIP",
-        "sv": "Lagra AIP"
       }
     },
     "498f7a6d-1b8c-431a-aa5d-83f14f3c5e65": {
@@ -6684,38 +6639,6 @@
         "sv": "SIP misslyckades"
       }
     },
-    "7e6330c6-0280-4b25-8bf8-4b8143b69bde": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%clientAssetsDirectory%README/TRANSFER_README.html\" \"%SIPDirectory%README.html\"",
-        "execute": "copy_v0.0"
-      },
-      "description": {
-        "en": "Add README file",
-        "ja": "READMEファイルを追加",
-        "no": "Legg til README-fil",
-        "pt_BR": "Adicionar arquivo README",
-        "sv": "Lägg till README-fil"
-      },
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully",
-          "link_id": "e6e553cf-85f5-4e2f-abf4-d276acd66f5a"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "e6e553cf-85f5-4e2f-abf4-d276acd66f5a",
-      "group": {
-        "en": "Create SIP from Transfer",
-        "es": "Crear SIP a partir de la transferencia",
-        "fr": "Créer un SIP à partir du Transfert",
-        "ja": "転送からSIPを作成する",
-        "no": "Opprett SIP fra overføring",
-        "pt_BR": "Crie SIP a partir da transferência",
-        "sv": "Skapa SIP från överföringspaket"
-      }
-    },
     "7e81f94e-6441-4430-a12d-76df09181b66": {
       "config": {
         "@manager": "linkTaskManagerChoice",
@@ -8284,38 +8207,6 @@
         "sv": "Godkänn skapande av SIP"
       }
     },
-    "abd6d60c-d50f-4660-a189-ac1b34fafe85": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPUUID%\" \"%SIPDirectory%\" \"%jobCreatedDate%\"",
-        "execute": "moveToBacklog_v1.0"
-      },
-      "description": {
-        "en": "Move transfer to backlog",
-        "es": "Mover transferencia a la cola",
-        "no": "Flytt overføring til feillogg",
-        "pt_BR": "Mover a transferência para o backlog",
-        "sv": "Flytta överföring till backlogg"
-      },
-      "end": true,
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "61c316a6-0a50-4f65-8767-1f44b1eeb6dd",
-      "group": {
-        "en": "Create SIP from Transfer",
-        "es": "Crear SIP a partir de la transferencia",
-        "fr": "Créer un SIP à partir du Transfert",
-        "ja": "転送からSIPを作成する",
-        "no": "Opprett SIP fra overføring",
-        "pt_BR": "Crie SIP a partir da transferência",
-        "sv": "Skapa SIP från överföringspaket"
-      }
-    },
     "accea2bf-ba74-4a3a-bb97-614775c74459": {
       "config": {
         "@manager": "linkTaskManagerChoice",
@@ -8846,38 +8737,6 @@
         "sv": "Bearbeta metadatamapp"
       }
     },
-    "b7cf0d9a-504f-4f4e-9930-befa817d67ff": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPUUID%\"",
-        "execute": "postStoreAIPHook_v1.0"
-      },
-      "description": {
-        "en": "Clean up after storing AIP",
-        "es": "Limpiar después de almacenar el AIP",
-        "fr": "Nettoyer après avoir stocké l'AIP",
-        "no": "Rydd opp etter lagring av AIP",
-        "pt_BR": "Limpe após armazenar AIP",
-        "sv": "Rensa efter lagring av AIP"
-      },
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully",
-          "link_id": "d5a2ef60-a757-483c-a71a-ccbffe6b80da"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "d5a2ef60-a757-483c-a71a-ccbffe6b80da",
-      "group": {
-        "en": "Store AIP",
-        "fr": "Stocker l’AIP",
-        "ja": "AIPを蓄える",
-        "no": "Lagre AIP",
-        "pt_BR": "Armazenar AIP",
-        "sv": "Lagra AIP"
-      }
-    },
     "b944ec7f-7f99-491f-986d-58914c9bb4fa": {
       "config": {
         "@manager": "linkTaskManagerDirectories",
@@ -8950,7 +8809,6 @@
         "@model": "MicroServiceChainChoice",
         "chain_choices": [
           "61cfa825-120e-4b17-83e6-51a42b67d969",
-          "7065d256-2f47-4b7d-baec-2c4699626121",
           "1b04ec43-055c-43b7-9543-bd03c6a778ba"
         ]
       },
@@ -10708,37 +10566,6 @@
         "fr": "Transfert TRIM",
         "no": "TRIM-overføring",
         "pt_BR": "Transferência do TRIM "
-      }
-    },
-    "e6e553cf-85f5-4e2f-abf4-d276acd66f5a": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPUUID%\" \"%relativeLocation%metadata/dc.json\"",
-        "execute": "saveDublinCore_v0.0"
-      },
-      "description": {
-        "en": "Serialize Dublin Core metadata to disk",
-        "no": "Serialiser Dublin Core-metadata til disk",
-        "pt_BR": "Seriar os metadados Dublin Core para o disco",
-        "sv": "Sänd Dublin Core metadata till disk som serie"
-      },
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully",
-          "link_id": "abd6d60c-d50f-4660-a189-ac1b34fafe85"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "abd6d60c-d50f-4660-a189-ac1b34fafe85",
-      "group": {
-        "en": "Create SIP from Transfer",
-        "es": "Crear SIP a partir de la transferencia",
-        "fr": "Créer un SIP à partir du Transfert",
-        "ja": "転送からSIPを作成する",
-        "no": "Opprett SIP fra overføring",
-        "pt_BR": "Crie SIP a partir da transferência",
-        "sv": "Skapa SIP från överföringspaket"
       }
     },
     "e76aec15-5dfa-4b14-9405-735863e3a6fa": {

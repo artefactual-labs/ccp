@@ -193,9 +193,6 @@ func (f *chainChoicesField) build(cf *configField) {
 		if slices.Contains(f.ignoredChoices, chainDesc) {
 			continue
 		}
-		if !ChoiceAvailable(cf.link, chain) {
-			continue
-		}
 		choice := &adminv1.ProcessingConfigFieldChoice{
 			Value: chainID.String(),
 			Label: i18n(chain.Description),
@@ -433,53 +430,6 @@ func (f *ProcessingConfigForm) Fields(ctx context.Context) ([]*adminv1.Processin
 	}
 
 	return fields, err
-}
-
-// ChoiceAvailable determines if a choice should be presented to the user.
-//
-// From “server.workflow_abilities“:
-// > Return “True“ if the “MicroServiceChainChoice“ instance “choice“
-// > should be presented to the user, given “ABILITIES“ and the configuration
-// > object “settings“. If the ability “enabled_condition“ is set to “in“,
-// > check that the “enabled_value“ is included in the “enabled_attr“ value.
-// > Otherwise, check “enabled_attr“ boolean value.
-//
-// TODO: abilities only exist at this point to omit "Send to backlog" if search
-// indexing is disabled. Is it worth it?
-func ChoiceAvailable(link *Link, chain *Chain) bool {
-	for _, ability := range abilities {
-		featureEnabled := false
-		// TODO: django_settings lookup? MCPServer used this only to look up
-		// whether SEARCH_ENABLED was enabled (or with transfers index enabled).
-		if !featureEnabled {
-			choiceTuple := [2]string{link.Description.String(), chain.Description.String()}
-			if slices.Contains(ability.dependencies, choiceTuple) {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-type ability struct {
-	name             string
-	enabledAttr      string
-	enabledCondition string
-	enabledValue     string
-	dependencies     [][2]string
-}
-
-var abilities = []ability{
-	{
-		name:             "search",
-		enabledAttr:      "SEARCH_ENABLED",
-		enabledCondition: "in",
-		enabledValue:     "transfers",
-		dependencies: [][2]string{
-			{"Create SIP(s)", "Send to backlog"},
-		},
-	},
 }
 
 func i18n(tx I18nField) *adminv1.I18N {

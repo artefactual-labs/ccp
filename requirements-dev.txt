@@ -48,8 +48,6 @@ django-autoslug==1.9.9
     # via -r requirements.txt
 django-tastypie==0.14.7
     # via -r requirements.txt
-elasticsearch==6.8.2
-    # via -r requirements.txt
 exceptiongroup==1.2.1
     # via pytest
 filelock==3.15.4
@@ -186,7 +184,6 @@ urllib3==2.2.2
     # via
     #   -r requirements.txt
     #   amclient
-    #   elasticsearch
     #   requests
 virtualenv==20.26.3
     # via tox

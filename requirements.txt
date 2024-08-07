@@ -26,8 +26,6 @@ django-autoslug==1.9.9
     # via -r requirements.in
 django-tastypie==0.14.7
     # via -r requirements.in
-elasticsearch==6.8.2
-    # via -r requirements.in
 gearman3 @ git+https://github.com/artefactual-labs/python-gearman.git@b68efc868c7a494dd6a2d2e820fb098a6da9f797
     # via -r requirements.in
 idna==3.7
@@ -78,7 +76,6 @@ unidecode==1.3.8
 urllib3==2.2.2
     # via
     #   amclient
-    #   elasticsearch
     #   requests
 zipp==3.19.2
     # via

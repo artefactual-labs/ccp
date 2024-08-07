@@ -187,7 +187,6 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_PASSWORD", "12345").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST", "mysql").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_SEARCH_ENABLED", "false").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("storage", storage).
@@ -222,7 +221,6 @@ func (m *CCP) bootstrapWorker(mysql, storage, ccp *dagger.Service) *dagger.Servi
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST", "mysql").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_MCPARCHIVEMATICASERVER", "ccp:4730").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_SEARCH_ENABLED", "false").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("storage", storage).

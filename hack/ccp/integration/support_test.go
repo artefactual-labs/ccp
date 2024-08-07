@@ -240,7 +240,6 @@ func (e *env) runMCPClient() {
 			"ARCHIVEMATICA_MCPCLIENT_CLIENT_PORT":                      "3306",
 			"ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE":                  "MCP",
 			"ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_MCPARCHIVEMATICASERVER": fmt.Sprintf("%s:%d", testcontainers.HostInternal, e.ccpJobServerAddr.portN),
-			"ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_SEARCH_ENABLED":         "false",
 		},
 	}
 
