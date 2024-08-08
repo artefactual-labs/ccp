@@ -2,16 +2,11 @@ package workflow
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"slices"
-	"sync"
 
 	"github.com/google/uuid"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
-	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
-	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient/enums"
 )
 
 type configField struct {
@@ -43,12 +38,6 @@ func (c *configField) build(wf *Document) {
 type fieldBuilder interface {
 	// build is allowed to panic.
 	build(cf *configField)
-}
-
-// fieldStorageUpdater is the interface implemented by storageLocationField to
-// hit the Storage Service API so we can build field choices dynamically
-type fieldStorageUpdater interface {
-	update(ctx context.Context, cf *configField, ssclient ssclient.Client) error
 }
 
 // sharedConfigChoicesField ...
@@ -92,60 +81,6 @@ func (f *sharedChainChoicesField) build(cf *configField) {
 		}
 		cf.cached.Choice = append(cf.cached.Choice, choice)
 	}
-}
-
-// storageLocationField ...
-type storageLocationField struct {
-	purpose enums.LocationPurpose
-	mu      sync.Mutex
-}
-
-var (
-	_ fieldBuilder        = (*storageLocationField)(nil)
-	_ fieldStorageUpdater = (*storageLocationField)(nil)
-)
-
-func (f *storageLocationField) build(cf *configField) {
-	f.addChoice(cf, fmt.Sprintf("/api/v2/location/default/%s/", f.purpose.String()), "Default location")
-}
-
-func (f *storageLocationField) addChoice(cf *configField, uri, label string) {
-	i18n := &adminv1.I18N{Tx: map[string]string{"en": label}}
-	cf.cached.Choice = append(cf.cached.Choice, &adminv1.ProcessingConfigFieldChoice{
-		Value: uri,
-		Label: i18n,
-		AppliesTo: []*adminv1.ProcessingConfigFieldChoiceAppliesTo{
-			{
-				LinkId: cf.linkID.String(),
-				Value:  uri,
-				Label:  i18n,
-			},
-		},
-	})
-}
-
-func (f *storageLocationField) update(ctx context.Context, cf *configField, ssclient ssclient.Client) error {
-	var err error
-	locations, err := ssclient.ListLocations(ctx, "", f.purpose)
-	if err != nil {
-		return err
-	}
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	// Discard all locations excepting the default.
-	cf.cached.Choice = cf.cached.Choice[:1]
-
-	for _, loc := range locations {
-		label := loc.Description
-		if len(label) == 0 {
-			label = loc.RelativePath
-		}
-		f.addChoice(cf, loc.URI, label)
-	}
-
-	return nil
 }
 
 // replaceDictField ...
@@ -369,13 +304,6 @@ var processingConfigFields []*configField = []*configField{
 		},
 	},
 	{
-		name:   "store_aip_location",
-		linkID: uuid.MustParse("b320ce81-9982-408a-9502-097d0daa48fa"),
-		builder: &storageLocationField{
-			purpose: enums.LocationPurposeAS,
-		},
-	},
-	{
 		name:    "upload_dip",
 		linkID:  uuid.MustParse("92879a29-45bf-4f0b-ac43-e64474f0f2f9"),
 		builder: &chainChoicesField{},
@@ -385,27 +313,18 @@ var processingConfigFields []*configField = []*configField{
 		linkID:  uuid.MustParse("5e58066d-e113-4383-b20b-f301ed4d751c"),
 		builder: &chainChoicesField{},
 	},
-	{
-		name:   "store_dip_location",
-		linkID: uuid.MustParse("cd844b6e-ab3c-4bc6-b34f-7103f88715de"),
-		builder: &storageLocationField{
-			purpose: enums.LocationPurposeDS,
-		},
-	},
 }
 
 type ProcessingConfigForm struct {
-	wf       *Document
-	ssclient ssclient.Client
-	fields   []*configField
+	wf     *Document
+	fields []*configField
 }
 
 // NewProcessingConfigForms can panic during initialization.
-func NewProcessingConfigForm(wf *Document, ssclient ssclient.Client) *ProcessingConfigForm {
+func NewProcessingConfigForm(wf *Document) *ProcessingConfigForm {
 	f := &ProcessingConfigForm{
-		wf:       wf,
-		ssclient: ssclient,
-		fields:   processingConfigFields, // This is a global.
+		wf:     wf,
+		fields: processingConfigFields, // This is a global.
 	}
 
 	for _, item := range f.fields {
@@ -420,12 +339,6 @@ func (f *ProcessingConfigForm) Fields(ctx context.Context) ([]*adminv1.Processin
 
 	var err error
 	for _, cf := range f.fields {
-		if updater, ok := cf.builder.(fieldStorageUpdater); ok {
-			if updateErr := updater.update(ctx, cf, f.ssclient); updateErr != nil {
-				err = errors.Join(err, updateErr)
-			}
-		}
-
 		fields = append(fields, cf.cached)
 	}
 

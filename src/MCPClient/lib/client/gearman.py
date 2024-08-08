@@ -4,8 +4,8 @@ import multiprocessing
 from datetime import datetime
 
 import gearman
+import orjson
 from django.conf import settings
-from gearman_encoder import JSONDataEncoder
 
 from client import metrics
 from client.job import Job
@@ -15,6 +15,21 @@ from client.utils import replace_task_arguments
 from client.worker import run_task
 
 logger = logging.getLogger("archivematica.mcp.client.gearman")
+
+
+class JSONDataEncoder(gearman.DataEncoder):
+    """Custom data encoder class for the `gearman` library (JSON)."""
+
+    @classmethod
+    def encode(cls, encodable_object):
+        # Object of type bytes is not JSON serializable.
+        if isinstance(encodable_object, bytes):
+            encodable_object = encodable_object.decode("utf-8")
+        return orjson.dumps(encodable_object)
+
+    @classmethod
+    def decode(cls, decodable_string):
+        return orjson.loads(decodable_string)
 
 
 class MCPGearmanWorker(gearman.GearmanWorker):

@@ -5,5 +5,3 @@ scrape_configs:
   - targets:
     - archivematica-mcp-client:7999
     - archivematica-ccp:7999
-    - archivematica-dashboard:8000
-    - archivematica-storage-service:8000

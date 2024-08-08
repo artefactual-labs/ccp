@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { BoolValue, Message, proto3, StringValue } from "@bufbuild/protobuf";
+import { Message, proto3, StringValue } from "@bufbuild/protobuf";
 import { Choice, Decision, Package, PackageType, ProcessingConfigField, TransferType } from "./admin_pb.js";
 
 /**
@@ -57,16 +57,9 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
   metadataSetId?: string;
 
   /**
-   * An option to auto-approve the package. It is enabled by default.
-   *
-   * @generated from field: google.protobuf.BoolValue auto_approve = 7;
-   */
-  autoApprove?: boolean;
-
-  /**
    * Name of the processing configuration file to be included.
    *
-   * @generated from field: string processing_config = 8;
+   * @generated from field: string processing_config = 7;
    */
   processingConfig = "";
 
@@ -84,8 +77,7 @@ export class CreatePackageRequest extends Message<CreatePackageRequest> {
     { no: 4, name: "access_system_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "metadata_set_id", kind: "message", T: StringValue },
-    { no: 7, name: "auto_approve", kind: "message", T: BoolValue },
-    { no: 8, name: "processing_config", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "processing_config", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePackageRequest {

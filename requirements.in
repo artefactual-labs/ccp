@@ -1,6 +1,5 @@
 Django>=4.2,<5
 agentarchives
-amclient
 ammcpc
 git+https://github.com/artefactual-labs/bagit-python.git@4b8fde73b4e631461bfd7add87e200500d40ca21#egg=bagit
 clamd

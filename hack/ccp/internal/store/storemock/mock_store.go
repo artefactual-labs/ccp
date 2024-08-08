@@ -666,45 +666,6 @@ func (c *MockStoreReadSIPCall) DoAndReturn(f func(context.Context, uuid.UUID) (s
 	return c
 }
 
-// ReadStorageServiceConfig mocks base method.
-func (m *MockStore) ReadStorageServiceConfig(ctx context.Context) (store.StorageServiceConfig, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadStorageServiceConfig", ctx)
-	ret0, _ := ret[0].(store.StorageServiceConfig)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadStorageServiceConfig indicates an expected call of ReadStorageServiceConfig.
-func (mr *MockStoreMockRecorder) ReadStorageServiceConfig(ctx any) *MockStoreReadStorageServiceConfigCall {
-	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadStorageServiceConfig", reflect.TypeOf((*MockStore)(nil).ReadStorageServiceConfig), ctx)
-	return &MockStoreReadStorageServiceConfigCall{Call: call}
-}
-
-// MockStoreReadStorageServiceConfigCall wrap *gomock.Call
-type MockStoreReadStorageServiceConfigCall struct {
-	*gomock.Call
-}
-
-// Return rewrite *gomock.Call.Return
-func (c *MockStoreReadStorageServiceConfigCall) Return(arg0 store.StorageServiceConfig, arg1 error) *MockStoreReadStorageServiceConfigCall {
-	c.Call = c.Call.Return(arg0, arg1)
-	return c
-}
-
-// Do rewrite *gomock.Call.Do
-func (c *MockStoreReadStorageServiceConfigCall) Do(f func(context.Context) (store.StorageServiceConfig, error)) *MockStoreReadStorageServiceConfigCall {
-	c.Call = c.Call.Do(f)
-	return c
-}
-
-// DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreReadStorageServiceConfigCall) DoAndReturn(f func(context.Context) (store.StorageServiceConfig, error)) *MockStoreReadStorageServiceConfigCall {
-	c.Call = c.Call.DoAndReturn(f)
-	return c
-}
-
 // ReadTransfer mocks base method.
 func (m *MockStore) ReadTransfer(ctx context.Context, id uuid.UUID) (store.Transfer, error) {
 	m.ctrl.T.Helper()

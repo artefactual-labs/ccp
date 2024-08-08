@@ -7,7 +7,6 @@ grpcurl \
     "path": ["/home/archivematica/archivematica-sampledata/SampleTransfers/Images/pictures"],
     "name": "Test",
     "type": "TRANSFER_TYPE_STANDARD",
-    "autoApprove": true,
     "processingConfig": "automated"
   }' \
     127.0.0.1:63030 \

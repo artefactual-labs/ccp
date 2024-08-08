@@ -950,31 +950,6 @@ func (s *mysqlStoreImpl) ReadDict(ctx context.Context, name string) (_ map[strin
 	return ret, nil
 }
 
-func (s *mysqlStoreImpl) ReadStorageServiceConfig(ctx context.Context) (ret StorageServiceConfig, err error) {
-	defer wrap(&err, "ReadStorageServiceConfig()")
-
-	rows, err := s.queries.ReadDashboardSettingsWithNameLike(ctx, "storage_service_%")
-	if err != nil {
-		return ret, err
-	}
-	if len(rows) == 0 {
-		return ret, ErrNotFound
-	}
-
-	for _, row := range rows {
-		switch row.Name {
-		case "storage_service_url":
-			ret.URL = row.Value
-		case "storage_service_user":
-			ret.Username = row.Value
-		case "storage_service_apikey":
-			ret.APIKey = row.Value
-		}
-	}
-
-	return ret, nil
-}
-
 func (s *mysqlStoreImpl) ValidateUserAPIKey(ctx context.Context, username, key string) (_ *User, err error) {
 	defer wrap(&err, "ValidateUserAPIKey(%q, %q)", username, key)
 

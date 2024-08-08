@@ -64,7 +64,7 @@ type choice struct {
 	label string // TODO: use the i18n field in the workflow package.
 
 	// value is optional, not used by nextChainDecisionJob.
-	// - outputClientScriptJob populates a single value, e.g.: `[2]string{"", item.URI}`.
+	// - outputClientScriptJob used to (but was removed) a single value, e.g.: `[2]string{"", item.URI}`.
 	// - udpateContextDecisionJob populates a pair, e.g.: `[2]string{"AIPCompressionLevel", "1"}`.
 	value [2]string
 
@@ -190,73 +190,6 @@ func (d *decision) convert() *adminv1.Decision {
 	return ret
 }
 
-// outputDecisionJob.
-//
-// A job that handles a workflow decision point, with choices based on script
-// output.
-//
-// Manager: linkTaskManagerGetUserChoiceFromMicroserviceGeneratedList.
-// Class: OutputDecisionJob(DecisionJob).
-type outputDecisionJob struct {
-	j      *job
-	config *workflow.LinkStandardTaskConfig
-}
-
-var (
-	_ jobRunner  = (*outputDecisionJob)(nil)
-	_ jobDecider = (*outputDecisionJob)(nil)
-)
-
-func newOutputDecisionJob(j *job) (*outputDecisionJob, error) {
-	ret := &outputDecisionJob{
-		j:      j,
-		config: &workflow.LinkStandardTaskConfig{},
-	}
-	if err := loadConfig(j.wl, ret.config); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
-func (l *outputDecisionJob) exec(ctx context.Context) (_ uuid.UUID, err error) {
-	derrors.Add(&err, "outputDecisionJob")
-
-	nextLink := exitCodeLinkID(l.j.wl, 0)
-
-	var c *choice
-	locURI, err := l.j.pkg.PreconfiguredChoice(l.j.wl.ID)
-	if err != nil {
-		return uuid.Nil, err
-	} else if locURI != "" {
-		for _, item := range l.j.chain.choices {
-			if locURI == item.value[1] {
-				c = &item
-				break
-			}
-		}
-	}
-	if c != nil {
-		return nextLink, l.decide(ctx, *c)
-	}
-
-	// Store the next link in all choices we're sharing with the decision.
-	for i := range l.j.chain.choices {
-		l.j.chain.choices[i].nextLink = nextLink
-	}
-
-	return createAwait(l.j, l.j.chain.choices)
-}
-
-func (l *outputDecisionJob) decide(ctx context.Context, c choice) error {
-	// Pass the choice to the next job. This case is only used to select an AIP
-	// store URI, and the value of execute (script_name here) is a replacement
-	// string (e.g. %AIPsStore%).
-	l.j.chain.context.Set(l.config.Execute, c.value[1])
-
-	return l.j.markComplete(ctx)
-}
-
 // nextChainDecisionJob.
 //
 // A type of workflow decision that determines the next chain to be executed,
@@ -271,7 +204,7 @@ type nextChainDecisionJob struct {
 
 var (
 	_ jobRunner  = (*nextChainDecisionJob)(nil)
-	_ jobDecider = (*outputDecisionJob)(nil)
+	_ jobDecider = (*nextChainDecisionJob)(nil)
 )
 
 func newNextChainDecisionJob(j *job) (*nextChainDecisionJob, error) {
@@ -349,7 +282,7 @@ type updateContextDecisionJob struct {
 
 var (
 	_ jobRunner  = (*updateContextDecisionJob)(nil)
-	_ jobDecider = (*outputDecisionJob)(nil)
+	_ jobDecider = (*updateContextDecisionJob)(nil)
 )
 
 // Maps decision point UUIDs and decision UUIDs to their "canonical"

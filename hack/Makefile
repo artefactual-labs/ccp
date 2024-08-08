@@ -2,7 +2,6 @@
 
 # Paths for Docker named volumes
 AM_PIPELINE_DATA ?= $(HOME)/.ccp/am-pipeline-data
-SS_LOCATION_DATA ?= $(HOME)/.ccp/ss-location-data
 
 CALLER_UID=$(shell id -u)
 CALLER_GID=$(shell id -g)
@@ -15,10 +14,6 @@ COMMA := ,
 
 define compose_all
 	docker compose -f docker-compose.yml -f docker-compose.acceptance-tests.yml -f docker-compose.pmm.yml $(1)
-endef
-
-define compose_amauat
-	docker compose -f docker-compose.yml -f docker-compose.acceptance-tests.yml $(1)
 endef
 
 define compose_tests
@@ -79,55 +74,11 @@ create-volumes:  ## Create external data volumes.
 		--opt o=bind \
 		--opt device=$(AM_PIPELINE_DATA) \
 			ccp-am-pipeline-data
-	mkdir -p ${SS_LOCATION_DATA}
-	docker volume create \
-		--opt type=none \
-		--opt o=bind \
-		--opt device=$(SS_LOCATION_DATA) \
-			ccp-ss-location-data
-	# This workaround prevents Docker from creating this directory structure
-	# inside the external SS_LOCATION_DATA volume directory assigning root as
-	# the owner of some parts of it.
-	mkdir -p $(SS_LOCATION_DATA)/archivematica/archivematica-sampledata
 
 build:  # Build Compose services.
 	docker compose build \
 		--build-arg USER_ID=$(CALLER_UID) \
 		--build-arg GROUP_ID=$(CALLER_GID)
-
-bootstrap: bootstrap-storage-service bootstrap-db  ## Full bootstrap.
-
-bootstrap-storage-service:  ## Bootstrap Storage Service (new database).
-	$(call create_db,SS)
-	docker compose run \
-		--rm \
-		--no-deps \
-		--entrypoint /src/storage_service/manage.py \
-			archivematica-storage-service \
-				migrate --noinput
-	docker compose run \
-		--rm \
-		--no-deps \
-		--entrypoint /src/storage_service/manage.py \
-			archivematica-storage-service \
-				create_user \
-					--username="test" \
-					--password="test" \
-					--email="test@test.com" \
-					--api-key="test" \
-					--superuser
-	# SS needs to be restarted so the local space is created.
-	# See #303 (https://git.io/vNKlM) for more details.
-	docker compose restart --no-deps archivematica-storage-service
-
-makemigrations-ss:
-	docker compose run \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--rm \
-		--no-deps \
-		--entrypoint /src/storage_service/manage.py \
-			archivematica-storage-service \
-				makemigrations
 
 manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
 	docker compose run \
@@ -138,16 +89,7 @@ manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as 
 			archivematica-mcp-client \
 				$(ARG)
 
-manage-ss:  ## Run Django /manage.py on Storage Service, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG='shell --help'`
-	docker compose run \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--rm \
-		--no-deps \
-		--entrypoint /src/storage_service/manage.py \
-			archivematica-storage-service \
-				$(ARG)
-
-bootstrap-db:  ## Bootstrap Dashboard (new database).
+bootstrap:  ## Bootstrap MCP (new database).
 	$(call create_db,MCP)
 	docker compose run \
 		--rm \
@@ -167,13 +109,10 @@ bootstrap-db:  ## Bootstrap Dashboard (new database).
 					--org-name="test" \
 					--org-id="test" \
 					--api-key="test" \
-					--ss-url="http://archivematica-storage-service:8000" \
-					--ss-user="test" \
-					--ss-api-key="test" \
 					--site-url="http://archivematica-dashboard:8000"
 
-restart-am-services:  ## Restart Archivematica services: MCPServer, MCPClient and Storage Service.
-	docker compose restart --no-deps archivematica-mcp-client archivematica-storage-service
+restart-am-services:  ## Restart Archivematica services.
+	docker compose restart --no-deps archivematica-mcp-client
 
 compile-requirements-am:  ## Run pip-compile for Archivematica
 	docker compose run --workdir /src \
@@ -182,7 +121,7 @@ compile-requirements-am:  ## Run pip-compile for Archivematica
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--entrypoint bash archivematica-mcp-client \
-			-c "make pip-compile"
+			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
 
 upgrade-requirements-am:  ## Run pip-upgrade for Archivematica
 	docker compose run --workdir /src \
@@ -191,25 +130,7 @@ upgrade-requirements-am:  ## Run pip-upgrade for Archivematica
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--entrypoint bash archivematica-mcp-client \
-			-c "make pip-upgrade"
-
-compile-requirements-ss:  ## Run pip-compile for Storage Service
-	docker compose run --workdir /src \
-		-e XDG_CACHE_HOME=/tmp/pip-cache \
-		--rm \
-		--no-deps \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-storage-service \
-			-c "make pip-compile"
-
-upgrade-requirements-ss:  ## Run pip-upgrade for Storage Service
-	docker compose run --workdir /src \
-		-e XDG_CACHE_HOME=/tmp/pip-cache \
-		--rm \
-		--no-deps \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-storage-service \
-			-c "make pip-upgrade"
+			-c "pip-compile --allow-unsafe --upgrade --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --upgrade --output-file requirements-dev.txt requirements-dev.in"
 
 db:  ## Connect to the MySQL server using the CLI.
 	docker compose exec mysql mysql -hlocalhost -uroot -p12345
@@ -237,11 +158,8 @@ flush-logs:  ## Delete container logs - requires root privileges.
 # modules plus the prefixed and suffixed variations used by Django and
 # tox when running in parallel mode
 __TEST_DBS_MCPCLIENT = MCPCLIENTTEST test_MCPCLIENTTEST test_MCPCLIENTTEST_mcp-client
-__TEST_DBS_MIGRATIONS = DASHBOARDTEST SSTEST
-__TEST_DBS_DASHBOARD = DASHBOARDTEST test_DASHBOARDTEST test_DASHBOARDTEST_dashboard test_DASHBOARDTEST_archivematica-common
-__TEST_DBS_MCPSERVER = MCPSERVERTEST test_MCPSERVERTEST test_MCPSERVERTEST_mcp-server
-__TEST_DBS_STORAGE_SERVICE = test_SSTEST test_SSTEST_storage-service
-__TEST_DBS := $(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_MIGRATIONS) $(__TEST_DBS_DASHBOARD) $(__TEST_DBS_MCPSERVER) $(__TEST_DBS_STORAGE_SERVICE) test_MCP test_SS
+__TEST_DBS_MIGRATIONS = MCPCLIENTTEST
+__TEST_DBS := $(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_MIGRATIONS) test_MCP
 flush-test-dbs: start-mysql
 	$(foreach test_db,$(__TEST_DBS),$(call drop_db,$(test_db));)
 
@@ -254,35 +172,17 @@ test-build:  ## Build archivematica-tests image.
 		--build-arg PYTHON_VERSION \
 			../
 
-__TOXENVS_MCPSERVER := mcp-server
-test-mcp-server: start-mysql  ## Run MCPServer tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_MCPSERVER))
-	$(call run_toxenvs,$(__TOXENVS_MCPSERVER))
-
 __TOXENVS_MCPCLIENT = mcp-client
 test-mcp-client: start-mysql  ## Run MCPClient tests.
 	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT))
 	$(call run_toxenvs,$(__TOXENVS_MCPCLIENT))
 
-__TOXENVS_DASHBOARD = dashboard
-test-dashboard: start-mysql  ## Run Dashboard tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_DASHBOARD))
-	$(call run_toxenvs,$(__TOXENVS_DASHBOARD))
-
-__TOXENVS_STORAGE_SERVICE = storage-service
-test-storage-service: start-mysql  ## Run Storage Service tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_STORAGE_SERVICE))
-	$(call run_toxenvs,$(__TOXENVS_STORAGE_SERVICE))
-
-test-storage-service-integration:  ## Run Storage Service unit and integration tests using MySQL and MinIO.
-	$(CURDIR)/submodules/archivematica-storage-service/tests/integration/run.sh
-
 __TOXENVS_ARCHIVEMATICA_COMMON = archivematica-common
 test-archivematica-common: start-mysql  ## Run Archivematica Common tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_DASHBOARD))
+	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT))
 	$(call run_toxenvs,$(__TOXENVS_ARCHIVEMATICA_COMMON))
 
-__TOXENVS_MIGRATIONS = migrations-dashboard migrations-storage-service
+__TOXENVS_MIGRATIONS = migrations
 test-migrations: start-mysql  ## Check there are no pending migrations.
 	$(call create_dbs,$(__TEST_DBS_MIGRATIONS))
 	$(call run_toxenvs,$(__TOXENVS_MIGRATIONS))
@@ -291,9 +191,9 @@ __TOXENVS_LINTING = linting
 test-linting:  ## Check linting.
 	$(call run_toxenvs,$(__TOXENVS_LINTING))
 
-__TOXENVS_ALL := $(__TOXENVS_MCPSERVER) $(__TOXENVS_MCPCLIENT) $(__TOXENVS_DASHBOARD) $(__TOXENVS_STORAGE_SERVICE) $(__TOXENVS_ARCHIVEMATICA_COMMON)
+__TOXENVS_ALL := $(__TOXENVS_MCPCLIENT) $(__TOXENVS_ARCHIVEMATICA_COMMON)
 test-all: start-mysql  ## Run all tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_MCPSERVER) $(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_DASHBOARD) $(__TEST_DBS_STORAGE_SERVICE) $(__TEST_DBS_ARCHIVEMATICA_COMMON))
+	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_ARCHIVEMATICA_COMMON))
 	$(call run_toxenvs,$(__TOXENVS_ALL))
 
 stop:  # Stop all containers.

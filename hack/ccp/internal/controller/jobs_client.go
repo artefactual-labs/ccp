@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -190,98 +189,4 @@ func (l *filesClientScriptJob) filterSubDir(ctx context.Context) (string, error)
 	}
 
 	return filterSubDir, nil
-}
-
-// outputClientScriptJob.
-//
-// Manager: linkTaskManagerGetMicroserviceGeneratedListInStdOut.
-// Class: OutputClientScriptJob(DecisionJob).
-type outputClientScriptJob struct {
-	j      *job
-	config *workflow.LinkStandardTaskConfig
-}
-
-var _ jobRunner = (*outputClientScriptJob)(nil)
-
-func newOutputClientScriptJob(j *job) (*outputClientScriptJob, error) {
-	ret := &outputClientScriptJob{
-		j:      j,
-		config: &workflow.LinkStandardTaskConfig{},
-	}
-	if err := loadConfig(j.wl, ret.config); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
-// The list of choices as encoded by the client script:
-//
-//	{
-//	  "default": {"description": "asdf", "uri": "asdf"},
-//	  "5c732a52-6cdb-4b50-ac2e-ae10361b019a": {"description": "asdf", "uri": "asdf"},
-//	}
-type outputClientScriptChoice struct {
-	Description string `json:"description"`
-	URI         string `json:"uri"`
-}
-
-func (l *outputClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	taskResults, err := l.submitTasks(ctx)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("submit task: %v", err)
-	}
-
-	exitCode := l.j.processTaskResults(l.config, taskResults)
-	taskResult := taskResults.First()
-
-	output := map[string]outputClientScriptChoice{}
-	if err := json.Unmarshal([]byte(taskResult.Stdout), &output); err != nil {
-		l.j.logger.Error(err, "Unable to parse output: %s", taskResult.Stdout)
-	} else {
-		choices := make([]choice, 0, len(output))
-		for _, item := range output {
-			choices = append(choices, choice{
-				label: item.Description,
-				value: [2]string{"", item.URI},
-			})
-		}
-		l.j.chain.choices = choices
-	}
-
-	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
-		return uuid.Nil, err
-	}
-
-	if ec, ok := l.j.wl.ExitCodes[exitCode]; ok {
-		if ec.LinkID == nil {
-			return uuid.Nil, io.EOF // End of chain.
-		}
-		return *ec.LinkID, nil
-	}
-
-	if l.j.wl.FallbackLinkID == uuid.Nil {
-		return uuid.Nil, io.EOF // End of chain.
-	}
-
-	return uuid.Nil, nil
-}
-
-func (l *outputClientScriptJob) submitTasks(ctx context.Context) (*taskResults, error) {
-	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
-	args := rm.replaceValues(l.config.Arguments)
-	stdout := rm.replaceValues(l.config.StdoutFile)
-	stderr := rm.replaceValues(l.config.StderrFile)
-
-	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
-	if err := taskBackend.submit(ctx, rm, args, true, stdout, stderr); err != nil {
-		return nil, err
-	}
-
-	results, err := taskBackend.wait(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("wait: %v", err)
-	}
-
-	return results, nil
 }

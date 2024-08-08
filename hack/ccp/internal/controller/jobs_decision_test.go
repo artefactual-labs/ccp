@@ -15,63 +15,6 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
 
-func TestOutputDecisionJob(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Honours preconfigured choices", func(t *testing.T) {
-		t.Parallel()
-
-		job, store := createJob(t, "b320ce81-9982-408a-9502-097d0daa48fa")
-		createAutomatedProcessingConfig(t, job.pkg.path)
-
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-
-		// Populated by outputClientScriptJob.
-		job.chain.choices = []choice{
-			{label: "Default AIPStore", value: [2]string{"", "/api/v2/location/default/AS/"}},
-		}
-
-		id, err := job.exec(context.Background())
-		assert.Equal(t, id, uuid.MustParse("5f213529-ced4-49b0-9e30-be4e0c9b81d5"))
-		assert.NilError(t, err)
-
-		assertChainContext(t, job.chain, map[string]string{
-			"%AIPsStore%": "/api/v2/location/default/AS/",
-		})
-	})
-
-	t.Run("Creates a decision from chain choices", func(t *testing.T) {
-		t.Parallel()
-
-		job, store := createJob(t, "b320ce81-9982-408a-9502-097d0daa48fa")
-
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-
-		// Populated by outputClientScriptJob.
-		chainChoices := []choice{
-			{label: "AIPStore 1", value: [2]string{"", "aipstore1-uri"}},
-			{label: "AIPStore 2", value: [2]string{"", "aipstore2-uri"}},
-		}
-		job.chain.choices = chainChoices
-
-		id, err := job.exec(context.Background())
-		assert.Equal(t, id, uuid.Nil)
-
-		decision := assertErrWait(t, err, "Store AIP location", chainChoices)
-
-		decision.resolveWithPos(0)
-		nextLink, err := decision.await(context.Background())
-		assert.NilError(t, err)
-		assert.Equal(t, nextLink, uuid.MustParse("5f213529-ced4-49b0-9e30-be4e0c9b81d5"))
-
-		assertChainContext(t, job.chain, map[string]string{
-			"%AIPsStore%": "aipstore1-uri",
-		})
-	})
-}
-
 func TestNextChainDecisionJob(t *testing.T) {
 	t.Parallel()
 

@@ -5,9 +5,6 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
-# archivematicaCommon
-import storageService as storage_service
 from client import metrics
 from main import models
 
@@ -21,14 +18,6 @@ def main(job, fail_type, sip_uuid):
     job.pyprint("Allow files in this SIP to be arranged. UUIDs:", file_uuids)
     models.SIPArrange.objects.filter(sip_id=sip_uuid).delete()
 
-    # Update storage service that reingest failed
-    session = storage_service._storage_api_session()
-    url = storage_service._storage_service_url() + "file/" + sip_uuid + "/"
-    try:
-        session.patch(url, json={"reingest": None})
-    except Exception:
-        # Ignore errors, as this may not be reingest
-        pass
     return 0
 
 

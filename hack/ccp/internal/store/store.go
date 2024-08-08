@@ -111,10 +111,6 @@ type Store interface {
 	// ReadDict reads a dictionary given its name.
 	ReadDict(ctx context.Context, name string) (map[string]string, error)
 
-	// ReadStorageServiceConfig reads the connection attributes of the
-	// Archivematica Storage Service associated to this pipeline.
-	ReadStorageServiceConfig(ctx context.Context) (StorageServiceConfig, error)
-
 	// ValidateUserAPIKey checks if a user with the given username and API key
 	// exists and is active. It returns a pointer to the User if valid, or nil
 	// and an error otherwise. A nil User doesn't necessarily mean the user
@@ -206,12 +202,6 @@ type Task struct {
 	Stderr    string        `db:"stdError"`
 	ExitCode  sql.NullInt16 `db:"exitCode"`
 	JobID     uuid.UUID     `db:"jobuuid"`
-}
-
-type StorageServiceConfig struct {
-	URL      string
-	Username string
-	APIKey   string
 }
 
 type FindAwaitingJobParams struct {

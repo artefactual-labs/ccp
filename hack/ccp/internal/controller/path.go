@@ -57,7 +57,7 @@ func locationPath(locationPath string) (id uuid.UUID, path string) {
 	return id, path
 }
 
-func isDir(path string) bool {
+func isDir(path string) bool { //nolint: unused
 	info, err := os.Stat(path)
 	if err != nil {
 		return false

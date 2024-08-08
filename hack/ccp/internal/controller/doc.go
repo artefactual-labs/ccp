@@ -11,9 +11,9 @@ A job corresponds to a microservice (client script), a link in the workflow, and
 the `Jobs` table in the database.
 
 Types of jobs:
-  - Decision jobs: outputDecisionJob, nextChainDecisionJob, updateContextDecisionJob.
-  - Client jobs: directoryClientScriptJob, filesClientScriptJob, outputClientScriptJob
-  - Local jobs: setUnitVarLinkJob, getUnitVarLinkJob
+  - Decision jobs: nextChainDecisionJob, updateContextDecisionJob.
+  - Client jobs: directoryClientScriptJob, filesClientScriptJob.
+  - Local jobs: setUnitVarLinkJob, getUnitVarLinkJob.
 
 ## Task
 

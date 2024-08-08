@@ -5,19 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"path/filepath"
 	"time"
 
 	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/gohugoio/hugo/watcher"
-	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/controller"
 	"github.com/artefactual/archivematica/hack/ccp/internal/shim"
-	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/webui"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -126,16 +123,8 @@ func (s *Server) Run() error {
 		s.gearman = gearmin.NewServer(ln)
 	}
 
-	s.logger.V(1).Info("Creating ssclient.")
-	retryableClient := retryablehttp.NewClient()
-	retryableClient.Logger = httpClientLogger{s.logger.WithName("ssclient").V(2)}
-	ssclient, err := ssclient.NewClient(retryableClient.StandardClient(), s.store, s.config.ssclient)
-	if err != nil {
-		return fmt.Errorf("error creating ssclient: %v", err)
-	}
-
 	s.logger.V(1).Info("Creating controller.")
-	s.controller = controller.New(s.logger.WithName("controller"), s.metrics.metrics, ssclient, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
+	s.controller = controller.New(s.logger.WithName("controller"), s.metrics.metrics, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
 	if err := s.controller.Run(); err != nil {
 		return fmt.Errorf("error creating controller: %v", err)
 	}
@@ -146,7 +135,7 @@ func (s *Server) Run() error {
 	}
 
 	s.logger.V(1).Info("Creating admin API.")
-	processingConfigForm := workflow.NewProcessingConfigForm(wf, ssclient)
+	processingConfigForm := workflow.NewProcessingConfigForm(wf)
 	if s.admin, err = admin.New(s.logger.WithName("api.admin"), s.config.api.admin, s.controller, s.store, wf, processingConfigForm); err != nil {
 		return fmt.Errorf("error creating admin API: %v", err)
 	}
@@ -214,21 +203,4 @@ func (s *Server) Close() error {
 	s.gearman.Stop()
 
 	return errs
-}
-
-type httpClientLogger struct {
-	logr.Logger
-}
-
-func (l httpClientLogger) Printf(msg string, keysAndValues ...any) {
-	method, path := "", ""
-	if len(keysAndValues) >= 2 {
-		if v, ok := keysAndValues[0].(string); ok {
-			method = v
-		}
-		if v, ok := keysAndValues[1].(*url.URL); ok {
-			path = v.Path
-		}
-	}
-	l.Info("ssclient", "method", method, "path", path, "client", "github.com/hashicorp/go-retryablehttp")
 }

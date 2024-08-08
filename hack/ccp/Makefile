@@ -45,7 +45,6 @@ IGNORED_PACKAGES := \
 	github.com/artefactual/archivematica/hack/ccp/internal/api/gen/% \
 	github.com/artefactual/archivematica/hack/ccp/internal/shim/gen \
 	github.com/artefactual/archivematica/hack/ccp/internal/%/enums \
-	github.com/artefactual/archivematica/hack/ccp/internal/ssclient/ssclientmock \
 	github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql \
 	github.com/artefactual/archivematica/hack/ccp/internal/store/storemock
 PACKAGES := $(shell go list ./...)
@@ -119,7 +118,6 @@ gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web gen-shim
 gen-mocks: # @HELP Generate mocks.
 gen-mocks: $(MOCKGEN)
 	mockgen -typed -source=./internal/store/store.go -destination=./internal/store/storemock/mock_store.go -package=storemock Store
-	mockgen -typed -source=./internal/ssclient/ssclient.go -destination=./internal/ssclient/ssclientmock/mock_ssclient.go -package=ssclientmock Client
 
 gen-sqlc: # @HELP Generate sqlc code.
 gen-sqlc: $(SQLC)
@@ -130,13 +128,7 @@ gen-enums: $(ENUMS)
 
 gen-buf: # @HELP Generate buf.build assets.
 gen-buf: $(BUF)
-	buf generate --include-imports
-	rm -rf $(CURDIR)/internal/api/gen/buf/ $(CURDIR)/web/src/gen/buf
-	sed -i \
-		-e 's/^from archivematica\.ccp\.admin\.v1beta1/from client\.gen\.archivematica\.ccp\.admin\.v1beta1/' \
-		-e 's/^from buf\.validate/from client\.gen\.buf\.validate/' \
-		$(CURDIR)/../../src/dashboard/src/client/gen/archivematica/ccp/admin/v1beta1/*.py \
-		$(CURDIR)/../../src/dashboard/src/client/gen/buf/validate/*.py
+	buf generate
 
 gen-web: # @HELP Generate webui assets.
 gen-web:

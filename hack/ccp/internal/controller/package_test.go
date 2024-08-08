@@ -27,3 +27,7 @@ func TestReplacements(t *testing.T) {
 		)
 	})
 }
+
+func TestCopyTransfer(t *testing.T) {
+	t.Parallel()
+}

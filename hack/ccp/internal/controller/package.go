@@ -14,9 +14,10 @@ import (
 	"connectrpc.com/authn"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	"github.com/otiai10/copy"
 
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
-	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
+	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store/enums"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
@@ -101,12 +102,8 @@ func NewPackage(ctx context.Context, logger logr.Logger, store store.Store, shar
 //     starting_point = PACKAGE_TYPE_STARTING_POINTS.get(type_)
 //
 //  4. Start creation.
-//     params = (transfer, name, path, tmpdir, starting_point)
-//     if auto_approve:
-//     params = params + (workflow, package_queue)
+//     params = (transfer, name, path, tmpdir, starting_point, workflow, package_queue)
 //     result = executor.submit(_start_package_transfer_with_auto_approval, *params)
-//     else:
-//     result = executor.submit(_start_package_transfer, *params)
 //
 //  5. Adjust permissions?
 //     result.add_done_callback(lambda f: os.chmod(tmpdir, 0o770))
@@ -114,17 +111,10 @@ func NewTransferPackage(
 	ctx context.Context,
 	logger logr.Logger,
 	store store.Store,
-	ssclient ssclient.Client,
 	sharedDir string,
 	req *adminv1.CreatePackageRequest,
 	queue func(pkg *Package),
 ) (*Package, error) {
-	// TODO: implement transfer submissions without auto-approval (see: copyTransferIntoActiveTransfers).
-	autoApprove := req.AutoApprove == nil || req.AutoApprove.Value
-	if !autoApprove {
-		return nil, errors.New("submissions with auto-approve disabled are not supported yet")
-	}
-
 	pkg := newPackage(logger, store, sharedDir)
 	pkg.id = uuid.New()
 	pkg.unit = &Transfer{pkg: pkg}
@@ -179,8 +169,8 @@ func NewTransferPackage(
 		_ = os.Chmod(tmpDir, os.FileMode(0o770))
 		logger = logger.WithValues("tmpDir", tmpDir)
 
-		// Copy into new location.
-		path, err := copyTransfer(ctx, ssclient, sharedDir, tmpDir, req.Name, req.Path[0])
+		// Copy into the processing directory.
+		path, err := copyTransfer(sharedDir, tmpDir, req.Name, req.Path[0])
 		if err != nil {
 			return fmt.Errorf("copy transfer: %v", err)
 		}
@@ -760,4 +750,54 @@ func (rm replacementMapping) replaceValues(input string) string {
 	}
 
 	return input
+}
+
+// TODO: stop assuming we have a dir.
+func copyTransfer(sharedDir, tmpDir, name, path string) (string, error) {
+	base := filepath.Base(path)
+	dest := filepath.Join(tmpDir, base)
+
+	if err := copy.Copy(path, dest, copy.Options{
+		Sync: true,
+	}); err != nil {
+		return "", err
+	}
+
+	return move(
+		dest,
+		filepath.Join(sharedDir, "currentlyProcessing", name),
+	)
+}
+
+// move a directory.
+func move(src, dst string) (_ string, err error) {
+	defer derrors.Add(&err, "move(%s, %s)", src, dst)
+
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return "", fmt.Errorf("source path does not exist: %q", src)
+	}
+
+	var (
+		attempt = 0
+		newPath = dst
+	)
+	for {
+		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+			if err := os.Rename(src, newPath); os.IsExist(err) {
+				goto incr // Retry with incremented path
+			} else if err != nil {
+				return "", err
+			}
+
+			return newPath, nil // Success!
+		}
+
+	incr:
+		attempt++
+		if attempt > 1000 {
+			return "", fmt.Errorf("reached max. number of attempts: %d", attempt)
+		}
+
+		newPath = fmt.Sprintf("%s-%d", dst, attempt)
+	}
 }

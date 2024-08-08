@@ -19,7 +19,6 @@ import (
 	adminv1 "github.com/artefactual/archivematica/hack/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
 	"github.com/artefactual/archivematica/hack/ccp/internal/derrors"
-	"github.com/artefactual/archivematica/hack/ccp/internal/ssclient"
 	"github.com/artefactual/archivematica/hack/ccp/internal/store"
 	"github.com/artefactual/archivematica/hack/ccp/internal/workflow"
 )
@@ -34,9 +33,6 @@ type Controller struct {
 
 	// Application metrics.
 	metrics *metrics.Metrics
-
-	// Archivematica Storage Service API client.
-	ssclient ssclient.Client
 
 	// Application store.
 	store store.Store
@@ -79,11 +75,10 @@ type Controller struct {
 	closeOnce sync.Once
 }
 
-func New(logger logr.Logger, metrics *metrics.Metrics, ssclient ssclient.Client, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
+func New(logger logr.Logger, metrics *metrics.Metrics, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
 	c := &Controller{
 		logger:           logger,
 		metrics:          metrics,
-		ssclient:         ssclient,
 		store:            store,
 		gearman:          gearman,
 		wf:               wf,
@@ -136,7 +131,6 @@ func (c *Controller) Submit(ctx context.Context, req *adminv1.CreatePackageReque
 		authn.SetInfo(c.groupCtx, authn.GetInfo(ctx)),
 		c.logger.WithName("package"),
 		c.store,
-		c.ssclient,
 		c.sharedDir,
 		req,
 		queue,

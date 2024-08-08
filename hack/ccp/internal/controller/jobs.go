@@ -69,9 +69,6 @@ func newJob(logger logr.Logger, metrics *metrics.Metrics, chain *chain, pkg *Pac
 	switch wl.Manager {
 
 	// Decision jobs - handles workflow decision points.
-	case "linkTaskManagerGetUserChoiceFromMicroserviceGeneratedList":
-		j.logger = logger.WithName("outputDecisionJob")
-		j.jobRunner, err = newOutputDecisionJob(j)
 	case "linkTaskManagerChoice":
 		j.logger = logger.WithName("nextChainDecisionJob")
 		j.jobRunner, err = newNextChainDecisionJob(j)
@@ -86,9 +83,6 @@ func newJob(logger logr.Logger, metrics *metrics.Metrics, chain *chain, pkg *Pac
 	case "linkTaskManagerFiles":
 		j.logger = logger.WithName("filesClientScriptJob")
 		j.jobRunner, err = newFilesClientScriptJob(j)
-	case "linkTaskManagerGetMicroserviceGeneratedListInStdOut":
-		j.logger = logger.WithName("outputClientScriptJob")
-		j.jobRunner, err = newOutputClientScriptJob(j)
 
 	// Local jobs - executed directly.
 	case "linkTaskManagerSetUnitVariable":

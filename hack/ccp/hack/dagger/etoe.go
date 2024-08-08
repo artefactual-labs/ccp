@@ -11,7 +11,6 @@ import (
 
 const (
 	mcpDBName = "MCP"
-	ssDBName  = "SS"
 	dumpsDir  = "hack/ccp/e2e/testdata/dumps"
 )
 
@@ -21,15 +20,6 @@ var (
 	sharedDir                = "/var/archivematica/sharedDirectory"
 	sharedDirVolume          = dag.CacheVolume("share")
 	sharedDirVolumeMountOpts = dagger.ContainerWithMountedCacheOpts{
-		Sharing: dagger.Shared,
-		Owner:   "1000:1000",
-	}
-)
-
-var (
-	transferSourceDir                = "/home"
-	transferSourceDirVolume          = dag.CacheVolume("transfers")
-	transferSourceDirVolumeMountOpts = dagger.ContainerWithMountedCacheOpts{
 		Sharing: dagger.Shared,
 		Owner:   "1000:1000",
 	}
@@ -55,12 +45,12 @@ func (m *CCP) GenerateDumps(ctx context.Context) (*dagger.Directory, error) {
 	mysql := m.Build().MySQLContainer().AsService()
 
 	// ForceDrop ensures that the app is migrated and installed.
-	_, _, err := m.bootstrapAM(ctx, mysql, ForceDrop)
+	_, err := m.bootstrapDashboard(ctx, mysql, ForceDrop)
 	if err != nil {
 		return nil, err
 	}
 
-	return dumpDB(mysql, mcpDBName, ssDBName)
+	return dumpDB(mysql, mcpDBName)
 }
 
 // Run the e2e tests.
@@ -77,19 +67,14 @@ func (m *CCP) Etoe(
 		WithMountedCache("/var/lib/mysql", dag.CacheVolume("mysql")).
 		AsService()
 
-	storage, err := m.bootstrapStorage(ctx, mysql, dbMode)
+	dashboard, err := m.bootstrapDashboard(ctx, mysql, dbMode)
 	if err != nil {
 		return err
 	}
 
-	dashboard, err := m.bootstrapDashboard(ctx, mysql, storage, dbMode)
-	if err != nil {
-		return err
-	}
+	ccp := m.bootstrapCCP(mysql)
 
-	ccp := m.bootstrapCCP(mysql, storage)
-
-	worker := m.bootstrapWorker(mysql, storage, ccp)
+	worker := m.bootstrapWorker(mysql, ccp)
 
 	args := []string{"go", "test", "-v"}
 	{
@@ -105,7 +90,6 @@ func (m *CCP) Etoe(
 			Container().
 			WithServiceBinding("mysql", mysql).
 			WithServiceBinding("dashboard", dashboard).
-			WithServiceBinding("storage", storage).
 			WithServiceBinding("ccp", ccp).
 			WithServiceBinding("worker", worker).
 			WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
@@ -117,7 +101,7 @@ func (m *CCP) Etoe(
 	return nil
 }
 
-func (m *CCP) bootstrapCCP(mysql, storage *dagger.Service) *dagger.Service {
+func (m *CCP) bootstrapCCP(mysql *dagger.Service) *dagger.Service {
 	return m.Build().CCPImage().
 		WithEnvVariable("CCP_DEBUG", "true").
 		WithEnvVariable("CCP_V", "10").
@@ -126,61 +110,13 @@ func (m *CCP) bootstrapCCP(mysql, storage *dagger.Service) *dagger.Service {
 		WithEnvVariable("CCP_DB_DSN", "root:12345@tcp(mysql:3306)/MCP").
 		WithEnvVariable("CCP_API_ADMIN_ADDR", ":8000").
 		WithEnvVariable("CCP_WEBUI_ADDR", ":8001").
-		// TODO: ssclient to disable chunked transfer encoding, or we'll need nginx.
-		WithEnvVariable("CCP_SSCLIENT_URL", "http://storage:8000").
-		WithEnvVariable("CCP_SSCLIENT_USERNAME", "test").
-		WithEnvVariable("CCP_SSCLIENT_KEY", "test").
 		WithEnvVariable("CCP_METRICS_ADDR", ":7999").
 		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("storage", storage).
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		AsService()
 }
 
-func (m *CCP) bootstrapAM(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (storage *dagger.Service, dashboard *dagger.Service, err error) {
-	storage, err = m.bootstrapStorage(ctx, mysql, dbMode)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	dashboard, err = m.bootstrapDashboard(ctx, mysql, storage, dbMode)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return storage, dashboard, nil
-}
-
-func (m *CCP) bootstrapStorage(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
-	storageCtr := m.Build().StorageImage().
-		WithServiceBinding("mysql", mysql).
-		WithEnvVariable("DJANGO_SETTINGS_MODULE", "storage_service.settings.local").
-		WithEnvVariable("SS_DB_URL", "mysql://root:12345@mysql/"+ssDBName).
-		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
-		WithMountedCache(transferSourceDir, transferSourceDirVolume, transferSourceDirVolumeMountOpts).
-		WithExposedPort(8000)
-
-	drop := dbMode != UseCached
-	if err := createDB(ctx, mysql, ssDBName, drop); err != nil {
-		return nil, err
-	}
-
-	if dbMode == UseDumps {
-		dumpFile := m.Source.File(filepath.Join(dumpsDir, fmt.Sprintf("%s.sql.bz2", ssDBName)))
-		if err := loadDump(ctx, mysql, ssDBName, dumpFile); err != nil {
-			return nil, err
-		}
-	}
-
-	onlyMigrate := dbMode == UseDumps || dbMode == UseCached
-	if err := bootstrapSSDB(ctx, storageCtr, onlyMigrate); err != nil {
-		return nil, err
-	}
-
-	return storageCtr.AsService(), nil
-}
-
-func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
+func (m *CCP) bootstrapDashboard(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
 	dashboardCtr := m.Build().WorkerImage().
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_USER", "root").
@@ -189,7 +125,6 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("storage", storage).
 		WithExposedPort(8000)
 
 	drop := dbMode != UseCached
@@ -212,7 +147,7 @@ func (m *CCP) bootstrapDashboard(ctx context.Context, mysql, storage *dagger.Ser
 	return dashboardCtr.AsService(), nil
 }
 
-func (m *CCP) bootstrapWorker(mysql, storage, ccp *dagger.Service) *dagger.Service {
+func (m *CCP) bootstrapWorker(mysql, ccp *dagger.Service) *dagger.Service {
 	return m.Build().WorkerImage().
 		WithEnvVariable("DJANGO_SECRET_KEY", "12345").
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
@@ -223,7 +158,6 @@ func (m *CCP) bootstrapWorker(mysql, storage, ccp *dagger.Service) *dagger.Servi
 		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_MCPARCHIVEMATICASERVER", "ccp:4730").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
-		WithServiceBinding("storage", storage).
 		WithServiceBinding("ccp", ccp).
 		AsService()
 }
@@ -306,44 +240,7 @@ func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool
 			`--org-name=test`,
 			`--org-id=test`,
 			`--api-key=test`,
-			`--ss-url=http://storage:8000`,
-			`--ss-user=test`,
-			`--ss-api-key=test`,
 			`--site-url=http://dashboard:8000`,
-		}).
-		Sync(ctx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func bootstrapSSDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool) error {
-	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
-
-	if _, err := ctr.
-		WithExec([]string{
-			"/src/storage_service/manage.py",
-			"migrate",
-			"--noinput",
-		}).
-		Sync(ctx); err != nil {
-		return err
-	}
-
-	if onlyMigrate {
-		return nil
-	}
-
-	if _, err := ctr.
-		WithExec([]string{
-			"/src/storage_service/manage.py",
-			"create_user",
-			`--username=test`,
-			`--password=test`,
-			`--email=test@test.com`,
-			`--api-key=test`,
-			`--superuser`,
 		}).
 		Sync(ctx); err != nil {
 		return err

@@ -95,11 +95,8 @@ message CreatePackageRequest {
   // An empty string is not a valid UUID, use null instead (default).
   google.protobuf.StringValue metadata_set_id = 6 [(buf.validate.field).string.uuid = true];
 
-  // An option to auto-approve the package. It is enabled by default.
-  google.protobuf.BoolValue auto_approve = 7;
-
   // Name of the processing configuration file to be included.
-  string processing_config = 8;
+  string processing_config = 7;
 }
 
 message CreatePackageResponse {

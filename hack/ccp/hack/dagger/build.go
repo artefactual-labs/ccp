@@ -20,11 +20,6 @@ func (m *Build) WorkerImage() *dagger.Container {
 	})
 }
 
-func (m *Build) StorageImage() *dagger.Container {
-	return m.Source.Directory("hack/submodules/archivematica-storage-service").
-		DockerBuild()
-}
-
 func (m *Build) CCPImage() *dagger.Container {
 	return m.Source.Directory("hack/ccp").
 		DockerBuild()

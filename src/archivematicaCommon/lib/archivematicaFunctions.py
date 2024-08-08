@@ -31,7 +31,6 @@ from itertools import zip_longest
 from pathlib import Path
 from uuid import uuid4
 
-from amclient import AMClient
 from django.apps import apps
 from lxml import etree
 from namespaces import NSMAP
@@ -51,8 +50,6 @@ MANUAL_NORMALIZATION_DIRECTORIES = [
     "objects/manualNormalization/access",
     "objects/manualNormalization/preservation",
 ]
-
-AMCLIENT_ERROR_CODES = (1, 2, 3, 4, -1)
 
 # Package UUID suffix is a single dash followed by a UUID v4 with hyphens.
 PACKAGE_UUID_SUFFIX_LENGTH = 37
@@ -84,16 +81,6 @@ def get_setting(setting, default=""):
 def get_dashboard_uuid():
     """Get Dashboard uuid via the Dashboard database mode."""
     return get_setting("dashboard_uuid", default=None)
-
-
-def setup_amclient():
-    """Initialize and return an AMClient instance."""
-    client = AMClient(
-        ss_api_key=get_setting("storage_service_apikey", ""),
-        ss_user_name=get_setting("storage_service_user", ""),
-        ss_url=get_setting("storage_service_url", "").rstrip("/"),
-    )
-    return client
 
 
 class OrderedListsDict(collections.OrderedDict):
