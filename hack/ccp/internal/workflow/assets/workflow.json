@@ -3877,36 +3877,6 @@
         "sv": "Förbered DIP"
       }
     },
-    "379a4cba-b43c-45fb-88e9-7e0322107080": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPDirectory%\"",
-        "execute": "removeDirectories_v0.0"
-      },
-      "description": {
-        "en": "Remove the processing directory",
-        "no": "Fjern prosesseringsmappen",
-        "pt_BR": "Remova o diretório de processamento",
-        "sv": "Radera bearbetningsmappen"
-      },
-      "end": true,
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "group": {
-        "en": "Upload DIP",
-        "es": "Subir DIP",
-        "fr": "Télécharger le DIP",
-        "ja": "DIPをアップロード",
-        "no": "Last opp DIP",
-        "pt_BR": "Carregar DIP",
-        "sv": "Ladda upp DIP"
-      }
-    },
     "390d6507-5029-4dae-bcd4-ce7178c9b560": {
       "config": {
         "@manager": "linkTaskManagerChoice",
