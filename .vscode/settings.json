@@ -1,0 +1,7 @@
+{
+    "files.exclude": {
+        "**/.ruff_cache": true,
+        "**/playwright-report": true,
+        "**/test-results": true,
+    }
+}
