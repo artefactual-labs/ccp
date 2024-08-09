@@ -11,6 +11,14 @@
 !/COPYRIGHT
 !/TRADEMARK
 
+# Include
+!/hack/ccp/cmd
+!/hack/ccp/internal
+!/hack/ccp/go.mod
+!/hack/ccp/go.sum
+!/hack/ccp/main.go
+!/hack/ccp/web
+
 # Exclude
 **/*~
 **/*.log

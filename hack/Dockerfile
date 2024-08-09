@@ -1,8 +1,10 @@
-ARG TARGET=archivematica-mcp-client
+ARG TARGET
 ARG UBUNTU_VERSION=22.04
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG PYTHON_VERSION=3.9
+ARG GO_VERSION=1.22.5
+ARG NODE_VERSION=20
 ARG PYENV_DIR=/pyenv
 ARG SELENIUM_DIR=/selenium
 ARG MEDIAAREA_VERSION=1.0-24
@@ -11,7 +13,7 @@ ARG MEDIAAREA_VERSION=1.0-24
 
 FROM ubuntu:${UBUNTU_VERSION} AS base-builder
 
-ARG PYENV_DIR=/pyenv
+ARG PYENV_DIR
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -45,7 +47,7 @@ ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 FROM base-builder AS pyenv-builder
 
-ARG PYTHON_VERSION=3.9
+ARG PYTHON_VERSION
 
 RUN set -ex \
 	&& apt-get update \
@@ -81,9 +83,9 @@ RUN set -ex \
 
 FROM base-builder AS base
 
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-ARG PYENV_DIR=/pyenv
+ARG USER_ID
+ARG GROUP_ID
+ARG PYENV_DIR
 ARG MEDIAAREA_VERSION
 
 RUN set -ex \
@@ -172,6 +174,45 @@ ENTRYPOINT ["pyenv", "exec", "python3", "/src/src/MCPClient/lib/archivematicaCli
 # -----------------------------------------------------------------------------
 
 FROM base AS archivematica-tests
+
+# -----------------------------------------------------------------------------
+
+FROM node:$NODE_VERSION AS node-builder
+WORKDIR /app
+COPY --link hack/ccp/web/package.json hack/ccp/web/package-lock.json ./
+RUN --mount=type=cache,target=/app/.npm npm set cache /app/.npm && npm install-clean
+COPY --link hack/ccp/web/ ./
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+
+FROM golang:$GO_VERSION-alpine AS go-builder
+ARG VERSION_PATH=github.com/artefactual/archivematica/hack/ccp/internal/version
+ARG VERSION_NUMBER
+ARG VERSION_GIT_COMMIT
+WORKDIR /src
+ENV CGO_ENABLED=0
+COPY --link hack/ccp/go.* ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY --link hack/ccp/ ./
+COPY --from=node-builder /internal/webui/assets /src/internal/webui/assets
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
+	go build \
+	-ldflags="-X '${VERSION_PATH}.version=${VERSION_NUMBER}' -X '${VERSION_PATH}.gitCommit=${VERSION_GIT_COMMIT}'" \
+	-trimpath \
+	-o /out/ccp \
+	.
+
+# -----------------------------------------------------------------------------
+
+FROM alpine:3.20.0 AS archivematica-ccp
+ARG USER_ID
+ARG GROUP_ID
+RUN addgroup -g ${GROUP_ID} -S ccp
+RUN adduser -u ${USER_ID} -S -D ccp ccp
+COPY --from=go-builder --link /out/ccp /home/ccp/bin/ccp
+USER ccp
+CMD ["/home/ccp/bin/ccp", "server"]
 
 # -----------------------------------------------------------------------------
 

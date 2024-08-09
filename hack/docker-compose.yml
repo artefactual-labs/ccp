@@ -37,9 +37,10 @@ services:
 
   archivematica-ccp:
     build:
-      context: "ccp"
-      dockerfile: "Dockerfile"
+      context: "../"
+      dockerfile: "hack/Dockerfile"
       args:
+        TARGET: "archivematica-ccp"
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
     entrypoint: ["/home/ccp/bin/ccp", "server"]
