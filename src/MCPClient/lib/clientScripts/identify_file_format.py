@@ -6,13 +6,8 @@ import uuid
 import django
 
 django.setup()
-# dashboard
-from databaseFunctions import insertIntoEvents
 from django.db import transaction
 from django.utils import timezone
-
-# archivematicaCommon
-from executeOrRunSubProcess import executeOrRun
 from fpr.models import FormatVersion
 from fpr.models import IDCommand
 from fpr.models import IDRule
@@ -20,6 +15,8 @@ from main.models import File
 from main.models import FileFormatVersion
 from main.models import FileID
 from main.models import UnitVariable
+from utils.databaseFunctions import insertIntoEvents
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def concurrent_instances():

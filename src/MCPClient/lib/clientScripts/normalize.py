@@ -12,9 +12,6 @@ import transcoder
 from django.utils import timezone
 
 django.setup()
-import databaseFunctions
-import fileOperations
-from dicts import ReplacementDict
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -24,6 +21,9 @@ from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
 from main.models import FileID
+from utils import databaseFunctions
+from utils import fileOperations
+from utils.dicts import ReplacementDict
 
 # Return codes
 SUCCESS = 0

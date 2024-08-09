@@ -23,17 +23,13 @@ import django
 
 django.setup()
 import change_names
-
-# archivematicaCommon
-from custom_handlers import get_script_logger
 from django.db import transaction
 from main.models import SIP
 from main.models import Directory
-
-# dashboard
 from main.models import Event
 from main.models import File
 from main.models import Transfer
+from utils.custom_handlers import get_script_logger
 
 logger = get_script_logger("archivematica.mcp.client.changeObjectNames")
 

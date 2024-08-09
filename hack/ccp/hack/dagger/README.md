@@ -1,3 +1,5 @@
+# Dagger
+
 ## Usage
 
 ### Run e2e tests
@@ -14,6 +16,6 @@ The e2e tests load existing SQL dumps by default, but you can update them with:
 
     dagger call --source=".:default" generate-dumps export --path=hack/ccp/e2e/testdata/dumps
 
-### Troubleshooting
+## Troubleshooting
 
 Use of `dagger call --progress=plain` yields clearer output during debugging.

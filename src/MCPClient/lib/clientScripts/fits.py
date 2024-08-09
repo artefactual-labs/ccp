@@ -20,16 +20,13 @@ import tempfile
 
 import django
 import lxml.etree as etree
-from archivematicaFunctions import getTagged
-from custom_handlers import get_script_logger
-from databaseFunctions import insertIntoFPCommandOutput
 from django.db import transaction
-from executeOrRunSubProcess import executeOrRun
-
-# archivematicaCommon
+from utils.archivematicaFunctions import getTagged
+from utils.custom_handlers import get_script_logger
+from utils.databaseFunctions import insertIntoFPCommandOutput
+from utils.executeOrRunSubProcess import executeOrRun
 
 django.setup()
-# dashboard
 from main.models import FPCommandOutput
 
 logger = get_script_logger("archivematica.mcp.client.FITS")

@@ -3,7 +3,6 @@
 omit =
     **/src/archivematicaCommon/lib/externals/*
     **/migrations/*
-    **/south_migrations/*
     **/management/commands/*
     **/settings/*
     **/tests/*
@@ -11,7 +10,6 @@ omit =
     **/manage.py
 
 source =
-    **/src/archivematicaCommon/lib/
     **/src/MCPClient/lib/
     **/src/MCPClient/lib/clientScripts/
 

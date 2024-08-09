@@ -1,6 +1,6 @@
-import bindpid
 import pytest
 from django.test import TestCase
+from utils import bindpid
 
 VALID_ARG_DICT = {
     "entity_type": "file",

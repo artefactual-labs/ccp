@@ -18,11 +18,8 @@
 import os
 import shutil
 
-import archivematicaFunctions
-from custom_handlers import get_script_logger
-
-# archivematicaCommon
-
+from utils import archivematicaFunctions
+from utils.custom_handlers import get_script_logger
 
 logger = get_script_logger("archivematica.mcp.client.restructureBagAIPToSIP")
 

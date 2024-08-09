@@ -26,13 +26,9 @@ import time
 
 import django
 import requests
-from custom_handlers import get_script_logger
-
-# archivematicaCommon
-# externals
+from utils.custom_handlers import get_script_logger
 
 django.setup()
-# dashboard
 import main.models as models
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError

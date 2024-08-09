@@ -2649,16 +2649,15 @@
         "fr": "Stocker l'AIP",
         "no": "Lagre AIP-en",
         "pt_BR": "Armazenar o AIP?",
-        "sv": "Lagra AIP:n"
+        "sv": "Lagra AIP"
       },
+      "end": true,
       "exit_codes": {
         "0": {
-          "job_status": "Completed successfully",
-          "link_id": "d5a2ef60-a757-483c-a71a-ccbffe6b80da"
+          "job_status": "Completed successfully"
         }
       },
       "fallback_job_status": "Failed",
-      "fallback_link_id": "7d728c39-395f-4892-8193-92f086c0546f",
       "group": {
         "en": "Store AIP",
         "fr": "Stocker l’AIP",
@@ -5580,14 +5579,13 @@
         "pt_BR": "Armazenar DIP",
         "sv": "Lagra DIP"
       },
+      "end": true,
       "exit_codes": {
         "0": {
-          "job_status": "Completed successfully",
-          "link_id": "379a4cba-b43c-45fb-88e9-7e0322107080"
+          "job_status": "Completed successfully"
         }
       },
       "fallback_job_status": "Failed",
-      "fallback_link_id": "7d728c39-395f-4892-8193-92f086c0546f",
       "group": {
         "en": "Upload DIP",
         "es": "Subir DIP",
@@ -9524,35 +9522,6 @@
         "fr": "Préparer l'AIP",
         "no": "Forbered AIP",
         "sv": "Förbered AIP"
-      }
-    },
-    "d5a2ef60-a757-483c-a71a-ccbffe6b80da": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPDirectory%\"",
-        "execute": "removeDirectories_v0.0"
-      },
-      "description": {
-        "en": "Remove the processing directory",
-        "no": "Fjern prosesseringsmappen",
-        "pt_BR": "Remova o diretório de processamento",
-        "sv": "Radera bearbetningsmappen"
-      },
-      "end": true,
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "group": {
-        "en": "Store AIP",
-        "fr": "Stocker l’AIP",
-        "ja": "AIPを蓄える",
-        "no": "Lagre AIP",
-        "pt_BR": "Armazenar AIP",
-        "sv": "Lagra AIP"
       }
     },
     "d6f6f5db-4cc2-4652-9283-9ec6a6d181e5": {

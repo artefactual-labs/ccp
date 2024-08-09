@@ -23,12 +23,9 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
-from fileOperations import rename
-
-# archivematicaCommon
-from fileOperations import updateFileLocation
 from main.models import File
+from utils.fileOperations import rename
+from utils.fileOperations import updateFileLocation
 
 
 def main(

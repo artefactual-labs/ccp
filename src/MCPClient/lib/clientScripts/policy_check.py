@@ -15,15 +15,12 @@ import json
 import os
 
 import django
-from custom_handlers import get_script_logger
+from utils.custom_handlers import get_script_logger
 
 django.setup()
-import databaseFunctions
-from dicts import replace_string_values
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from executeOrRunSubProcess import executeOrRun
 from fpr.models import FormatVersion
 from fpr.models import FPRule
 from lib import setup_dicts
@@ -31,6 +28,9 @@ from main.models import SIP
 from main.models import Derivation
 from main.models import File
 from main.models import Transfer
+from utils import databaseFunctions
+from utils.dicts import replace_string_values
+from utils.executeOrRunSubProcess import executeOrRun
 
 # Note that linkTaskManagerFiles.py will take the highest exit code it has seen
 # from all tasks and will use that as the exit code of the job as a whole.

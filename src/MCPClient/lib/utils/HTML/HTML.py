@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 HTML.py - v0.04 2009-07-28 Philippe Lagadec
 

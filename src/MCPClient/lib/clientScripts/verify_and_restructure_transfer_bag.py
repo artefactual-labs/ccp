@@ -22,16 +22,16 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
-import bag
-import fileOperations
-from archivematicaFunctions import OPTIONAL_FILES
 
-# archivematicaCommon
-from archivematicaFunctions import REQUIRED_DIRECTORIES
-from databaseFunctions import insertIntoEvents
 from main.models import File
 from move_or_merge import move_or_merge
+from utils.archivematicaFunctions import OPTIONAL_FILES
+from utils.archivematicaFunctions import REQUIRED_DIRECTORIES
+from utils.bag import is_valid
+from utils.databaseFunctions import insertIntoEvents
+from utils.fileOperations import UpdateFileLocationFailed
+from utils.fileOperations import updateDirectoryLocation
+from utils.fileOperations import updateFileLocation2
 
 
 def restructureBagForComplianceFileUUIDsAssigned(
@@ -62,7 +62,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
             # move to the top level
             src = dirDataPath
             dst = dirPath
-            fileOperations.updateDirectoryLocation(
+            updateDirectoryLocation(
                 src,
                 dst,
                 unitPath,
@@ -81,7 +81,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
         if os.path.isfile(src):
             if item.startswith("manifest"):
                 dst = os.path.join(unitPath, "metadata", item)
-                fileOperations.updateFileLocation2(
+                updateFileLocation2(
                     src,
                     dst,
                     unitPath,
@@ -94,7 +94,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
                 job.pyprint("not moving:", item)
             else:
                 dst = os.path.join(bagFileDefaultDest, item)
-                fileOperations.updateFileLocation2(
+                updateFileLocation2(
                     src,
                     dst,
                     unitPath,
@@ -108,7 +108,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
         if os.path.isdir(itemPath) and item not in MY_REQUIRED_DIRECTORIES:
             job.pyprint("moving directory to objects: ", item)
             dst = os.path.join(unitPath, "objects", item)
-            fileOperations.updateDirectoryLocation(
+            updateDirectoryLocation(
                 itemPath,
                 dst,
                 unitPath,
@@ -119,7 +119,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
         elif os.path.isfile(itemPath) and item not in OPTIONAL_FILES:
             job.pyprint("moving file to objects: ", item)
             dst = os.path.join(unitPath, "objects", item)
-            fileOperations.updateFileLocation2(
+            updateFileLocation2(
                 itemPath,
                 dst,
                 unitPath,
@@ -130,7 +130,7 @@ def restructureBagForComplianceFileUUIDsAssigned(
             )
         elif item in OPTIONAL_FILES:
             dst = os.path.join(unitPath, item)
-            fileOperations.updateFileLocation2(
+            updateFileLocation2(
                 itemPath,
                 dst,
                 unitPath,
@@ -149,7 +149,7 @@ def call(jobs):
             with job.JobContext():
                 target = job.args[1]
                 transferUUID = job.args[2]
-                if not bag.is_valid(target, printfn=job.pyprint):
+                if not is_valid(target, printfn=job.pyprint):
                     job.pyprint(
                         "Failed bagit compliance. Not restructuring.", file=sys.stderr
                     )
@@ -159,7 +159,7 @@ def call(jobs):
                         restructureBagForComplianceFileUUIDsAssigned(
                             job, target, transferUUID
                         )
-                    except fileOperations.UpdateFileLocationFailed as e:
+                    except UpdateFileLocationFailed as e:
                         job.set_status(e.code)
                         continue
 

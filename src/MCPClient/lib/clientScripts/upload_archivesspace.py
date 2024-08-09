@@ -9,11 +9,7 @@ from agentarchives.archivesspace import ArchivesSpaceError
 from fpr.models import FormatVersion
 from main.models import ArchivesSpaceDIPObjectResourcePairing
 from main.models import File
-from xml2obj import mets_file
-
-# archivematicaCommon
-# Third party dependencies, alphabetical by import source
-# initialize Django (required for Django 1.7)
+from utils.xml2obj import mets_file
 
 django.setup()
 from django.core.exceptions import ValidationError

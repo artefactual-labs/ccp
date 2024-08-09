@@ -22,9 +22,8 @@ import django
 
 django.setup()
 from client import metrics
-
-from custom_handlers import get_script_logger
 from django.db import transaction
+from utils.custom_handlers import get_script_logger
 
 logger = get_script_logger("archivematica.mcp.client.storeAIP")
 
@@ -44,9 +43,6 @@ def store_aip(job, aip_path, sip_uuid, sip_name, sip_type):
         "ep6"
         "AIP"
     """
-
-    shared_path = "var/archivematica/sharedDirectory/"
-    relative_aip_path = aip_path.replace(shared_path, "")
 
     # Get the package type: AIC or AIP
     if "SIP" in sip_type or "AIP" in sip_type:  # Also matches AIP-REIN

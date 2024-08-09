@@ -47,23 +47,19 @@ from itertools import chain
 import django
 
 django.setup()
-import namespaces as ns
-
-# archivematicaCommon
-from archivematicaFunctions import str2bool
-from bindpid import BindPIDException
-from bindpid import _validate_entity_type_required_params
-from bindpid import _validate_handle_server_config
-from bindpid import bind_pid
-from custom_handlers import get_script_logger
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from lxml import etree
 from main.models import SIP
-
-# dashboard
 from main.models import DashboardSetting
 from main.models import Directory
+from utils import namespaces as ns
+from utils.archivematicaFunctions import str2bool
+from utils.bindpid import BindPIDException
+from utils.bindpid import _validate_entity_type_required_params
+from utils.bindpid import _validate_handle_server_config
+from utils.bindpid import bind_pid
+from utils.custom_handlers import get_script_logger
 
 logger = get_script_logger("archivematica.mcp.client.bind_pids")
 
@@ -177,8 +173,8 @@ def _bind_pid_to_model(job, mdl, shared_path, config):
     """Binds a PID (Handle persistent identifier) to the (SIP or Directory)
     model ``mdl`` by making a request to a Handle web service endpoint, given
     the configuration in ``config`` (which is configured in a dashboard form).
-    Uses ``bind_pid`` from the bindpid.py module in archivematicaCommon. If
-    successful, adds the PID to the model's ``identifiers`` attribute.
+    Uses ``bind_pid`` from the bindpid.py module. If successful, adds the PID to
+    the model's ``identifiers`` attribute.
     """
     is_sip = isinstance(mdl, SIP)
     entity_type = (

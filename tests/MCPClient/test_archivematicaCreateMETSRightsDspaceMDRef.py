@@ -1,7 +1,6 @@
 import pathlib
 from unittest import mock
 
-import namespaces as ns
 import pytest
 from archivematicaCreateMETSRightsDspaceMDRef import (
     archivematicaCreateMETSRightsDspaceMDRef,
@@ -9,6 +8,7 @@ from archivematicaCreateMETSRightsDspaceMDRef import (
 from client.job import Job
 from create_mets_v2 import MetsState
 from main import models
+from utils import namespaces as ns
 
 
 @pytest.fixture

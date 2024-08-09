@@ -4,7 +4,7 @@ from io import StringIO
 
 import pytest
 from django.test import TestCase
-from env_configparser import EnvConfigParser
+from utils.appconfig import EnvConfigParser
 
 
 class TestConfigReader(TestCase):

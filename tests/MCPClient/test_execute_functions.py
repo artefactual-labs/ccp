@@ -3,30 +3,27 @@ import tempfile
 from unittest.mock import ANY
 from unittest.mock import patch
 
-import executeOrRunSubProcess as execsub
 import pytest
+from utils.executeOrRunSubProcess import createAndRunScript
+from utils.executeOrRunSubProcess import launchSubProcess
 
 
 def test_capture_output():
     """Tests behaviour of capture_output when executing sub processes."""
 
     # Test that stdout and stderr are not captured by default
-    ret, std_out, std_err = execsub.launchSubProcess(["ls", "/tmp"])
+    ret, std_out, std_err = launchSubProcess(["ls", "/tmp"])
     assert std_out == ""
     assert std_err == ""
 
     # Test that stdout and stderr are captured when `capture_output` is
     # enabled.
-    ret, std_out, std_err = execsub.launchSubProcess(
-        ["ls", "/tmp"], capture_output=True
-    )
+    ret, std_out, std_err = launchSubProcess(["ls", "/tmp"], capture_output=True)
     assert std_out != "" or std_err != ""
 
     # Test that stdout and stderr are not captured when `capture_output` is
     # not enabled.
-    ret, std_out, std_err = execsub.launchSubProcess(
-        ["ls", "/tmp"], capture_output=False
-    )
+    ret, std_out, std_err = launchSubProcess(["ls", "/tmp"], capture_output=False)
     assert std_out == ""
     assert std_err == ""
 
@@ -35,27 +32,19 @@ def test_capture_output():
     cmd1 = 'sh -c \'>&2 echo "error"; echo "out"; exit 1\''
     cmd0 = 'sh -c \'>&2 echo "error"; echo "out"; exit 0\''
 
-    ret, std_out, std_err = execsub.launchSubProcess(
-        shlex.split(cmd1), capture_output=False
-    )
+    ret, std_out, std_err = launchSubProcess(shlex.split(cmd1), capture_output=False)
     assert std_out.strip() == ""
     assert std_err.strip() == "error"
 
-    ret, std_out, std_err = execsub.launchSubProcess(
-        shlex.split(cmd0), capture_output=False
-    )
+    ret, std_out, std_err = launchSubProcess(shlex.split(cmd0), capture_output=False)
     assert std_out.strip() == ""
     assert std_err.strip() == ""
 
-    ret, std_out, std_err = execsub.launchSubProcess(
-        shlex.split(cmd1), capture_output=True
-    )
+    ret, std_out, std_err = launchSubProcess(shlex.split(cmd1), capture_output=True)
     assert std_out.strip() == "out"
     assert std_err.strip() == "error"
 
-    ret, std_out, std_err = execsub.launchSubProcess(
-        shlex.split(cmd0), capture_output=True
-    )
+    ret, std_out, std_err = launchSubProcess(shlex.split(cmd0), capture_output=True)
     assert std_out.strip() == "out"
     assert std_err.strip() == "error"
 
@@ -72,13 +61,13 @@ def temp_path(tmp_path):
     tempfile.tempdir = original_tempdir
 
 
-@patch("executeOrRunSubProcess.launchSubProcess")
+@patch("utils.executeOrRunSubProcess.launchSubProcess")
 def test_createAndRunScript_creates_tmpfile_in_custom_dir(launchSubProcess, temp_path):
     """Tests execution of launchSubProcess when executing createAndRunScript."""
 
     script_content = "#!/bin/bash\necho 'Script output'\nexit 0"
 
-    execsub.createAndRunScript(script_content)
+    createAndRunScript(script_content)
 
     launchSubProcess.assert_called_once_with(
         ANY,

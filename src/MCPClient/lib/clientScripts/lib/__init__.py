@@ -1,4 +1,4 @@
-import dicts
+from utils import dicts
 
 
 def setup_dicts(settings):

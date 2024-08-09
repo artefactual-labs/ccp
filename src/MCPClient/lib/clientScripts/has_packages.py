@@ -2,7 +2,6 @@
 import django
 
 django.setup()
-# dashboard
 from fpr.models import FPRule
 from main.models import Event
 from main.models import File

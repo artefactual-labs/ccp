@@ -12,21 +12,17 @@ import django
 from lxml import etree
 
 django.setup()
-from databaseFunctions import insertIntoFPCommandOutput
-from dicts import ReplacementDict
-from dicts import replace_string_values
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-
-# archivematicaCommon
-from executeOrRunSubProcess import executeOrRun
 from fpr.models import FormatVersion
 from fpr.models import FPRule
 from lib import setup_dicts
-
-# dashboard
 from main.models import FPCommandOutput
+from utils.databaseFunctions import insertIntoFPCommandOutput
+from utils.dicts import ReplacementDict
+from utils.dicts import replace_string_values
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def concurrent_instances():

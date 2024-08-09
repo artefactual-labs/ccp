@@ -24,13 +24,9 @@ import django
 
 django.setup()
 from django.db import transaction
-
-# archivematicaCommon
-from executeOrRunSubProcess import executeOrRun
-from fileOperations import get_extract_dir_name
-
-# dashboard
 from main.models import Transfer
+from utils.executeOrRunSubProcess import executeOrRun
+from utils.fileOperations import get_extract_dir_name
 
 
 def extract(job, target, destinationDirectory):

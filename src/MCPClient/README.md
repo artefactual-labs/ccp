@@ -27,7 +27,7 @@ these.
 There are numerous examples of client scripts in the `clientScripts`
 directory. Commonly they will follow a pattern like:
 
-    from custom_handlers import get_script_logger
+    from utils.custom_handlers import get_script_logger
     # ...
     logger = get_script_logger("archivematica.mcp.client.myModuleName")
 

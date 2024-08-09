@@ -23,9 +23,9 @@ import os
 from io import StringIO
 from pathlib import Path
 
-import email_settings
-from appconfig import Config
 from django.core.exceptions import ImproperlyConfigured
+from utils import email_settings
+from utils.appconfig import Config
 
 
 def _get_settings_from_file(path):

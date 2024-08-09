@@ -34,10 +34,8 @@ import lxml.etree as etree
 import metsrw
 
 django.setup()
-# dashboard
 import archivematicaCreateMETSMetadataXML
 import archivematicaCreateMETSReingest
-import namespaces as ns
 from archivematicaCreateMETSMetadataCSV import parseMetadata
 from archivematicaCreateMETSRights import archivematicaGetRights
 from archivematicaCreateMETSRightsDspaceMDRef import (
@@ -47,15 +45,11 @@ from archivematicaCreateMETSTrim import getTrimAmdSec
 from archivematicaCreateMETSTrim import getTrimDmdSec
 from archivematicaCreateMETSTrim import getTrimFileAmdSec
 from archivematicaCreateMETSTrim import getTrimFileDmdSec
-
-# archivematicaCommon
-from archivematicaFunctions import normalizeNonDcElementName
 from bagit import Bag
 from bagit import BagError
 from change_names import change_name
 from create_mets_dataverse_v2 import create_dataverse_sip_dmdsec
 from create_mets_dataverse_v2 import create_dataverse_tabfile_dmdsec
-from custom_handlers import get_script_logger
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from main.models import SIP
@@ -68,6 +62,9 @@ from main.models import File
 from main.models import FileID
 from main.models import FPCommandOutput
 from main.models import SIPArrange
+from utils import namespaces as ns
+from utils.archivematicaFunctions import normalizeNonDcElementName
+from utils.custom_handlers import get_script_logger
 
 SIP_DIR_VAR = r"%SIPDirectory%"
 

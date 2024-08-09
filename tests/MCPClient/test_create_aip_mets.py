@@ -12,12 +12,12 @@ from typing import List
 import archivematicaCreateMETSMetadataCSV
 import archivematicaCreateMETSRights
 import create_mets_v2
-import namespaces as ns
 import pytest
 from client.job import Job
 from django.test import TestCase
 from lxml import etree
 from main.models import RightsStatement
+from utils import namespaces as ns
 from version import get_preservation_system_identifier
 
 THIS_DIR = pathlib.Path(__file__).parent

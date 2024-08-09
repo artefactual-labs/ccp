@@ -4,6 +4,7 @@ import multiprocessing
 from datetime import datetime
 from multiprocessing.synchronize import Event
 from types import TracebackType
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -55,18 +56,18 @@ JobResults = Dict[str, JobData]
 logger = logging.getLogger("archivematica.mcp.client.gearman")
 
 
-class JSONDataEncoder(gearman.DataEncoder):
+class JSONDataEncoder(gearman.DataEncoder):  # type: ignore
     """Custom data encoder class for the `gearman` library (JSON)."""
 
     @classmethod
-    def encode(cls, encodable_object):
+    def encode(cls, encodable_object: Any) -> Any:
         # Object of type bytes is not JSON serializable.
         if isinstance(encodable_object, bytes):
             encodable_object = encodable_object.decode("utf-8")
         return orjson.dumps(encodable_object)
 
     @classmethod
-    def decode(cls, decodable_string):
+    def decode(cls, decodable_string: Union[bytes, bytearray, memoryview, str]) -> Any:
         return orjson.loads(decodable_string)
 
 

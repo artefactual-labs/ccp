@@ -15,11 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
-# archivematicaCommon
-from django.db.models import F
-from executeOrRunSubProcess import executeOrRun
 
-# dashboard
+from django.db.models import F
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def toStrFromUnicode(inputString, encoding="utf-8"):

@@ -5,15 +5,12 @@ import shutil
 
 import django
 
-# fileOperations requires Django to be set up
-
 django.setup()
-# archivematicaCommon
-import archivematicaFunctions
-import fileOperations
-from archivematicaFunctions import OPTIONAL_FILES
-from archivematicaFunctions import REQUIRED_DIRECTORIES
 from django.db import transaction
+from utils import archivematicaFunctions
+from utils import fileOperations
+from utils.archivematicaFunctions import OPTIONAL_FILES
+from utils.archivematicaFunctions import REQUIRED_DIRECTORIES
 
 
 def restructureForComplianceFileUUIDsAssigned(

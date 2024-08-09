@@ -22,14 +22,10 @@ import uuid
 
 import django
 
-# fileOperations, databaseFunctions requires Django to be set up
-
 django.setup()
-import databaseFunctions
 from django.db import transaction
-
-# archivematicaCommon
-from fileOperations import getFileUUIDLike
+from utils.databaseFunctions import insertIntoEvents
+from utils.fileOperations import getFileUUIDLike
 
 
 def call(jobs):
@@ -123,7 +119,7 @@ def call(jobs):
                                 eventOutcome = "Pass"
                                 eventOutcomeDetailNote = "Verified file exists"
                                 eventIdentifierUUID = str(uuid.uuid4())
-                                databaseFunctions.insertIntoEvents(
+                                insertIntoEvents(
                                     fileUUID=fileUUID,
                                     eventIdentifierUUID=eventIdentifierUUID,
                                     eventType="manifest check",
@@ -163,7 +159,7 @@ def call(jobs):
                                     eventOutcome = "Pass"
                                     eventOutcomeDetailNote = "Verified file exists, but with implicit extension case"
                                     eventIdentifierUUID = str(uuid.uuid4())
-                                    databaseFunctions.insertIntoEvents(
+                                    insertIntoEvents(
                                         fileUUID=fileUUID,
                                         eventIdentifierUUID=eventIdentifierUUID,
                                         eventType="manifest check",

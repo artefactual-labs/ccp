@@ -18,15 +18,11 @@
 import os
 
 import django
-from custom_handlers import get_script_logger
-
-# archivematicaCommon
+from utils.custom_handlers import get_script_logger
 
 django.setup()
 from django.db import connection
 from django.db import transaction
-
-# dashboard
 from main.models import File
 from main.models import FileFormatVersion
 from main.models import FileID

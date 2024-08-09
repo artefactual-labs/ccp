@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from executeOrRunSubProcess import executeOrRun
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def call(jobs):

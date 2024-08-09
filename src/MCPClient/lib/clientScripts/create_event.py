@@ -20,12 +20,9 @@ from optparse import OptionParser
 
 import django
 
-# databaseFunctions requires Django to be set up
-
 django.setup()
-# archivematicaCommon
-from databaseFunctions import insertIntoEvents
 from django.db import transaction
+from utils.databaseFunctions import insertIntoEvents
 
 
 def call(jobs):

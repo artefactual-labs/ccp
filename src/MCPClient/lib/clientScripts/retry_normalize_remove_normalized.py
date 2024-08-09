@@ -24,7 +24,6 @@ from optparse import OptionParser
 import django
 
 django.setup()
-# dashboard
 from django.db import transaction
 from django.utils import timezone
 from main.models import Derivation

@@ -22,15 +22,12 @@ import uuid
 import django
 from lxml import etree as etree
 
-# fileOperations, databaseFunctions requires Django to be set up
-
 django.setup()
-import databaseFunctions
 
-# archivematicaCommon
-from archivematicaFunctions import get_file_checksum
 from django.db import transaction
-from fileOperations import getFileUUIDLike
+from utils.archivematicaFunctions import get_file_checksum
+from utils.databaseFunctions import insertIntoEvents
+from utils.fileOperations import getFileUUIDLike
 
 
 def call(jobs):
@@ -97,7 +94,7 @@ def call(jobs):
                                 )
                                 eventIdentifierUUID = str(uuid.uuid4())
 
-                                databaseFunctions.insertIntoEvents(
+                                insertIntoEvents(
                                     fileUUID=fileUUID,
                                     eventIdentifierUUID=eventIdentifierUUID,
                                     eventType="fixity check",

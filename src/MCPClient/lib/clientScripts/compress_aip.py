@@ -7,11 +7,9 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
-# archivematicaCommon
-import databaseFunctions
-from executeOrRunSubProcess import executeOrRun
 from main.models import SIP
+from utils import databaseFunctions
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def update_unit(sip_uuid, compressed_location):

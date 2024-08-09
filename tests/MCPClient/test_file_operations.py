@@ -3,14 +3,14 @@ from unittest import mock
 
 import pytest
 from django.db.models import Q
-from fileOperations import FindFileInNormalizatonCSVError
-from fileOperations import addAccessionEvent
-from fileOperations import findFileInNormalizationCSV
-from fileOperations import get_extract_dir_name
 from main.models import SIP
 from main.models import Event
 from main.models import File
 from main.models import Transfer
+from utils.fileOperations import FindFileInNormalizatonCSVError
+from utils.fileOperations import addAccessionEvent
+from utils.fileOperations import findFileInNormalizationCSV
+from utils.fileOperations import get_extract_dir_name
 
 
 @pytest.mark.parametrize(

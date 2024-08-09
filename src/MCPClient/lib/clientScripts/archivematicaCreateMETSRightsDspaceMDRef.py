@@ -20,9 +20,9 @@ import os
 import sys
 
 import lxml.etree as etree
-import namespaces as ns
 from django.core.exceptions import ValidationError
 from main.models import File
+from utils import namespaces as ns
 
 
 def createMDRefDMDSec(LABEL, itemdirectoryPath, directoryPathSTR):

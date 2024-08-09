@@ -18,12 +18,11 @@
 import os
 
 import django
-import namespaces
 from django.db import transaction
 from lxml import etree
+from utils import namespaces
 
 django.setup()
-# dashboard
 from main.models import File
 
 

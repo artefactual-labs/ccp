@@ -1,10 +1,10 @@
 import os
 
 import pytest
-from dicts import ChoicesDict
-from dicts import ReplacementDict
-from dicts import setup as setup_dicts
 from main import models
+from utils.dicts import ChoicesDict
+from utils.dicts import ReplacementDict
+from utils.dicts import setup as setup_dicts
 
 
 @pytest.fixture

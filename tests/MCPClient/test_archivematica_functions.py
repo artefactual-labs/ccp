@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
-import archivematicaFunctions as am
 import bagit
 import pytest
+from utils import archivematicaFunctions as am
 
 
 def test_find_mets_file_match(tmp_path):
@@ -43,7 +43,7 @@ def test_get_bag_size(tmpdir):
     bag.info["Payload-Oxum"] = size_oxum
     bag.save()
     # Assertions
-    with patch("archivematicaFunctions.os") as mock_os:
+    with patch("utils.archivematicaFunctions.os") as mock_os:
         # Test returned value against expected
         size = am.get_bag_size(bag, bag_dir.strpath)
         assert size == int(size_oxum.split(".")[0])

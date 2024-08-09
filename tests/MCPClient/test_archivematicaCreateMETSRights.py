@@ -2,7 +2,7 @@ import archivematicaCreateMETSRights
 import pytest
 from create_mets_v2 import MetsState
 from main import models
-from namespaces import NSMAP
+from utils.namespaces import NSMAP
 
 
 @pytest.fixture()

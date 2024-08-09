@@ -7,17 +7,15 @@ from pprint import pformat
 import django
 
 django.setup()
-import databaseFunctions
-
-# archivematicaCommon
-from archivematicaFunctions import get_setting
 from bagit import Bag
 from bagit import BagError
 from django.conf import settings as mcpclient_settings
 from django.db import transaction
-from executeOrRunSubProcess import executeOrRun
 from main.models import SIP
 from main.models import File
+from utils.archivematicaFunctions import get_setting
+from utils.databaseFunctions import insertIntoEvents
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 class VerifyChecksumsError(Exception):
@@ -47,7 +45,7 @@ def write_premis_event(
 ):
     """Write the AIP-level "fixity check" PREMIS event."""
     try:
-        databaseFunctions.insertIntoEvents(
+        insertIntoEvents(
             fileUUID=sip_uuid,
             eventType="fixity check",
             eventDetail=f'program="python, bag"; module="hashlib.{checksum_type}()"',

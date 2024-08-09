@@ -7,21 +7,18 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
-import databaseFunctions
-import fileOperations
-
-# archivematicaCommon
-from dicts import ReplacementDict
 from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from executeOrRunSubProcess import executeOrRun
 from fpr.models import FPRule
 from lib import setup_dicts
 from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
+from utils import databaseFunctions
+from utils import fileOperations
+from utils.dicts import ReplacementDict
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def concurrent_instances():

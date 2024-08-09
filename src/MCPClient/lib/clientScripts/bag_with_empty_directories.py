@@ -23,10 +23,9 @@ import shutil
 import django
 
 django.setup()
-# archivematicaCommon
-from archivematicaFunctions import get_setting
 from bagit import make_bag
 from django.conf import settings as mcpclient_settings
+from utils.archivematicaFunctions import get_setting
 
 
 def get_sip_directories(job, sip_dir):

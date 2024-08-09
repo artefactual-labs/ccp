@@ -35,7 +35,7 @@ from lxml import etree
 django.setup()
 
 import metsrw
-from custom_handlers import get_script_logger
+from utils.custom_handlers import get_script_logger
 
 logger = get_script_logger("archivematica.mcp.client.convert_dataverse_struct")
 

@@ -36,18 +36,15 @@ import django
 from django.db import transaction
 
 django.setup()
-# dashboard
 import metsrw
-import namespaces as ns
-
-# archivematicaCommon
-from archivematicaFunctions import chunk_iterable
-from archivematicaFunctions import find_mets_file
-from custom_handlers import get_script_logger
-from fileOperations import addFileToSIP
-from fileOperations import addFileToTransfer
 from main.models import File
 from main.models import Transfer
+from utils import namespaces as ns
+from utils.archivematicaFunctions import chunk_iterable
+from utils.archivematicaFunctions import find_mets_file
+from utils.custom_handlers import get_script_logger
+from utils.fileOperations import addFileToSIP
+from utils.fileOperations import addFileToTransfer
 
 logger = get_script_logger("archivematica.mcp.client.assignFileUUID")
 

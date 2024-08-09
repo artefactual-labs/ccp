@@ -157,15 +157,15 @@ COPY --chown=${USER_ID}:${GROUP_ID} --link . /src
 FROM base AS archivematica-mcp-client
 
 ENV DJANGO_SETTINGS_MODULE=settings.common
-ENV PYTHONPATH=/src/src/MCPClient/lib/:/src/src/MCPClient/lib/clientScripts:/src/src/archivematicaCommon/lib/
+ENV PYTHONPATH=/src/src/MCPClient/lib/:/src/src/MCPClient/lib/clientScripts
 ENV ARCHIVEMATICA_MCPCLIENT_ARCHIVEMATICACLIENTMODULES=/src/src/MCPClient/lib/archivematicaClientModules
 ENV ARCHIVEMATICA_MCPCLIENT_CLIENTASSETSDIRECTORY=/src/src/MCPClient/lib/assets/
 ENV ARCHIVEMATICA_MCPCLIENT_CLIENTSCRIPTSDIRECTORY=/src/src/MCPClient/lib/clientScripts/
 
 # Some scripts in archivematica-fpr-admin executed by MCPClient rely on certain
 # files being available in this image (e.g. see https://git.io/vA1wF).
-COPY --link src/archivematicaCommon/lib/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
-COPY --link src/archivematicaCommon/lib/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
+COPY --link src/MCPClient/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
+COPY --link src/MCPClient/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
 ENTRYPOINT ["pyenv", "exec", "python3", "/src/src/MCPClient/lib/archivematicaClient.py"]
 

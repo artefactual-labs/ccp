@@ -18,7 +18,6 @@
 import os
 import string
 import sys
-import traceback
 import uuid
 from datetime import datetime
 from datetime import timedelta
@@ -29,26 +28,13 @@ from lxml import etree as etree
 
 django.setup()
 from django.db import transaction
-
-# archivematicaCommon
-from fileOperations import getFileUUIDLike
-
-# dashboard
 from main.models import RightsStatement
 from main.models import RightsStatementOtherRightsDocumentationIdentifier
 from main.models import RightsStatementOtherRightsInformation
 from main.models import RightsStatementRightsGranted
 from main.models import RightsStatementRightsGrantedNote
 from main.models import RightsStatementRightsGrantedRestriction
-
-while False:
-    import time
-
-    time.sleep(10)
-
-
-def callWithException(exception):
-    traceback
+from utils.fileOperations import getFileUUIDLike
 
 
 def getTimedeltaFromRetensionSchedule(RetentionSchedule):

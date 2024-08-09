@@ -1,12 +1,12 @@
 import uuid
 
-from django.core.management.base import BaseCommand
-from django.utils.translation import gettext_lazy as _
-from django.utils import termcolors
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+from django.utils import termcolors
+from tastypie.models import ApiKey
+
 from main.models import Agent
 from main.models import DashboardSetting
-from tastypie.models import ApiKey
 
 
 def create_super_user(username, email, password, key):

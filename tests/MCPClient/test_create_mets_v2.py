@@ -9,7 +9,7 @@ from main.models import DublinCore
 from main.models import File
 from main.models import MetadataAppliesToType
 from main.models import SIPArrange
-from namespaces import NSMAP
+from utils.namespaces import NSMAP
 
 
 def test_createDMDIDsFromCSVMetadata_finds_non_ascii_paths(mocker):

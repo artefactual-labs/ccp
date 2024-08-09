@@ -18,16 +18,16 @@
 import argparse
 
 import django
-from custom_handlers import get_script_logger
 from django.conf import settings as mcpclient_settings
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db import connection
 from django.db import transaction
-from externals.HTML import HTML
 from lxml import etree
 from main.models import Job
 from main.models import Report
+from utils.custom_handlers import get_script_logger
+from utils.HTML import HTML
 
 django.setup()
 

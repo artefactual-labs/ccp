@@ -1,13 +1,13 @@
 import pathlib
 import uuid
 
-import databaseFunctions
 import pytest
 from django.test import TestCase
 from main.models import Event
 from main.models import File
+from utils import databaseFunctions
 
-AGENTS_FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "agents.json"
+AGENTS_FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "agents_common.json"
 TEST_DATABASE_FUNCTIONS_FIXTURE = (
     pathlib.Path(__file__).parent / "fixtures" / "test_database_functions.json"
 )

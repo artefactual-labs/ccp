@@ -25,17 +25,17 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 django.setup()
-import databaseFunctions
-from custom_handlers import get_script_logger
-from dicts import replace_string_values
 from django.conf import settings as mcpclient_settings
-from executeOrRunSubProcess import executeOrRun
 from fpr.models import FormatVersion
 from fpr.models import FPRule
 from lib import setup_dicts
 from main.models import SIP
 from main.models import Derivation
 from main.models import File
+from utils.custom_handlers import get_script_logger
+from utils.databaseFunctions import insertIntoEvents
+from utils.dicts import replace_string_values
+from utils.executeOrRunSubProcess import executeOrRun
 
 SUCCESS_CODE = 0
 FAIL_CODE = 1
@@ -181,7 +181,7 @@ class Validator:
         self.job.print_output(
             f"Creating {self.purpose} event for {self.file_path} ({self.file_uuid})"
         )
-        databaseFunctions.insertIntoEvents(
+        insertIntoEvents(
             fileUUID=self.file_uuid,
             eventType="validation",  # From PREMIS controlled vocab.
             eventDetail=event_detail,

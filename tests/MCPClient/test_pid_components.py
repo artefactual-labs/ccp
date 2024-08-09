@@ -12,7 +12,6 @@ from itertools import chain
 import bind_pid
 import bind_pids
 import create_mets_v2
-import namespaces as ns
 import pytest
 from main.models import SIP
 from main.models import DashboardSetting
@@ -20,6 +19,7 @@ from main.models import Directory
 from main.models import File
 from pid_declaration import DeclarePIDs
 from pid_declaration import DeclarePIDsException
+from utils import namespaces as ns
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

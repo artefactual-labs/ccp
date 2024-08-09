@@ -1,7 +1,7 @@
 from datetime import datetime
 
+from client.gearman import JSONDataEncoder
 from django.utils.timezone import make_aware
-from gearman_encoder import JSONDataEncoder
 
 
 def test_encoder():

@@ -3,9 +3,7 @@ import logging
 import os.path
 from argparse import ArgumentParser
 
-import components.helpers as helpers
 import django
-from custom_handlers import get_script_logger
 from django.conf import settings as mcpclient_settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -14,10 +12,12 @@ from django.db import transaction
 from django.template import Context
 from django.template import Template
 from main.models import SIP
+from main.models import DashboardSetting
 from main.models import File
 from main.models import Job
 from main.models import Report
 from main.models import Task
+from utils.custom_handlers import get_script_logger
 
 django.setup()
 
@@ -95,6 +95,14 @@ EMAIL_TEMPLATE = """
 """
 
 
+def get_dashboard_id(setting):
+    try:
+        setting = DashboardSetting.objects.get(name="dashboard_uuid")
+        return setting.value
+    except Exception:
+        return ""
+
+
 def report(uuid):
     """
     Generate normalization report using Django's template module and send it to
@@ -156,7 +164,7 @@ def report(uuid):
         "name": os.path.basename(sip.currentpath.rstrip("/")).replace(
             "-" + str(sip.uuid), ""
         ),
-        "pipeline_uuid": helpers.get_setting("dashboard_uuid"),
+        "pipeline_uuid": get_dashboard_id(),
         "failed_tasks": failed_tasks,
     }
 

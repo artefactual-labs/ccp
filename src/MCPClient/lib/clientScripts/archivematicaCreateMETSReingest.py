@@ -6,12 +6,10 @@ import archivematicaCreateMETSMetadataCSV as createmetscsv
 import archivematicaCreateMETSRights as createmetsrights
 import create_mets_v2 as createmets2
 import metsrw
-import namespaces as ns
 from django.core.exceptions import ValidationError
 from lxml import etree
 from main import models
-
-# dashboard
+from utils import namespaces as ns
 
 
 def _create_premis_object(premis_object_type):

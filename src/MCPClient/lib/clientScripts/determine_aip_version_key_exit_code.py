@@ -20,8 +20,8 @@ import sys
 from typing import Dict
 from typing import Optional
 
-import namespaces as ns
 from lxml import etree
+from utils import namespaces as ns
 
 VERSION_MAP: Dict[Optional[str], int] = {
     # Only change exit code if AIP format changes. If unknown, default to latest

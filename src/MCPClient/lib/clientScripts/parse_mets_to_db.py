@@ -9,14 +9,11 @@ from django.db import transaction
 from lxml import etree
 
 django.setup()
-# dashboard
-import databaseFunctions
-import fileOperations
-
-# archivematicaCommon
-import namespaces as ns
 from fpr import models as fpr_models
 from main import models
+from utils import databaseFunctions
+from utils import fileOperations
+from utils import namespaces as ns
 
 MD_TYPE_SIP_ID = "3e48343d-e2d2-4956-aaa3-b54d26eb9761"
 

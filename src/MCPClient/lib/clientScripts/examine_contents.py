@@ -2,7 +2,7 @@
 import multiprocessing
 import os
 
-from executeOrRunSubProcess import executeOrRun
+from utils.executeOrRunSubProcess import executeOrRun
 
 
 def concurrent_instances():

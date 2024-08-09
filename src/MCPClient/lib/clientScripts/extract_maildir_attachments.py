@@ -27,14 +27,10 @@ from lxml import etree
 django.setup()
 from django.core.exceptions import ValidationError
 from django.db import transaction
-
-# archivematicaCommon
-from externals.extractMaildirAttachments import parse
-from fileOperations import addFileToTransfer
-from fileOperations import updateSizeAndChecksum
-
-# dashboard
 from main.models import File
+from utils.fileOperations import addFileToTransfer
+from utils.fileOperations import updateSizeAndChecksum
+from utils.maildir import parse
 
 
 class State:
