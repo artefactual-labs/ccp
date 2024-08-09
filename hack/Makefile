@@ -114,7 +114,7 @@ bootstrap:  ## Bootstrap MCP (new database).
 restart-am-services:  ## Restart Archivematica services.
 	docker compose restart --no-deps archivematica-mcp-client
 
-compile-requirements-am:  ## Run pip-compile for Archivematica
+compile-requirements:  ## Run pip-compile for Archivematica
 	docker compose run --workdir /src \
 		-e XDG_CACHE_HOME=/tmp/pip-cache \
 		--rm \
@@ -123,7 +123,7 @@ compile-requirements-am:  ## Run pip-compile for Archivematica
 		--entrypoint bash archivematica-mcp-client \
 			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
 
-upgrade-requirements-am:  ## Run pip-upgrade for Archivematica
+upgrade-requirements:  ## Run pip-upgrade for Archivematica
 	docker compose run --workdir /src \
 		-e XDG_CACHE_HOME=/tmp/pip-cache \
 		--rm \
