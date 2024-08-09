@@ -60,9 +60,8 @@ of these settings or provide values to mandatory fields.
 There is an example configuration file for MCPClient included in the source
 code: (see [`the example`](./clientConfig.conf))
 
-MCPClient will look for a configuration file in one of two locations:
+MCPClient will look for a configuration file in the following location:
 
-- `/etc/archivematica/archivematicaCommon/dbsettings`
 - `/etc/archivematica/MCPClient/clientConfig.conf`
 
 Traditionally, the dbsettings file was used to hold mysql login credentials,
@@ -74,13 +73,13 @@ non-database parameters could be set in the dbsettings file.
 
 This is the full list of variables supported by MCPClient:
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_TIME_ZONE`**:
+- **`ARCHIVEMATICA_MCPCLIENT_TIME_ZONE`**:
   - **Description:** application time zone. See [TIME_ZONE] for more details.
   - **Config file example:** `MCPClient.time_zone`
   - **Type:** `string`
   - **Default:** `"UTC"`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_DJANGO_SECRET_KEY`**:
+- **`ARCHIVEMATICA_MCPCLIENT_DJANGO_SECRET_KEY`**:
   - **Description:** a secret key used for cryptographic signing. See [SECRET_KEY]
     for more details.
   - **Config file example:** `MCPClient.django_secret_key`
@@ -101,55 +100,37 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `int`
   - **Default:** `10`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_SHAREDDIRECTORYMOUNTED`**:
+- **`ARCHIVEMATICA_MCPCLIENT_SHARED_DIR`**:
   - **Description:** location of the Archivematica Shared Directory.
-  - **Config file example:** `MCPClient.sharedDirectoryMounted`
+  - **Config file example:** `MCPClient.shared_dir`
   - **Type:** `string`
   - **Default:** `/var/archivematica/sharedDirectory/`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_PROCESSINGDIRECTORY`**:
-  - **Description:** location of the Archivematica Currently Procesing Directory.
-  - **Config file example:** `MCPClient.processingDirectory`
-  - **Type:** `string`
-  - **Default:** `/var/archivematica/sharedDirectory/currentlyProcessing/`
-
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_REJECTEDDIRECTORY`**:
-  - **Description:** location of the Archivematica Rejected Directory.
-  - **Config file example:** `MCPClient.rejectedDirectory`
-  - **Type:** `string`
-  - **Default:** `/var/archivematica/sharedDirectory/rejected/`
-
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_WATCHDIRECTORYPATH`**:
-  - **Description:** location of the Archivematica Watched Directories.
-  - **Config file example:** `MCPClient.watchDirectoryPath`
-  - **Type:** `string`
-  - **Default:** `/var/archivematica/sharedDirectory/watchedDirectories/`
-
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLIENTSCRIPTSDIRECTORY`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLIENTSCRIPTSDIRECTORY`**:
   - **Description:** location of the client scripts directory.
   - **Config file example:** `MCPClient.clientScriptsDirectory`
   - **Type:** `string`
   - **Default:** `/usr/lib/archivematica/MCPClient/clientScripts/`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLIENTASSETSDIRECTORY`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLIENTASSETSDIRECTORY`**:
   - **Description:** location of the client assets directory.
   - **Config file example:** `MCPClient.clientAssetsDirectory`
   - **Type:** `string`
   - **Default:** `/usr/lib/archivematica/MCPClient/assets/`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_LOADSUPPORTEDCOMMANDSSPECIAL`**:
+- **`ARCHIVEMATICA_MCPCLIENT_LOADSUPPORTEDCOMMANDSSPECIAL`**:
   - **Description:** enables loading special modules.
   - **Config file example:** `MCPClient.LoadSupportedCommandsSpecial`
   - **Type:** `boolean`
   - **Default:** `true`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_MCPARCHIVEMATICASERVER`**:
+- **`ARCHIVEMATICA_MCPCLIENT_GEARMAN_SERVER`**:
   - **Description:** address of the Gearman server.
-  - **Config file example:** `MCPClient.MCPArchivematicaServer`
+  - **Config file example:** `MCPClient.gearman_server`
   - **Type:** `string`
   - **Default:** `localhost:4730`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_ARCHIVEMATICACLIENTMODULES`**:
+- **`ARCHIVEMATICA_MCPCLIENT_ARCHIVEMATICACLIENTMODULES`**:
   - **Description:** location of the client modules configuration file. This can
     be useful when the user wants to set up workers that can only work in a
     limited number of tasks, e.g. a worker exclusively dedicated to antivirus
@@ -158,42 +139,36 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `string`
   - **Default:** `/usr/lib/archivematica/MCPClient/archivematicaClientModules`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_REMOVABLEFILES`**:
+- **`ARCHIVEMATICA_MCPCLIENT_REMOVABLEFILES`**:
   - **Description:** comma-separated listed of file names that will be deleted.
   - **Config file example:** `MCPClient.removableFiles`
   - **Type:** `string`
   - **Default:** `Thumbs.db, Icon, Icon\r, .DS_Store`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_TEMP_DIR`**:
-  - **Description:** location of the temporary directory.
-  - **Config file example:** `MCPClient.temp_dir`
-  - **Type:** `string`
-  - **Default:** `/var/archivematica/sharedDirectory/tmp`
-
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_AGENTARCHIVES_CLIENT_TIMEOUT`**:
+- **`ARCHIVEMATICA_MCPCLIENT_AGENTARCHIVES_CLIENT_TIMEOUT`**:
   - **Description:** configures the agentarchives client to stop waiting for a
     response after a given number of seconds.
   - **Config file example:** `MCPClient.agentarchives_client_timeout`
   - **Type:** `float`
   - **Default:** `300`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_PROMETHEUS_BIND_ADDRESS`**:
+- **`ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_ADDRESS`**:
   - **Description:** when set to a non-empty string, its value is parsed as the
     IP address on which to serve Prometheus metrics. If this value is not
-    provided, but ``ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_PROMETHEUS_BIND_PORT`` is,
-    then 127.0.0.1 will be used.
+    provided, but ``ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_PORT`` is, then
+    `127.0.0.1` will be used.
   - **Config file example:** `MCPClient.prometheus_bind_addresss`
   - **Type:** `string`
   - **Default:** `""`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_PROMETHEUS_BIND_PORT`**:
+- **`ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_PORT`**:
   - **Description:** The port on which to serve Prometheus metrics.
     If this value is not provided, metrics will not be served.
   - **Config file example:** `MCPClient.prometheus_bind_port`
   - **Type:** `int`
   - **Default:** `""`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_PROMETHEUS_DETAILED_METRICS`**:
+- **`ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_DETAILED_METRICS`**:
   - **Description:** Send detailed metrics to Prometheus. With large transfers
     this might affect performance of the local storage in Prometheus and slow
     down its threads in Archivematica.
@@ -201,7 +176,7 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `boolean`
   - **Default:** `false`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED`**:
+- **`ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED`**:
   - **Description:** (**Experimental**) Determines if the XML files in the
     `metadata` directory of a SIP should be validated against a set of XML
     schemas, recorded in the METS file and indexed as custom metadata. See the
@@ -210,91 +185,91 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `boolean`
   - **Default:** `false`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_SERVER`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_SERVER`**:
   - **Description:** configures the `clamdscanner` backend so it knows how to
     reach the clamd server via UNIX socket (if the value starts with /) or TCP
     socket (form `host:port`, e.g.: `myclamad:3310`).
-  - **Config file example:** `MCPClient.clamav_server`
+  - **Config file example:** `clamav.server`
   - **Type:** `string`
   - **Default:** `/var/run/clamav/clamd.ctl`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_PASS_BY_STREAM`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_PASS_BY_STREAM`**:
   - **Description:** configures the `clamdscanner` backend to stream the file's
     contents to clamd. This is useful when clamd does not have access to the
     filesystem where the file is stored. When disabled, the files are read from
     the filesystem by reference.
-  - **Config file example:** `MCPClient.clamav_pass_by_stream`
+  - **Config file example:** `clamav.pass_by_stream`
   - **Type:** `boolean`
   - **Default:** `true`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_CLIENT_TIMEOUT`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_CLIENT_TIMEOUT`**:
   - **Description:** configures the `clamdscanner` backend to stop waiting for a
     response after a given number of seconds.
-  - **Config file example:** `MCPClient.clamav_client_timeout`
+  - **Config file example:** `clamav.client_timeout`
   - **Type:** `float`
   - **Default:** `86400`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_CLIENT_BACKEND`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_CLIENT_BACKEND`**:
   - **Description:** the ClamAV backend used for anti-virus scanning. The two
     options that are available are: `clamscanner` (via CLI) and `clamdscanner`
     (over TCP or UNIX socket).
-  - **Config file example:** `MCPClient.clamav_client_backend`
+  - **Config file example:** `clamav.client_backend`
   - **Type:** `string`
   - **Default:** `clamdscanner`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_CLIENT_MAX_FILE_SIZE`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_CLIENT_MAX_FILE_SIZE`**:
   - **Description:** files larger than this limit will not be scanned. The unit
     used is megabyte (MB).
-  - **Config file example:** `MCPClient.clamav_client_max_file_size`
+  - **Config file example:** `clamav.client_max_file_size`
   - **Type:** `float`
   - **Default:** `2000`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CLAMAV_CLIENT_MAX_SCAN_SIZE`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_CLIENT_MAX_SCAN_SIZE`**:
   - **Description**: sets the maximum amount of data to be scanned for each
     input file. Files larger than this value will be scanned but only up to this
     limit. Archives and other containers are recursively extracted and scanned
     up to this value. The unit used is megabyte (MB).
-  - **Config file example:** `MCPClient.clamav_client_max_scan_size`
+  - **Config file example:** `clamav.client_max_scan_size`
   - **Type:** `float`
   - **Default:** `2000`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_ENGINE`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_ENGINE`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.engine`
+  - **Config file example:** `db.engine`
   - **Type:** `string`
   - **Default:** `django.db.backends.mysql`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_DATABASE`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.database`
+  - **Config file example:** `db.database`
   - **Type:** `string`
   - **Default:** `MCP`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_USER`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_USER`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.user`
+  - **Config file example:** `db.user`
   - **Type:** `string`
   - **Default:** `archivematica`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_PASSWORD`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_PASSWORD`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.password`
+  - **Config file example:** `db.password`
   - **Type:** `string`
   - **Default:** `demo`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_HOST`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.host`
+  - **Config file example:** `db.host`
   - **Type:** `string`
   - **Default:** `localhost`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENT_PORT`**
+- **`ARCHIVEMATICA_MCPCLIENT_DB_PORT`**
   - **Description:** a database setting. See [DATABASES] for more details.
-  - **Config file example:** `client.port`
+  - **Config file example:** `db.port`
   - **Type:** `string`
   - **Default:** `3306`
 
-- **`ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_CAPTURE_CLIENT_SCRIPT_OUTPUT`**:
+- **`ARCHIVEMATICA_MCPCLIENT_CAPTURE_CLIENT_SCRIPT_OUTPUT`**:
   - **Description:** controls whether or not to capture stdout from client
     script subprocesses.  If set to `true`, then stdout is captured; if set to
     `false`, then stdout is not captured. If set to `true`, then stderr is
@@ -394,10 +369,10 @@ This is the full list of variables supported by MCPClient:
 **This feature is experimental, please share your feedback!**
 
 These variables specify how XML files contained in the `metadata` directory of a
-SIP should be validated. Only applicable if `ARCHIVEMATICA_MCPCLIENT_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED`
-is set.
+SIP should be validated. Only applicable if
+`ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED` is set.
 
-- **`METADATA_XML_VALIDATION_SETTINGS_FILE`**:
+- **`ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_SETTINGS_FILE`**:
   - **Description:** Path to a Python module containing the following Django settings:
     - `XML_VALIDATION`: a dictionary which keys are strings that contain either
       an [XML schema location], an [XML namespace] or an XML element tag, and

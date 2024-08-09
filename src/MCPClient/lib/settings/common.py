@@ -61,24 +61,9 @@ CONFIG_MAPPING = {
         "option": "max_tasks_per_child",
         "type": "int",
     },
-    "shared_directory": {
+    "shared_dir": {
         "section": "MCPClient",
-        "option": "sharedDirectoryMounted",
-        "type": "string",
-    },
-    "processing_directory": {
-        "section": "MCPClient",
-        "option": "processingDirectory",
-        "type": "string",
-    },
-    "rejected_directory": {
-        "section": "MCPClient",
-        "option": "rejectedDirectory",
-        "type": "string",
-    },
-    "watch_directory": {
-        "section": "MCPClient",
-        "option": "watchDirectoryPath",
+        "option": "shared_dir",
         "type": "string",
     },
     "client_scripts_directory": {
@@ -93,7 +78,7 @@ CONFIG_MAPPING = {
     },
     "gearman_server": {
         "section": "MCPClient",
-        "option": "MCPArchivematicaServer",
+        "option": "gearman_server",
         "type": "string",
     },
     "client_modules_file": {
@@ -111,7 +96,6 @@ CONFIG_MAPPING = {
         "option": "removableFiles",
         "type": "string",
     },
-    "temp_directory": {"section": "MCPClient", "option": "temp_dir", "type": "string"},
     "secret_key": {
         "section": "MCPClient",
         "option": "django_secret_key",
@@ -143,64 +127,57 @@ CONFIG_MAPPING = {
         "type": "boolean",
     },
     "time_zone": {"section": "MCPClient", "option": "time_zone", "type": "string"},
-    # [antivirus]
+    # [clamav]
     "clamav_server": {
-        "section": "MCPClient",
-        "option": "clamav_server",
+        "section": "clamav",
+        "option": "server",
         "type": "string",
     },
     "clamav_pass_by_stream": {
-        "section": "MCPClient",
-        "option": "clamav_pass_by_stream",
+        "section": "clamav",
+        "option": "pass_by_stream",
         "type": "boolean",
     },
     "clamav_client_timeout": {
-        "section": "MCPClient",
-        "option": "clamav_client_timeout",
+        "section": "clamav",
+        "option": "client_timeout",
         "type": "float",
     },
     "clamav_client_backend": {
-        "section": "MCPClient",
-        "option": "clamav_client_backend",
+        "section": "clamav",
+        "option": "client_backend",
         "type": "string",
     },
-    # float for megabytes to preserve fractions on in-code operations on bytes
     "clamav_client_max_file_size": {
-        "section": "MCPClient",
-        "option": "clamav_client_max_file_size",
-        "type": "float",
+        "section": "clamav",
+        "option": "client_max_file_size",
+        "type": "float",  # float for megabytes to preserve fractions on in-code operations on bytes
     },
     "clamav_client_max_scan_size": {
-        "section": "MCPClient",
-        "option": "clamav_client_max_scan_size",
+        "section": "clamav",
+        "option": "client_max_scan_size",
         "type": "float",
     },
-    # [client]
-    "db_engine": {"section": "client", "option": "engine", "type": "string"},
-    "db_name": {"section": "client", "option": "database", "type": "string"},
-    "db_user": {"section": "client", "option": "user", "type": "string"},
-    "db_password": {"section": "client", "option": "password", "type": "string"},
-    "db_host": {"section": "client", "option": "host", "type": "string"},
-    "db_port": {"section": "client", "option": "port", "type": "string"},
+    # [db]
+    "db_engine": {"section": "db", "option": "engine", "type": "string"},
+    "db_name": {"section": "db", "option": "database", "type": "string"},
+    "db_user": {"section": "db", "option": "user", "type": "string"},
+    "db_password": {"section": "db", "option": "password", "type": "string"},
+    "db_host": {"section": "db", "option": "host", "type": "string"},
+    "db_port": {"section": "db", "option": "port", "type": "string"},
 }
 
 CONFIG_MAPPING.update(email_settings.CONFIG_MAPPING)
 
 CONFIG_DEFAULTS = """[MCPClient]
-MCPArchivematicaServer = localhost:4730
-sharedDirectoryMounted = /var/archivematica/sharedDirectory/
-watchDirectoryPath = /var/archivematica/sharedDirectory/watchedDirectories/
-processingDirectory = /var/archivematica/sharedDirectory/currentlyProcessing/
-rejectedDirectory = /var/archivematica/sharedDirectory/rejected/
+gearman_server = localhost:4730
+shared_dir = /var/archivematica/sharedDirectory/
 archivematicaClientModules = /usr/lib/archivematica/MCPClient/archivematicaClientModules
 clientScriptsDirectory = /usr/lib/archivematica/MCPClient/clientScripts/
 clientAssetsDirectory = /usr/lib/archivematica/MCPClient/assets/
 metadata_xml_validation_enabled = false
 capture_client_script_output = true
-temp_dir = /var/archivematica/sharedDirectory/tmp
 removableFiles = Thumbs.db, Icon, Icon\r, .DS_Store
-clamav_server = /var/run/clamav/clamd.ctl
-clamav_pass_by_stream = True
 agentarchives_client_timeout = 300
 prometheus_bind_address =
 prometheus_bind_port =
@@ -208,13 +185,16 @@ prometheus_detailed_metrics = false
 time_zone = UTC
 workers =
 max_tasks_per_child = 10
-clamav_client_timeout = 86400
-clamav_client_backend = clamdscanner    ; Options: clamdscanner or clamscanner
-clamav_client_max_file_size = 42        ; MB
-clamav_client_max_scan_size = 42        ; MB
 
+[clamav]
+server = /var/run/clamav/clamd.ctl
+pass_by_stream = True
+client_timeout = 86400
+client_backend = clamdscanner    ; Options: clamdscanner or clamscanner
+client_max_file_size = 42        ; MB
+client_max_scan_size = 42        ; MB
 
-[client]
+[db]
 user = archivematica
 password = demo
 host = localhost
@@ -317,24 +297,28 @@ else:
     logging.config.dictConfig(LOGGING)
 
 
+SHARED_DIRECTORY = os.path.join(config.get("shared_dir"), "")
+PROCESSING_DIRECTORY = os.path.join(SHARED_DIRECTORY, "currentlyProcessing", "")
+REJECTED_DIRECTORY = os.path.join(SHARED_DIRECTORY, "rejected", "")
+WATCH_DIRECTORY = os.path.join(SHARED_DIRECTORY, "watchedDirectories", "")
+TEMP_DIRECTORY = os.path.join(SHARED_DIRECTORY, "tmp")
+
 WORKERS = config.get("workers")
 MAX_TASKS_PER_CHILD = config.get("max_tasks_per_child")
-SHARED_DIRECTORY = config.get("shared_directory")
-PROCESSING_DIRECTORY = config.get("processing_directory")
-REJECTED_DIRECTORY = config.get("rejected_directory")
-WATCH_DIRECTORY = config.get("watch_directory")
 CLIENT_SCRIPTS_DIRECTORY = config.get("client_scripts_directory")
 CLIENT_ASSETS_DIRECTORY = config.get("client_assets_directory")
 GEARMAN_SERVER = config.get("gearman_server")
 CLIENT_MODULES_FILE = config.get("client_modules_file")
 REMOVABLE_FILES = config.get("removable_files")
-TEMP_DIRECTORY = config.get("temp_directory")
+
+# [clamav]
 CLAMAV_SERVER = config.get("clamav_server")
 CLAMAV_PASS_BY_STREAM = config.get("clamav_pass_by_stream")
 CLAMAV_CLIENT_TIMEOUT = config.get("clamav_client_timeout")
 CLAMAV_CLIENT_BACKEND = config.get("clamav_client_backend")
 CLAMAV_CLIENT_MAX_FILE_SIZE = config.get("clamav_client_max_file_size")
 CLAMAV_CLIENT_MAX_SCAN_SIZE = config.get("clamav_client_max_scan_size")
+
 AGENTARCHIVES_CLIENT_TIMEOUT = config.get("agentarchives_client_timeout")
 CAPTURE_CLIENT_SCRIPT_OUTPUT = config.get("capture_client_script_output")
 DEFAULT_CHECKSUM_ALGORITHM = "sha256"
@@ -355,7 +339,7 @@ globals().update(email_settings.get_settings(config))
 METADATA_XML_VALIDATION_ENABLED = config.get("metadata_xml_validation_enabled")
 if METADATA_XML_VALIDATION_ENABLED:
     METADATA_XML_VALIDATION_SETTINGS_FILE = os.environ.get(
-        "METADATA_XML_VALIDATION_SETTINGS_FILE", ""
+        "ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_SETTINGS_FILE", ""
     )
     if METADATA_XML_VALIDATION_SETTINGS_FILE:
         xml_validation_settings = _get_settings_from_file(
