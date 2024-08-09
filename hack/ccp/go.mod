@@ -25,6 +25,7 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/mikespook/gearman-go v0.0.0-20220520031403-2a518e866145
 	github.com/oapi-codegen/runtime v1.1.1
+	github.com/otiai10/copy v1.14.0
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/cors v1.11.0
@@ -62,7 +63,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/otiai10/copy v1.14.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
