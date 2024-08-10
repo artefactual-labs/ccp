@@ -14,7 +14,6 @@ returned. Otherwise a happy message is printed and 0 is returned.
 
 import importlib
 import logging
-import pathlib
 import pprint
 import types
 from dis import get_instructions
@@ -22,7 +21,7 @@ from dis import opmap
 
 import django
 import prometheus_client
-from client.loader import get_supported_modules
+from client.loader import SUPPORTED_MODULES
 
 django.setup()
 
@@ -150,14 +149,6 @@ def print_mutable_globals_usage(supported_modules):
 
 
 def test_ensure_no_mutable_globals():
-    config_path = (
-        pathlib.Path(__file__).parent.parent.parent
-        / "src"
-        / "MCPClient"
-        / "lib"
-        / "archivematicaClientModules"
-    )
-
-    result = print_mutable_globals_usage(get_supported_modules(config_path))
+    result = print_mutable_globals_usage(SUPPORTED_MODULES)
 
     assert result == 0

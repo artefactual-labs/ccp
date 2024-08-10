@@ -14,7 +14,6 @@ from typing import Union
 
 import gearman
 import orjson
-from django.conf import settings
 from gearman.job import GearmanJob
 
 from client import metrics
@@ -83,7 +82,7 @@ class MCPGearmanWorker(gearman.GearmanWorker):  # type: ignore
     ) -> None:
         super().__init__(hosts)
 
-        self.job_modules = load_job_modules(settings.CLIENT_MODULES_FILE)
+        self.job_modules = load_job_modules()
         self.client_id = f"MCPClient-{multiprocessing.current_process().pid}"
         self.jobs_processed_count = 0
         self.max_jobs_to_process = max_jobs_to_process

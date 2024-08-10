@@ -1,8 +1,13 @@
+import os
 import shlex
+from pathlib import Path
 from typing import List
 
 from django.conf import settings
 from django.utils import timezone
+
+# The assets directory, e.g. ``/usr/lib/archivematica/MCPClient/assets/``.
+ASSETS_DIR = os.path.join(str((Path(__file__).parent.parent / "assets").absolute()), "")
 
 
 def parse_command_line(s: str) -> List[str]:
@@ -21,8 +26,7 @@ def replace_task_arguments(
 ) -> str:
     replacements = {
         r"%sharedPath%": settings.SHARED_DIRECTORY,
-        r"%clientScriptsDirectory%": settings.CLIENT_SCRIPTS_DIRECTORY,
-        r"%clientAssetsDirectory%": settings.CLIENT_ASSETS_DIRECTORY,
+        r"%clientAssetsDirectory%": ASSETS_DIR,
         r"%date%": timezone.now().isoformat(),
         r"%taskUUID%": task_uuid,
         r"%jobCreatedDate%": task_created_date,

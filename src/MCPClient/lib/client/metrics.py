@@ -2,7 +2,6 @@
 Exposes various metrics via Prometheus.
 """
 
-import configparser
 import datetime
 import functools
 import threading
@@ -29,6 +28,8 @@ from prometheus_client import Gauge
 from prometheus_client import Histogram
 from prometheus_client import multiprocess
 from prometheus_client import start_http_server
+
+from client.loader import SUPPORTED_MODULES
 
 # We need to balance reasonably accurate tracking with high cardinality here, as
 # this is used with script_name labels and there are already over 100 scripts.
@@ -268,9 +269,7 @@ def skip_if_prometheus_disabled(
 def init_counter_labels() -> None:
     # Zero our counters to start, by intializing all labels. Non-zero starting points
     # cause problems when measuring rates.
-    modules_config = configparser.RawConfigParser()
-    modules_config.read(settings.CLIENT_MODULES_FILE)
-    for script_name, _ in modules_config.items("supportedBatchCommands"):
+    for script_name in SUPPORTED_MODULES.keys():
         task_execution_time_histogram.labels(script_name=script_name)
         job_counter.labels(script_name=script_name)
         job_processed_timestamp.labels(script_name=script_name)

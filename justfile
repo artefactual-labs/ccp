@@ -11,3 +11,6 @@ e2e:
 
 amflow:
   amflow edit --file ./hack/ccp/internal/workflow/assets/workflow.json
+
+grpcui:
+  grpcui -plaintext -H "Authorization: ApiKey test:test" localhost:63030

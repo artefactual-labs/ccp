@@ -80,6 +80,11 @@ build:  # Build Compose services.
 		--build-arg USER_ID=$(CALLER_UID) \
 		--build-arg GROUP_ID=$(CALLER_GID)
 
+iterate:
+	$(MAKE) flush-shared-dir
+	docker compose up -d --force-recreate --build --no-deps archivematica-ccp archivematica-mcp-client
+	docker compose logs -f archivematica-ccp archivematica-mcp-client
+
 manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
 	docker compose run \
 		--user $(CALLER_UID):$(CALLER_GID) \

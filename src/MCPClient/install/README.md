@@ -62,22 +62,11 @@ code: (see [`the example`](./clientConfig.conf))
 
 MCPClient will look for a configuration file in the following location:
 
-- `/etc/archivematica/MCPClient/clientConfig.conf`
-
-Traditionally, the dbsettings file was used to hold mysql login credentials,
-which are then shared with other Archivematica components like MCPServer.
-Database credentials can be set in the clientConfig.conf file instead, or
-non-database parameters could be set in the dbsettings file.
+    /etc/archivematica/MCPClient/clientConfig.conf
 
 ## Parameter list
 
 This is the full list of variables supported by MCPClient:
-
-- **`ARCHIVEMATICA_MCPCLIENT_TIME_ZONE`**:
-  - **Description:** application time zone. See [TIME_ZONE] for more details.
-  - **Config file example:** `MCPClient.time_zone`
-  - **Type:** `string`
-  - **Default:** `"UTC"`
 
 - **`ARCHIVEMATICA_MCPCLIENT_DJANGO_SECRET_KEY`**:
   - **Description:** a secret key used for cryptographic signing. See [SECRET_KEY]
@@ -106,42 +95,15 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `string`
   - **Default:** `/var/archivematica/sharedDirectory/`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENTSCRIPTSDIRECTORY`**:
-  - **Description:** location of the client scripts directory.
-  - **Config file example:** `MCPClient.clientScriptsDirectory`
-  - **Type:** `string`
-  - **Default:** `/usr/lib/archivematica/MCPClient/clientScripts/`
-
-- **`ARCHIVEMATICA_MCPCLIENT_CLIENTASSETSDIRECTORY`**:
-  - **Description:** location of the client assets directory.
-  - **Config file example:** `MCPClient.clientAssetsDirectory`
-  - **Type:** `string`
-  - **Default:** `/usr/lib/archivematica/MCPClient/assets/`
-
-- **`ARCHIVEMATICA_MCPCLIENT_LOADSUPPORTEDCOMMANDSSPECIAL`**:
-  - **Description:** enables loading special modules.
-  - **Config file example:** `MCPClient.LoadSupportedCommandsSpecial`
-  - **Type:** `boolean`
-  - **Default:** `true`
-
 - **`ARCHIVEMATICA_MCPCLIENT_GEARMAN_SERVER`**:
   - **Description:** address of the Gearman server.
   - **Config file example:** `MCPClient.gearman_server`
   - **Type:** `string`
   - **Default:** `localhost:4730`
 
-- **`ARCHIVEMATICA_MCPCLIENT_ARCHIVEMATICACLIENTMODULES`**:
-  - **Description:** location of the client modules configuration file. This can
-    be useful when the user wants to set up workers that can only work in a
-    limited number of tasks, e.g. a worker exclusively dedicated to antivirus
-    scanning or file identification.
-  - **Config file example:** `MCPClient.archivematicaClientModules`
-  - **Type:** `string`
-  - **Default:** `/usr/lib/archivematica/MCPClient/archivematicaClientModules`
-
-- **`ARCHIVEMATICA_MCPCLIENT_REMOVABLEFILES`**:
+- **`ARCHIVEMATICA_MCPCLIENT_REMOVABLE_FILES`**:
   - **Description:** comma-separated listed of file names that will be deleted.
-  - **Config file example:** `MCPClient.removableFiles`
+  - **Config file example:** `MCPClient.removable_files`
   - **Type:** `string`
   - **Default:** `Thumbs.db, Icon, Icon\r, .DS_Store`
 
@@ -151,6 +113,27 @@ This is the full list of variables supported by MCPClient:
   - **Config file example:** `MCPClient.agentarchives_client_timeout`
   - **Type:** `float`
   - **Default:** `300`
+
+- **`ARCHIVEMATICA_MCPCLIENT_CAPTURE_CLIENT_SCRIPT_OUTPUT`**:
+  - **Description:** controls whether or not to capture stdout from client
+    script subprocesses.  If set to `true`, then stdout is captured; if set to
+    `false`, then stdout is not captured. If set to `true`, then stderr is
+    captured; if set to `false`, then stderr is captured only if the subprocess
+    has failed, i.e., returned a non-zero exit code.
+  - **Config file example:** `MCPClient.capture_client_script_output`
+  - **Type:** `boolean`
+  - **Default:** `true`
+
+- **`ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED`**:
+  - **Description:** (**Experimental**) Determines if the XML files in the
+    `metadata` directory of a SIP should be validated against a set of XML
+    schemas, recorded in the METS file and indexed as custom metadata. See the
+    [feature variables](#metadata-xml-validation-variables) section below.
+  - **Config file example:** `MCPClient.metadata_xml_validation_enabled`
+  - **Type:** `boolean`
+  - **Default:** `false`
+
+Prometheus metrics server:
 
 - **`ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_ADDRESS`**:
   - **Description:** when set to a non-empty string, its value is parsed as the
@@ -176,14 +159,7 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `boolean`
   - **Default:** `false`
 
-- **`ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED`**:
-  - **Description:** (**Experimental**) Determines if the XML files in the
-    `metadata` directory of a SIP should be validated against a set of XML
-    schemas, recorded in the METS file and indexed as custom metadata. See the
-    [feature variables](#metadata-xml-validation-variables) section below.
-  - **Config file example:** `MCPClient.metadata_xml_validation_enabled`
-  - **Type:** `boolean`
-  - **Default:** `false`
+Antivirus (ClamAV):
 
 - **`ARCHIVEMATICA_MCPCLIENT_CLAMAV_SERVER`**:
   - **Description:** configures the `clamdscanner` backend so it knows how to
@@ -233,6 +209,8 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `float`
   - **Default:** `2000`
 
+Database client:
+
 - **`ARCHIVEMATICA_MCPCLIENT_DB_ENGINE`**
   - **Description:** a database setting. See [DATABASES] for more details.
   - **Config file example:** `db.engine`
@@ -269,15 +247,7 @@ This is the full list of variables supported by MCPClient:
   - **Type:** `string`
   - **Default:** `3306`
 
-- **`ARCHIVEMATICA_MCPCLIENT_CAPTURE_CLIENT_SCRIPT_OUTPUT`**:
-  - **Description:** controls whether or not to capture stdout from client
-    script subprocesses.  If set to `true`, then stdout is captured; if set to
-    `false`, then stdout is not captured. If set to `true`, then stderr is
-    captured; if set to `false`, then stderr is captured only if the subprocess
-    has failed, i.e., returned a non-zero exit code.
-  - **Config file example:** `MCPClient.capture_client_script_output`
-  - **Type:** `boolean`
-  - **Default:** `true`
+Email settings:
 
 - **`ARCHIVEMATICA_MCPCLIENT_EMAIL_BACKEND`**:
   - **Description:** an email setting. See [Sending email] for more details.
@@ -405,19 +375,17 @@ SIP should be validated. Only applicable if
 
       This is how an `XML_VALIDATION` dictionary would look like:
 
-      ```python
-      XML_VALIDATION = {
-          #
-          # Local XML schema
-          "http://www.lido-schema.org": "/etc/archivematica/xml-schemas/lido.xsd",
-          #
-          # External XML schema URL
-          "http://www.loc.gov/MARC21/slim": "https://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd",
-          #
-          # Tag name of the root node. Setting the value to `None` skips validation
-          "metadata": None,
-      }
-      ```
+          XML_VALIDATION = {
+              #
+              # Local XML schema
+              "http://www.lido-schema.org": "/etc/archivematica/xml-schemas/lido.xsd",
+              #
+              # External XML schema URL
+              "http://www.loc.gov/MARC21/slim": "https://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd",
+              #
+              # Tag name of the root node. Setting the value to `None` skips validation
+              "metadata": None,
+          }
 
   - **Type:** `string`
   - **Default:** ``
@@ -444,7 +412,6 @@ The [`clientConfig.logging.json`](./clientConfig.logging.json) file in this
 directory provides an example that implements the logging behaviour used in
 Archivematica 1.6.1 and earlier.
 
-[TIME_ZONE]: https://docs.djangoproject.com/en/1.8/ref/settings/#time-zone
 [SECRET_KEY]: https://docs.djangoproject.com/en/1.8/ref/settings/#secret-key
 [DATABASES]: https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 [Sending email]: https://docs.djangoproject.com/en/1.8/topics/email/

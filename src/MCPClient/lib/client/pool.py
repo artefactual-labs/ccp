@@ -111,7 +111,7 @@ class WorkerPool:
         self.log_queue: LogQueue = multiprocessing.Queue()
         self.shutdown_event = multiprocessing.Event()
         self.workers: List[multiprocessing.Process] = []
-        self.job_modules = loader.load_job_modules(settings.CLIENT_MODULES_FILE)
+        self.job_modules = loader.load_job_modules()
         self.worker_function = run_gearman_worker
 
         # The max. number of workers is established by the ``workers`` setting,

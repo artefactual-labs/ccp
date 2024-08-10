@@ -66,24 +66,9 @@ CONFIG_MAPPING = {
         "option": "shared_dir",
         "type": "string",
     },
-    "client_scripts_directory": {
-        "section": "MCPClient",
-        "option": "clientScriptsDirectory",
-        "type": "string",
-    },
-    "client_assets_directory": {
-        "section": "MCPClient",
-        "option": "clientAssetsDirectory",
-        "type": "string",
-    },
     "gearman_server": {
         "section": "MCPClient",
         "option": "gearman_server",
-        "type": "string",
-    },
-    "client_modules_file": {
-        "section": "MCPClient",
-        "option": "archivematicaClientModules",
         "type": "string",
     },
     "capture_client_script_output": {
@@ -93,7 +78,7 @@ CONFIG_MAPPING = {
     },
     "removable_files": {
         "section": "MCPClient",
-        "option": "removableFiles",
+        "option": "removable_files",
         "type": "string",
     },
     "secret_key": {
@@ -126,7 +111,6 @@ CONFIG_MAPPING = {
         "option": "metadata_xml_validation_enabled",
         "type": "boolean",
     },
-    "time_zone": {"section": "MCPClient", "option": "time_zone", "type": "string"},
     # [clamav]
     "clamav_server": {
         "section": "clamav",
@@ -170,21 +154,19 @@ CONFIG_MAPPING = {
 CONFIG_MAPPING.update(email_settings.CONFIG_MAPPING)
 
 CONFIG_DEFAULTS = """[MCPClient]
+django_secret_key =
 gearman_server = localhost:4730
 shared_dir = /var/archivematica/sharedDirectory/
-archivematicaClientModules = /usr/lib/archivematica/MCPClient/archivematicaClientModules
-clientScriptsDirectory = /usr/lib/archivematica/MCPClient/clientScripts/
-clientAssetsDirectory = /usr/lib/archivematica/MCPClient/assets/
-metadata_xml_validation_enabled = false
+workers =
+max_tasks_per_child = 1000000
 capture_client_script_output = true
-removableFiles = Thumbs.db, Icon, Icon\r, .DS_Store
+removable_files = Thumbs.db, Icon, Icon\r, .DS_Store
+metadata_xml_validation_enabled = false
 agentarchives_client_timeout = 300
 prometheus_bind_address =
 prometheus_bind_port =
 prometheus_detailed_metrics = false
-time_zone = UTC
-workers =
-max_tasks_per_child = 10
+
 
 [clamav]
 server = /var/run/clamav/clamd.ctl
@@ -221,12 +203,7 @@ timeout = 300
 
 config = Config(env_prefix="ARCHIVEMATICA_MCPCLIENT", attrs=CONFIG_MAPPING)
 config.read_defaults(StringIO(CONFIG_DEFAULTS))
-config.read_files(
-    [
-        "/etc/archivematica/archivematicaCommon/dbsettings",
-        "/etc/archivematica/MCPClient/clientConfig.conf",
-    ]
-)
+config.read_files(["/etc/archivematica/MCPClient/clientConfig.conf"])
 
 
 DATABASES = {
@@ -242,12 +219,10 @@ DATABASES = {
 }
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = config.get(
-    "secret_key", default="e7b-$#-3fgu)j1k01)3tp@^e0=yv1hlcc4k-b6*ap^zezv2$48"
-)
+SECRET_KEY = config.get("secret_key")
 
 USE_TZ = True
-TIME_ZONE = config.get("time_zone")
+TIME_ZONE = "UTC"
 
 INSTALLED_APPS = (
     "django.contrib.auth",
@@ -305,10 +280,7 @@ TEMP_DIRECTORY = os.path.join(SHARED_DIRECTORY, "tmp")
 
 WORKERS = config.get("workers")
 MAX_TASKS_PER_CHILD = config.get("max_tasks_per_child")
-CLIENT_SCRIPTS_DIRECTORY = config.get("client_scripts_directory")
-CLIENT_ASSETS_DIRECTORY = config.get("client_assets_directory")
 GEARMAN_SERVER = config.get("gearman_server")
-CLIENT_MODULES_FILE = config.get("client_modules_file")
 REMOVABLE_FILES = config.get("removable_files")
 
 # [clamav]
@@ -322,6 +294,7 @@ CLAMAV_CLIENT_MAX_SCAN_SIZE = config.get("clamav_client_max_scan_size")
 AGENTARCHIVES_CLIENT_TIMEOUT = config.get("agentarchives_client_timeout")
 CAPTURE_CLIENT_SCRIPT_OUTPUT = config.get("capture_client_script_output")
 DEFAULT_CHECKSUM_ALGORITHM = "sha256"
+
 PROMETHEUS_DETAILED_METRICS = config.get("prometheus_detailed_metrics")
 PROMETHEUS_BIND_ADDRESS = config.get("prometheus_bind_address")
 try:
