@@ -80,7 +80,7 @@ build:  # Build Compose services.
 		--build-arg USER_ID=$(CALLER_UID) \
 		--build-arg GROUP_ID=$(CALLER_GID)
 
-iterate:
+run:
 	$(MAKE) flush-shared-dir
 	docker compose up -d --force-recreate --build --no-deps archivematica-ccp archivematica-mcp-client
 	docker compose logs -f archivematica-ccp archivematica-mcp-client

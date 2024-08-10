@@ -15,5 +15,8 @@ amflow:
 grpcui:
   grpcui -plaintext -H "Authorization: ApiKey test:test" localhost:63030
 
+run:
+  make -C hack run
+
 transfer:
   ./hack/ccp/hack/transfer-via-api.sh
