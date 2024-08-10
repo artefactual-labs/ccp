@@ -12,12 +12,12 @@ import django
 from lxml import etree
 
 django.setup()
-from django.conf import settings as mcpclient_settings
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from fpr.models import FormatVersion
 from fpr.models import FPRule
-from lib import setup_dicts
+from utils.dicts import setup
 from main.models import FPCommandOutput
 from utils.databaseFunctions import insertIntoFPCommandOutput
 from utils.dicts import ReplacementDict
@@ -30,7 +30,7 @@ def concurrent_instances():
 
 
 def main(job, file_path, file_uuid, sip_uuid):
-    setup_dicts(mcpclient_settings)
+    setup()
 
     failed = False
 

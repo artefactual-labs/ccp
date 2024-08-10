@@ -7,11 +7,10 @@ import django
 from django.db import transaction
 
 django.setup()
-from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from fpr.models import FPRule
-from lib import setup_dicts
+from utils.dicts import setup
 from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
@@ -99,7 +98,7 @@ def fetch_rules_for_derivatives(file_):
 
 
 def main(job, task_uuid, file_uuid):
-    setup_dicts(mcpclient_settings)
+    setup()
 
     succeeded = True
 

@@ -16,7 +16,7 @@ from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from fpr.models import FPRule
-from lib import setup_dicts
+from utils.dicts import setup
 from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
@@ -332,7 +332,7 @@ def main(job, opts):
     """Find and execute normalization commands on input file."""
     # TODO fix for maildir working only on attachments
 
-    setup_dicts(mcpclient_settings)
+    setup()
 
     # Find the file and it's FormatVersion (file identification)
     try:

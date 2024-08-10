@@ -18,16 +18,20 @@ import ast
 import os
 import re
 
+from django.conf import settings as django_settings
+
 from main import models
 
 config = {}
 
 
-def setup(shared_directory, processing_directory, watch_directory, rejected_directory):
-    config["shared_directory"] = shared_directory
-    config["processing_directory"] = processing_directory
-    config["watch_directory"] = watch_directory
-    config["rejected_directory"] = rejected_directory
+def setup():
+    config.update({
+        "shared_directory": django_settings.SHARED_DIRECTORY,
+        "processing_directory": django_settings.PROCESSING_DIRECTORY,
+        "rejected_directory": django_settings.REJECTED_DIRECTORY,
+        "watch_directory": django_settings.WATCH_DIRECTORY,
+    })
 
 
 def replace_string_values(string, **kwargs):

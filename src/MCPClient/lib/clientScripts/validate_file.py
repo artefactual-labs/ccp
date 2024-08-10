@@ -25,10 +25,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 django.setup()
-from django.conf import settings as mcpclient_settings
 from fpr.models import FormatVersion
 from fpr.models import FPRule
-from lib import setup_dicts
+from utils.dicts import setup
 from main.models import SIP
 from main.models import Derivation
 from main.models import File
@@ -45,7 +44,7 @@ DERIVATIVE_TYPES = {"preservation", "access"}
 
 
 def main(job, file_path, file_uuid, sip_uuid, shared_path, file_type):
-    setup_dicts(mcpclient_settings)
+    setup()
 
     validator = Validator(job, file_path, file_uuid, sip_uuid, shared_path, file_type)
     return validator.validate()

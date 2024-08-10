@@ -4,7 +4,7 @@ import pytest
 from main import models
 from utils.dicts import ChoicesDict
 from utils.dicts import ReplacementDict
-from utils.dicts import setup as setup_dicts
+from utils.dicts import setup
 
 
 @pytest.fixture
@@ -40,12 +40,7 @@ def FILE(db, TRANSFER):
 
 @pytest.fixture(scope="module", autouse=True)
 def with_dicts():
-    setup_dicts(
-        shared_directory="/shared/",
-        processing_directory="/processing/",
-        watch_directory="/watch/",
-        rejected_directory="/rejected/",
-    )
+    setup()
 
 
 def test_alternate_replacementdict_constructor():
