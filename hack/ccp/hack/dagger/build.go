@@ -21,8 +21,10 @@ func (m *Build) WorkerImage() *dagger.Container {
 }
 
 func (m *Build) CCPImage() *dagger.Container {
-	return m.Source.Directory("hack/ccp").
-		DockerBuild()
+	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
+		Dockerfile: "hack/Dockerfile",
+		Target:     "archivematica-ccp",
+	})
 }
 
 func (m *Build) MySQLContainer() *dagger.Container {

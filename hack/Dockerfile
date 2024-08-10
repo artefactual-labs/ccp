@@ -1,4 +1,3 @@
-ARG TARGET
 ARG UBUNTU_VERSION=22.04
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -210,7 +209,3 @@ RUN adduser -u ${USER_ID} -S -D ccp ccp
 COPY --from=go-builder --link /out/ccp /home/ccp/bin/ccp
 USER ccp
 CMD ["/home/ccp/bin/ccp", "server"]
-
-# -----------------------------------------------------------------------------
-
-FROM ${TARGET}

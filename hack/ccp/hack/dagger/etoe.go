@@ -45,8 +45,7 @@ func (m *CCP) GenerateDumps(ctx context.Context) (*dagger.Directory, error) {
 	mysql := m.Build().MySQLContainer().AsService()
 
 	// ForceDrop ensures that the app is migrated and installed.
-	_, err := m.bootstrapDashboard(ctx, mysql, ForceDrop)
-	if err != nil {
+	if err := m.populateDatabase(ctx, mysql, ForceDrop); err != nil {
 		return nil, err
 	}
 
@@ -67,8 +66,7 @@ func (m *CCP) Etoe(
 		WithMountedCache("/var/lib/mysql", dag.CacheVolume("mysql")).
 		AsService()
 
-	dashboard, err := m.bootstrapDashboard(ctx, mysql, dbMode)
-	if err != nil {
+	if err := m.populateDatabase(ctx, mysql, dbMode); err != nil {
 		return err
 	}
 
@@ -89,7 +87,6 @@ func (m *CCP) Etoe(
 			WithSource(m.Source.Directory("hack/ccp")).
 			Container().
 			WithServiceBinding("mysql", mysql).
-			WithServiceBinding("dashboard", dashboard).
 			WithServiceBinding("ccp", ccp).
 			WithServiceBinding("worker", worker).
 			WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
@@ -116,46 +113,65 @@ func (m *CCP) bootstrapCCP(mysql *dagger.Service) *dagger.Service {
 		AsService()
 }
 
-func (m *CCP) bootstrapDashboard(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) (*dagger.Service, error) {
-	dashboardCtr := m.Build().WorkerImage().
-		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_USER", "root").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_PASSWORD", "12345").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST", "mysql").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
-		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
-		WithServiceBinding("mysql", mysql).
-		WithExposedPort(8000)
-
+func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMode DatabaseExecutionMode) error {
 	drop := dbMode != UseCached
 	if err := createDB(ctx, mysql, mcpDBName, drop); err != nil {
-		return nil, err
+		return err
 	}
 
 	if dbMode == UseDumps {
 		dumpFile := m.Source.File(filepath.Join(dumpsDir, fmt.Sprintf("%s.sql.bz2", mcpDBName)))
 		if err := loadDump(ctx, mysql, mcpDBName, dumpFile); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	onlyMigrate := dbMode == UseDumps || dbMode == UseCached
-	if err := bootstrapMCPDB(ctx, dashboardCtr, onlyMigrate); err != nil {
-		return nil, err
+	ctr := m.Build().WorkerImage().
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_USER", "root").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_PASSWORD", "12345").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_HOST", "mysql").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_DATABASE", mcpDBName).
+		WithServiceBinding("mysql", mysql).
+		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
+
+	if _, err := ctr.
+		WithExec([]string{"/src/src/MCPClient/lib/manage.py", "migrate", "--noinput"}).
+		Sync(ctx); err != nil {
+		return err
 	}
 
-	return dashboardCtr.AsService(), nil
+	onlyMigrate := dbMode == UseDumps || dbMode == UseCached
+	if onlyMigrate {
+		return nil
+	}
+
+	if _, err := ctr.
+		WithExec([]string{
+			"/src/src/MCPClient/lib/manage.py", "install",
+			`--username=test`,
+			`--password=test`,
+			`--email=test@test.com`,
+			`--org-name=test`,
+			`--org-id=test`,
+			`--api-key=test`,
+			`--site-url=http://todo:8000`,
+		}).
+		Sync(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *CCP) bootstrapWorker(mysql, ccp *dagger.Service) *dagger.Service {
 	return m.Build().WorkerImage().
 		WithEnvVariable("DJANGO_SECRET_KEY", "12345").
 		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_USER", "root").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_PASSWORD", "12345").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_HOST", "mysql").
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_CLIENT_DATABASE", mcpDBName).
-		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_MCPARCHIVEMATICASERVER", "ccp:4730").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_USER", "root").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_PASSWORD", "12345").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_HOST", "mysql").
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_DB_DATABASE", mcpDBName).
+		WithEnvVariable("ARCHIVEMATICA_MCPCLIENT_GEARMAN_SERVER", "ccp:4730").
 		WithMountedCache(sharedDir, sharedDirVolume, sharedDirVolumeMountOpts).
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("ccp", ccp).
@@ -211,40 +227,4 @@ func dumpDB(mysql *dagger.Service, dbs ...string) (*dagger.Directory, error) {
 	}
 
 	return ctr.Directory("/tmp/dumps"), nil
-}
-
-func bootstrapMCPDB(ctx context.Context, ctr *dagger.Container, onlyMigrate bool) error {
-	ctr = ctr.WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
-
-	if _, err := ctr.
-		WithExec([]string{
-			"/src/src/MCPClient/lib/manage.py",
-			"migrate",
-			"--noinput",
-		}).
-		Sync(ctx); err != nil {
-		return err
-	}
-
-	if onlyMigrate {
-		return nil
-	}
-
-	if _, err := ctr.
-		WithExec([]string{
-			"/src/src/MCPClient/lib/manage.py",
-			"install",
-			`--username=test`,
-			`--password=test`,
-			`--email=test@test.com`,
-			`--org-name=test`,
-			`--org-id=test`,
-			`--api-key=test`,
-			`--site-url=http://dashboard:8000`,
-		}).
-		Sync(ctx); err != nil {
-		return err
-	}
-
-	return nil
 }
