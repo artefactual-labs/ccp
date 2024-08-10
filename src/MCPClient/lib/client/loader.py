@@ -4,7 +4,6 @@ from types import ModuleType
 from typing import Dict
 from typing import Optional
 
-
 # Keys must use lowercase.
 SUPPORTED_MODULES = {
     "assignfileuuids_v0.0": "assign_file_uuids",

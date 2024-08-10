@@ -6,8 +6,8 @@ repos:
     args: [--no-ensure-ascii, --autofix]
     files: |
       (?x)^(
-        src/MCPServer/lib/assets/.*\.json|
-        src/(MCPClient/MCPServer|dashboard)/osdeps/.*\.json
+        hack/ccp/internal/workflow/assets/.*\.json|
+        src/MCPClient/install/.*\.json
       )
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.5.6
@@ -26,8 +26,7 @@ repos:
   - id: markdownlint
     exclude: |
       (?x)^(
-        ISSUE_TEMPLATE\.md|
-        src/dashboard/(frontend/app|src/media)/vendor/.*
+        ISSUE_TEMPLATE\.md
       )
 - repo: https://github.com/thlorenz/doctoc
   rev: v2.2.0
@@ -37,7 +36,7 @@ repos:
       (?x)^(
         (CONTRIBUTING|SECURITY).*\.md|
         hack/README\.md|
-        src/(MCPServer|MCPClient|dashboard)/install/README\.md
+        src/MCPClient/install/README\.md
       )
 - repo: https://github.com/citation-file-format/cffconvert
   # Current "2.0.0" git tag does not work because of
