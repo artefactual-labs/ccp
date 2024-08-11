@@ -16,7 +16,6 @@ from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from fpr.models import FPRule
-from utils.dicts import setup
 from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
@@ -24,6 +23,7 @@ from main.models import FileID
 from utils import databaseFunctions
 from utils import fileOperations
 from utils.dicts import ReplacementDict
+from utils.dicts import setup
 
 # Return codes
 SUCCESS = 0

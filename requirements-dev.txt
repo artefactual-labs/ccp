@@ -56,8 +56,6 @@ idna==3.7
     # via
     #   -r requirements.txt
     #   requests
-importlib-metadata==8.0.0
-    # via -r requirements.txt
 importlib-resources==6.4.0
     # via
     #   -r requirements.txt
@@ -156,10 +154,6 @@ virtualenv==20.26.3
     # via tox
 wheel==0.43.0
     # via pip-tools
-zipp==3.19.2
-    # via
-    #   -r requirements.txt
-    #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==24.1.2

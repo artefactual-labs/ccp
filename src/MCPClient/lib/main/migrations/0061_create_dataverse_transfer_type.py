@@ -17,7 +17,6 @@ normally for a standard transfer type.
 """
 
 from django.db import migrations
-
 from main.models import Job
 
 # We can't use apps.get_model for this model as we need to access class

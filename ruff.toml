@@ -1,7 +1,3 @@
-exclude = [
-  "src/dashboard/src/client/gen"
-]
-
 [lint]
 # Rule reference: https://docs.astral.sh/ruff/rules/
 select = [

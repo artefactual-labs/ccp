@@ -12,16 +12,15 @@ import django
 from lxml import etree
 
 django.setup()
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from fpr.models import FormatVersion
 from fpr.models import FPRule
-from utils.dicts import setup
 from main.models import FPCommandOutput
 from utils.databaseFunctions import insertIntoFPCommandOutput
 from utils.dicts import ReplacementDict
 from utils.dicts import replace_string_values
+from utils.dicts import setup
 from utils.executeOrRunSubProcess import executeOrRun
 
 

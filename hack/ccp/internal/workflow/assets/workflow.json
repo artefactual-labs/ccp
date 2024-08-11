@@ -2753,34 +2753,6 @@
         "sv": "Kontrollera överförings följsamhet"
       }
     },
-    "214f1004-2748-4bed-a38d-48fe500c41b9": {
-      "config": {
-        "@manager": "linkTaskManagerDirectories",
-        "@model": "StandardTaskConfig",
-        "arguments": "\"%SIPUUID%\" \"%SIPName%\" \"%SIPDirectory%\" \"%date%\"",
-        "execute": "trimCreateRightsEntries_v0.0"
-      },
-      "description": {
-        "en": "Create rights to flag closed AIPS.",
-        "no": "Opprett rettigheter for å flagge lukkede AIP-er",
-        "pt_BR": "Criar direitos para sinalizar o AIPS fechados.",
-        "sv": "Skapa rättigheter att flagga stängda AIP:er."
-      },
-      "exit_codes": {
-        "0": {
-          "job_status": "Completed successfully",
-          "link_id": "0fc3c795-dc68-4aa0-86fc-cbd6af3302fa"
-        }
-      },
-      "fallback_job_status": "Failed",
-      "fallback_link_id": "61c316a6-0a50-4f65-8767-1f44b1eeb6dd",
-      "group": {
-        "en": "TRIM transfer",
-        "fr": "Transfert TRIM",
-        "no": "TRIM overføring",
-        "pt_BR": "Transferência do TRIM "
-      }
-    },
     "21d6d597-b876-4b3f-ab85-f97356f10507": {
       "config": {
         "@manager": "linkTaskManagerFiles",
@@ -6803,7 +6775,7 @@
       "exit_codes": {
         "0": {
           "job_status": "Completed successfully",
-          "link_id": "214f1004-2748-4bed-a38d-48fe500c41b9"
+          "link_id": "0fc3c795-dc68-4aa0-86fc-cbd6af3302fa"
         }
       },
       "fallback_job_status": "Failed",

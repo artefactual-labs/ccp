@@ -4,12 +4,17 @@ entirely, or to only generate thumbnails if there is an active FPRule for the
 given file type.
 """
 
-from dateutil.parser import parse as parse_date
+from datetime import datetime
+
 from django.db import migrations
 from django.db.models import F
 from django.db.models import Func
 from django.db.models import Value
 from django.db.models.functions import Concat
+
+
+def parse_date(dt):
+    return datetime.fromisoformat(dt)
 
 
 def data_migration_down(apps, schema_editor):

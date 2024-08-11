@@ -2,7 +2,6 @@ import ast
 
 from django.db import migrations
 from django.db import models
-
 from main.models import DashboardSetting
 from main.models import DashboardSettingManager
 from main.models import Job

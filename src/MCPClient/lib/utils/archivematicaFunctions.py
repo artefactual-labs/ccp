@@ -33,7 +33,6 @@ from uuid import uuid4
 
 from django.apps import apps
 from lxml import etree
-
 from utils.namespaces import NSMAP
 from utils.namespaces import xml_find_premis
 

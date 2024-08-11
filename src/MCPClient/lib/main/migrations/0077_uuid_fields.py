@@ -2,9 +2,8 @@
 
 import uuid
 
-from django.db import migrations
-
 import main.models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):

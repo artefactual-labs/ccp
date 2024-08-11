@@ -24,7 +24,6 @@ from pathlib import Path
 
 from main.models import File
 from main.models import Transfer
-
 from utils.archivematicaFunctions import get_file_checksum
 from utils.archivematicaFunctions import get_setting
 from utils.databaseFunctions import insertIntoEvents

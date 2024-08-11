@@ -19,6 +19,7 @@
 """Management of XML metadata files."""
 
 import csv
+from importlib.metadata import version
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -26,7 +27,6 @@ from urllib.request import urlopen
 import create_mets_v2 as createmets2
 import requests
 from django.core.exceptions import ValidationError
-from importlib_metadata import version
 from lxml import etree
 from main import models
 from utils import namespaces as ns

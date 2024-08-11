@@ -15,6 +15,7 @@ import django
 
 django.setup()
 
+from client.loader import SUPPORTED_MODULES
 from django.conf import settings
 from django.db.models import Sum
 from django.utils import timezone
@@ -28,8 +29,6 @@ from prometheus_client import Gauge
 from prometheus_client import Histogram
 from prometheus_client import multiprocess
 from prometheus_client import start_http_server
-
-from client.loader import SUPPORTED_MODULES
 
 # We need to balance reasonably accurate tracking with high cardinality here, as
 # this is used with script_name labels and there are already over 100 scripts.

@@ -27,13 +27,13 @@ from django.db import transaction
 django.setup()
 from fpr.models import FormatVersion
 from fpr.models import FPRule
-from utils.dicts import setup
 from main.models import SIP
 from main.models import Derivation
 from main.models import File
 from utils.custom_handlers import get_script_logger
 from utils.databaseFunctions import insertIntoEvents
 from utils.dicts import replace_string_values
+from utils.dicts import setup
 from utils.executeOrRunSubProcess import executeOrRun
 
 SUCCESS_CODE = 0

@@ -172,7 +172,7 @@ test-build:  ## Build archivematica-tests image.
 	docker build \
 		-t archivematica-tests \
 		-f $(CURDIR)/Dockerfile \
-		--build-arg TARGET=archivematica-tests \
+		--target archivematica-tests \
 		--build-arg UBUNTU_VERSION \
 		--build-arg PYTHON_VERSION \
 			../

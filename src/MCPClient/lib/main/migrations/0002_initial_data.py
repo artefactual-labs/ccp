@@ -1,8 +1,12 @@
 import contextlib
+from datetime import datetime
 
-from dateutil.parser import parse as parse_date
 from django.db import connection
 from django.db import migrations
+
+
+def parse_date(dt):
+    return datetime.fromisoformat(dt)
 
 
 @contextlib.contextmanager

@@ -6,12 +6,10 @@ clamd
 django-autoslug
 django-tastypie
 git+https://github.com/artefactual-labs/python-gearman.git@b68efc868c7a494dd6a2d2e820fb098a6da9f797#egg=gearman3
-importlib-metadata
 lxml
 metsrw
 orjson
 git+https://github.com/artefactual-labs/fido.git@564ceb8018a8650fe931cf20e6780ee008e60fca#opf-fido
 prometheus_client
-python-dateutil
 requests
 unidecode

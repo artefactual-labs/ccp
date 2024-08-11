@@ -39,8 +39,8 @@ services:
     build:
       context: "../"
       dockerfile: "hack/Dockerfile"
+      target: "archivematica-ccp"
       args:
-        TARGET: "archivematica-ccp"
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
     entrypoint: ["/home/ccp/bin/ccp", "server"]
@@ -67,8 +67,8 @@ services:
     build:
       context: "../"
       dockerfile: "hack/Dockerfile"
+      target: "archivematica-mcp-client"
       args:
-        TARGET: "archivematica-mcp-client"
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
         UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}

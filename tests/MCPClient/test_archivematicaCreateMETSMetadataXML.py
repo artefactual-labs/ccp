@@ -5,6 +5,7 @@ Tests for XML metadata management on the METS creation process:
 archivematicaCreateMETSMetadataXML.process_xml_metadata()
 """
 
+from importlib.metadata import version
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,7 +13,6 @@ import metsrw
 import pytest
 import requests
 from archivematicaCreateMETSMetadataXML import process_xml_metadata
-from importlib_metadata import version
 from lxml.etree import parse
 from main.models import File
 

@@ -51,7 +51,6 @@ SUPPORTED_MODULES = {
     "setmaildirfilegrpuseandfileids_v0.0": "set_maildir_file_grp_use_and_file_ids",
     "storefilemodificationdates_v0.0": "store_file_modification_dates",
     "transcribefile_v0.0": "transcribe_file",
-    "trimcreaterightsentries_v0.0": "trim_create_rights_entries",
     "trimrestructureforcompliance_v0.0": "trim_restructure_for_compliance",
     "trimverifychecksums_v0.0": "trim_verify_checksums",
     "trimverifymanifest_v0.0": "trim_verify_manifest",

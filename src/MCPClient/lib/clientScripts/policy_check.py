@@ -22,13 +22,13 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from fpr.models import FormatVersion
 from fpr.models import FPRule
-from utils.dicts import setup
 from main.models import SIP
 from main.models import Derivation
 from main.models import File
 from main.models import Transfer
 from utils import databaseFunctions
 from utils.dicts import replace_string_values
+from utils.dicts import setup
 from utils.executeOrRunSubProcess import executeOrRun
 
 # Note that linkTaskManagerFiles.py will take the highest exit code it has seen

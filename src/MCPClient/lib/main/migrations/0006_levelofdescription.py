@@ -1,9 +1,8 @@
 import uuid
 
+import main.models
 from django.db import migrations
 from django.db import models
-
-import main.models
 
 
 def data_migration(apps, schema_editor):

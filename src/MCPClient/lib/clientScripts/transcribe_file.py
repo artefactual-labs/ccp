@@ -10,13 +10,13 @@ django.setup()
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from fpr.models import FPRule
-from utils.dicts import setup
 from main.models import Derivation
 from main.models import File
 from main.models import FileFormatVersion
 from utils import databaseFunctions
 from utils import fileOperations
 from utils.dicts import ReplacementDict
+from utils.dicts import setup
 from utils.executeOrRunSubProcess import executeOrRun
 
 
