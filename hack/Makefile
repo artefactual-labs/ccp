@@ -6,8 +6,6 @@ AM_PIPELINE_DATA ?= $(HOME)/.ccp/am-pipeline-data
 CALLER_UID=$(shell id -u)
 CALLER_GID=$(shell id -g)
 
-SRCDIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../src)
-
 NULL :=
 SPACE := $(NULL) $(NULL)
 COMMA := ,
@@ -26,7 +24,7 @@ define run_toxenvs
 			-e DJANGO_SETTINGS_MODULE=settings.testmysql \
 			-e PYTEST_ADDOPTS=$(subst $(SPACE),\$(SPACE),${PYTEST_ADDOPTS}) \
 			--user $(CALLER_UID):$(CALLER_GID) \
-			--workdir /src \
+			--workdir /src/worker \
 			--rm \
 			--entrypoint tox \
 				archivematica-tests \
@@ -82,31 +80,31 @@ build:  # Build Compose services.
 
 run:
 	$(MAKE) flush-shared-dir
-	docker compose up -d --force-recreate --build --no-deps archivematica-ccp archivematica-mcp-client
-	docker compose logs -f archivematica-ccp archivematica-mcp-client
+	docker compose up -d --force-recreate --build --no-deps archivematica-ccp archivematica-worker
+	docker compose logs -f archivematica-ccp archivematica-worker
 
 manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
 	docker compose run \
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/MCPClient/lib/manage.py \
-			archivematica-mcp-client \
+		--entrypoint /src/worker/manage.py \
+			archivematica-worker \
 				$(ARG)
 
-bootstrap:  ## Bootstrap MCP (new database).
-	$(call create_db,MCP)
+bootstrap:  ## Bootstrap the database.
+	$(call create_db,CCP)
 	docker compose run \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/MCPClient/lib/manage.py \
-			archivematica-mcp-client \
+		--entrypoint /src/worker/manage.py \
+			archivematica-worker \
 				migrate --noinput
 	docker compose run \
 		--rm \
 		--no-deps \
-		--entrypoint /src/src/MCPClient/lib/manage.py \
-			archivematica-mcp-client \
+		--entrypoint /src/worker/manage.py \
+			archivematica-worker \
 				install \
 					--username="test" \
 					--password="test" \
@@ -117,7 +115,7 @@ bootstrap:  ## Bootstrap MCP (new database).
 					--site-url="http://archivematica-dashboard:8000"
 
 restart-am-services:  ## Restart Archivematica services.
-	docker compose restart --no-deps archivematica-mcp-client
+	docker compose restart --no-deps archivematica-worker
 
 compile-requirements:  ## Run pip-compile for Archivematica
 	docker compose run --workdir /src \
@@ -125,7 +123,7 @@ compile-requirements:  ## Run pip-compile for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-mcp-client \
+		--entrypoint bash archivematica-worker \
 			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
 
 upgrade-requirements:  ## Run pip-upgrade for Archivematica
@@ -134,21 +132,21 @@ upgrade-requirements:  ## Run pip-upgrade for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-mcp-client \
+		--entrypoint bash archivematica-worker \
 			-c "pip-compile --allow-unsafe --upgrade --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --upgrade --output-file requirements-dev.txt requirements-dev.in"
 
 db:  ## Connect to the MySQL server using the CLI.
 	docker compose exec mysql mysql -hlocalhost -uroot -p12345
 
 dbdump:  ## Dump database.
-	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 MCP
+	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 CCP
 
 dbschemadump:  ## Dump shema.
-	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 --no-data --skip-add-drop-table MCP
+	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 --no-data --skip-add-drop-table CCP
 
 flush: flush-shared-dir bootstrap restart-am-services  ## Delete ALL user data.
 
-flush-shared-dir-mcp-configs:  ## Delete processing configurations - it restarts MCPServer.
+flush-shared-dir-mcp-configs:  ## Delete processing configurations - it restarts the server.
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/defaultProcessingMCP.xml
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/automatedProcessingMCP.xml
 	docker compose restart --no-deps archivematica-ccp
@@ -162,9 +160,9 @@ flush-logs:  ## Delete container logs - requires root privileges.
 # These include the database names used in the settings.testmysql
 # modules plus the prefixed and suffixed variations used by Django and
 # tox when running in parallel mode
-__TEST_DBS_MCPCLIENT = MCPCLIENTTEST test_MCPCLIENTTEST test_MCPCLIENTTEST_mcp-client
-__TEST_DBS_MIGRATIONS = MCPCLIENTTEST
-__TEST_DBS := $(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_MIGRATIONS) test_MCP
+__TEST_DBS_WORKER = WORKERTEST test_WORKERTEST test_WORKERTEST_worker
+__TEST_DBS_MIGRATIONS = WORKERTEST
+__TEST_DBS := $(__TEST_DBS_WORKER) $(__TEST_DBS_MIGRATIONS) test_CCP
 flush-test-dbs: start-mysql
 	$(foreach test_db,$(__TEST_DBS),$(call drop_db,$(test_db));)
 
@@ -177,15 +175,10 @@ test-build:  ## Build archivematica-tests image.
 		--build-arg PYTHON_VERSION \
 			../
 
-__TOXENVS_MCPCLIENT = mcp-client
-test-mcp-client: start-mysql  ## Run MCPClient tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT))
-	$(call run_toxenvs,$(__TOXENVS_MCPCLIENT))
-
-__TOXENVS_ARCHIVEMATICA_COMMON = archivematica-common
-test-archivematica-common: start-mysql  ## Run Archivematica Common tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT))
-	$(call run_toxenvs,$(__TOXENVS_ARCHIVEMATICA_COMMON))
+__TOXENVS_WORKER = worker
+test-worker: start-mysql  ## Run worker tests.
+	$(call grant_all_on_dbs,$(__TEST_DBS_WORKER))
+	$(call run_toxenvs,$(__TOXENVS_WORKER))
 
 __TOXENVS_MIGRATIONS = migrations
 test-migrations: start-mysql  ## Check there are no pending migrations.
@@ -196,9 +189,9 @@ __TOXENVS_LINTING = linting
 test-linting:  ## Check linting.
 	$(call run_toxenvs,$(__TOXENVS_LINTING))
 
-__TOXENVS_ALL := $(__TOXENVS_MCPCLIENT) $(__TOXENVS_ARCHIVEMATICA_COMMON)
+__TOXENVS_ALL := $(__TOXENVS_WORKER)
 test-all: start-mysql  ## Run all tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_MCPCLIENT) $(__TEST_DBS_ARCHIVEMATICA_COMMON))
+	$(call grant_all_on_dbs,$(__TEST_DBS_WORKER))
 	$(call run_toxenvs,$(__TOXENVS_ALL))
 
 stop:  # Stop all containers.

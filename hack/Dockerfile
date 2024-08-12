@@ -71,11 +71,11 @@ RUN set -ex \
 	&& pyenv install ${PYTHON_VERSION} \
 	&& pyenv global ${PYTHON_VERSION}
 
-COPY --link requirements-dev.txt /src/requirements-dev.txt
+COPY --link worker/requirements/requirements-dev.txt /src/worker/requirements/requirements-dev.txt
 
 RUN set -ex \
-	&& pyenv exec python3 -m pip install --upgrade pip setuptools \
-	&& pyenv exec python3 -m pip install --requirement /src/requirements-dev.txt \
+	&& pyenv exec python -m pip install --upgrade pip setuptools \
+	&& pyenv exec python -m pip install --requirement /src/worker/requirements/requirements-dev.txt \
 	&& pyenv rehash
 
 # -----------------------------------------------------------------------------
@@ -151,21 +151,21 @@ RUN freshclam --quiet
 USER archivematica
 
 COPY --chown=${USER_ID}:${GROUP_ID} --from=pyenv-builder --link ${PYENV_DIR} ${PYENV_DIR}
-COPY --chown=${USER_ID}:${GROUP_ID} --link . /src
+COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src/worker
+
+WORKDIR /src/worker
 
 # -----------------------------------------------------------------------------
 
-FROM base AS archivematica-mcp-client
+FROM base AS archivematica-worker
 
 ENV DJANGO_SETTINGS_MODULE=settings.common
-ENV PYTHONPATH=/src/src/MCPClient/lib/:/src/src/MCPClient/lib/clientScripts
 
-# Some scripts in archivematica-fpr-admin executed by MCPClient rely on certain
-# files being available in this image (e.g. see https://git.io/vA1wF).
-COPY --link src/MCPClient/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
-COPY --link src/MCPClient/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
+# Assets needed by FPR scripts.
+COPY --link worker/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
+COPY --link worker/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
-ENTRYPOINT ["pyenv", "exec", "python3", "/src/src/MCPClient/lib/archivematicaClient.py"]
+ENTRYPOINT ["pyenv", "exec", "python", "-m", "worker"]
 
 # -----------------------------------------------------------------------------
 

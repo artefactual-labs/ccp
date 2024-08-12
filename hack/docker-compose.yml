@@ -50,7 +50,7 @@ services:
       - "CCP_V=10"
       - "CCP_SHARED_DIR=/var/archivematica/sharedDirectory"
       - "CCP_DB_DRIVER=mysql"
-      - "CCP_DB_DSN=root:12345@tcp(mysql:3306)/MCP"
+      - "CCP_DB_DSN=root:12345@tcp(mysql:3306)/CCP"
       - "CCP_API_ADMIN_ADDR=:8000"
       - "CCP_WEBUI_ADDR=:8001"
       - "CCP_METRICS_ADDR=:7999"
@@ -63,11 +63,11 @@ services:
       - "63030:8000"
       - "63031:8001"
 
-  archivematica-mcp-client:
+  archivematica-worker:
     build:
       context: "../"
       dockerfile: "hack/Dockerfile"
-      target: "archivematica-mcp-client"
+      target: "archivematica-worker"
       args:
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
@@ -75,16 +75,16 @@ services:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.12.4}
     environment:
       DJANGO_SECRET_KEY: "12345"
-      ARCHIVEMATICA_MCPCLIENT_GEARMAN_SERVER: "archivematica-ccp:4730"
-      ARCHIVEMATICA_MCPCLIENT_CAPTURE_CLIENT_SCRIPT_OUTPUT: "true"
-      ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_PORT: "7999"
-      ARCHIVEMATICA_MCPCLIENT_PROMETHEUS_BIND_ADDRESS: "0.0.0.0"
-      ARCHIVEMATICA_MCPCLIENT_DB_USER: "archivematica"
-      ARCHIVEMATICA_MCPCLIENT_DB_PASSWORD: "demo"
-      ARCHIVEMATICA_MCPCLIENT_DB_HOST: "mysql"
-      ARCHIVEMATICA_MCPCLIENT_DB_DATABASE: "MCP"
-      ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_ENABLED: "true"
-      ARCHIVEMATICA_MCPCLIENT_METADATA_XML_VALIDATION_SETTINGS_FILE: "/src/hack/submodules/archivematica-sampledata/xml-validation/xml_validation.py"
+      ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "archivematica-ccp:4730"
+      ARCHIVEMATICA_WORKER_CAPTURE_CLIENT_SCRIPT_OUTPUT: "true"
+      ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_PORT: "7999"
+      ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_ADDRESS: "0.0.0.0"
+      ARCHIVEMATICA_WORKER_DB_USER: "archivematica"
+      ARCHIVEMATICA_WORKER_DB_PASSWORD: "demo"
+      ARCHIVEMATICA_WORKER_DB_HOST: "mysql"
+      ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
+      ARCHIVEMATICA_WORKER_METADATA_XML_VALIDATION_ENABLED: "true"
+      ARCHIVEMATICA_WORKER_METADATA_XML_VALIDATION_SETTINGS_FILE: "/src/hack/submodules/archivematica-sampledata/xml-validation/xml_validation.py"
     volumes:
       - "../:/src"
       - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"

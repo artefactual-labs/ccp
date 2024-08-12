@@ -2,14 +2,7 @@
 **
 
 # Include
-!/hack/osdeps.py
-!/src/**
-!/pytest.ini
-!/requirements*
-!/tox.ini
-!/LICENSE
-!/COPYRIGHT
-!/TRADEMARK
+!/worker/**
 
 # Include
 !/hack/ccp/cmd

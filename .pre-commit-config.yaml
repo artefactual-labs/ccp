@@ -7,7 +7,7 @@ repos:
     files: |
       (?x)^(
         hack/ccp/internal/workflow/assets/.*\.json|
-        src/MCPClient/install/.*\.json
+        worker/install/.*\.json
       )
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.5.6
@@ -36,7 +36,7 @@ repos:
       (?x)^(
         (CONTRIBUTING|SECURITY).*\.md|
         hack/README\.md|
-        src/MCPClient/install/README\.md
+        worker/install/README\.md
       )
 - repo: https://github.com/citation-file-format/cffconvert
   # Current "2.0.0" git tag does not work because of
@@ -48,6 +48,11 @@ repos:
   rev: v1.11.1
   hooks:
   - id: mypy
+    files: "^worker/"
+    args:
+      - "--config-file=./worker/mypy.ini"
+      - "--ignore-missing-imports"
+      - "--scripts-are-modules"
     additional_dependencies:
     - types-requests
     - pytest

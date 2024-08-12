@@ -16,7 +16,7 @@ type Build struct {
 func (m *Build) WorkerImage() *dagger.Container {
 	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 		Dockerfile: "hack/Dockerfile",
-		Target:     "archivematica-mcp-client",
+		Target:     "archivematica-worker",
 	})
 }
 
