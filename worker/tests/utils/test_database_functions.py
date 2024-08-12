@@ -8,14 +8,14 @@ from worker.main.models import Event
 from worker.main.models import File
 from worker.utils import databaseFunctions
 
-AGENTS_FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "agents_common.json"
-TEST_DATABASE_FUNCTIONS_FIXTURE = (
-    pathlib.Path(__file__).parent / "fixtures" / "test_database_functions.json"
-)
+FIXTURES_DIR = pathlib.Path(__file__).parent.parent / "fixtures"
 
 
 class TestDatabaseFunctions(TestCase):
-    fixtures = [AGENTS_FIXTURE, TEST_DATABASE_FUNCTIONS_FIXTURE]
+    fixtures = [
+        FIXTURES_DIR / "agents_common.json",
+        FIXTURES_DIR / "test_database_functions.json",
+    ]
 
     # insertIntoFiles
     def test_insert_into_files_with_sip(self):

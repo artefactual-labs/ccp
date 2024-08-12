@@ -1,11 +1,7 @@
-import os
-
 import pytest
 
 from worker.clientScripts import upload_qubit
 from worker.main import models
-
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.fixture
