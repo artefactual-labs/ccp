@@ -36,8 +36,6 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	fs.StringVar(&cfg.api.admin.Addr, "api.admin.addr", ":8000", "Admin API listen address")
 	fs.StringVar(&cfg.webui.Addr, "webui.addr", ":8001", "Web UI listen address")
 	fs.StringVar(&cfg.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
-	fs.BoolVar(&cfg.shim.Enabled, "shim.enabled", false, "Enable the Archivematica API shim for backward compatibility with older clients.")
-	fs.StringVar(&cfg.shim.Addr, "shim.addr", "", "Archivematica API shim listen address")
 	fs.StringVar(&cfg.metrics.Addr, "metrics.addr", "", "Prometheus HTTP API listen address")
 
 	rootConfig.RegisterFlags(fs)

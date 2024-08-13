@@ -17,7 +17,6 @@ issues:
   exclude-dirs:
     - hack
     - proto
-    - internal/shim/gen
   exclude-rules:
     - path: _test\.go
       linters:

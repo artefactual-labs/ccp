@@ -43,7 +43,6 @@ endef
 
 IGNORED_PACKAGES := \
 	github.com/artefactual/archivematica/hack/ccp/internal/api/gen/% \
-	github.com/artefactual/archivematica/hack/ccp/internal/shim/gen \
 	github.com/artefactual/archivematica/hack/ccp/internal/%/enums \
 	github.com/artefactual/archivematica/hack/ccp/internal/store/sqlcmysql \
 	github.com/artefactual/archivematica/hack/ccp/internal/store/storemock
@@ -110,7 +109,7 @@ deps:
 	@go mod tidy
 
 gen: # @HELP Generage code.
-gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web gen-shim
+gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web
 
 gen-mocks: # @HELP Generate mocks.
 gen-mocks: $(MOCKGEN)
@@ -130,15 +129,6 @@ gen-buf: $(BUF)
 gen-web: # @HELP Generate webui assets.
 gen-web:
 	npm --prefix=$(CURDIR)/web run build
-
-gen-shim: # @HELP Generate Go server boilerplate from OpenAPIv3 spec.
-gen-shim: SPEC_COMMIT := 65e58266
-gen-shim: SPEC_URL := https://raw.githubusercontent.com/artefactual-labs/archivematica-api-specification/$(SPEC_COMMIT)/typespec/tsp-output/@typespec/openapi3/openapi.v1.yaml
-gen-shim: $(OAPI_CODEGEN)
-	@echo "Downloading Archivematica API specification ($(SPEC_COMMIT))..."
-	@echo "Full URL: $(SPEC_URL)"
-	curl -Ls -o /tmp/amspec.yml $(SPEC_URL)
-	cd $(CURDIR)/internal/shim && oapi-codegen -config=config.yml /tmp/amspec.yml
 
 help: # @HELP Print this message.
 help:

@@ -6,7 +6,6 @@ import (
 	"github.com/artefactual/archivematica/hack/ccp/internal/api/admin"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/rootcmd"
 	"github.com/artefactual/archivematica/hack/ccp/internal/cmd/servercmd/metrics"
-	"github.com/artefactual/archivematica/hack/ccp/internal/shim"
 	"github.com/artefactual/archivematica/hack/ccp/internal/webui"
 )
 
@@ -19,7 +18,6 @@ type Config struct {
 	api        apiConfig
 	gearmin    gearminConfig
 	webui      webui.Config
-	shim       shim.Config
 	metrics    metrics.Config
 }
 
