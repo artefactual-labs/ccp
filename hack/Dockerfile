@@ -209,3 +209,9 @@ RUN adduser -u ${USER_ID} -S -D ccp ccp
 COPY --from=go-builder --link /out/ccp /home/ccp/bin/ccp
 USER ccp
 CMD ["/home/ccp/bin/ccp", "server"]
+
+# -----------------------------------------------------------------------------
+
+FROM archivematica-worker AS archivematica-full
+COPY --from=go-builder --link /out/ccp /var/archivematica/bin/ccp
+CMD ["/var/archivematica/bin/ccp", "server"]
