@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     concurrency: prod
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Deploy
         run: |
