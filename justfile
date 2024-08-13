@@ -1,5 +1,6 @@
 set shell := ["bash", "-uc"]
 
+[private]
 default:
   @just --list --unsorted
 
