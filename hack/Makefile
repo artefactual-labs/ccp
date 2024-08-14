@@ -39,7 +39,7 @@ start-mysql: test-build
 			--rm \
 			--entrypoint bash \
 				archivematica-tests \
-					/src/hack/wait-for-it.sh mysql:3306 --timeout=30)
+					/src/hack/helpers/wait-for-it.sh mysql:3306 --timeout=30)
 
 define create_db
 	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e '\
@@ -80,7 +80,7 @@ build:  # Build Compose services.
 
 run:
 	$(MAKE) flush-shared-dir
-	docker compose up -d --force-recreate --build --no-deps archivematica-ccp archivematica-worker
+	docker compose up -d --force-recreate --build --no-deps mysql archivematica-ccp archivematica-worker
 	docker compose logs -f archivematica-ccp archivematica-worker
 
 manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`

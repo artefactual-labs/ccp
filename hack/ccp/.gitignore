@@ -1,6 +1,0 @@
-/.tmp/
-*.pprof
-*.svg
-cover.out
-
-/internal/webui/assets/*

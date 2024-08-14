@@ -1,19 +1,21 @@
-# Ignore everything
+# Ignore everything.
 **
 
-# Include
-!/worker/**
+# Include ccp sources.
+!/internal
+!/go.mod
+!/go.sum
+!/main.go
 
-# Include
-!/hack/ccp/cmd
-!/hack/ccp/internal
-!/hack/ccp/go.mod
-!/hack/ccp/go.sum
-!/hack/ccp/main.go
-!/hack/ccp/web
+# Include subprojects.
+!/worker/**
+!/web/**
 
 # Exclude
 **/*~
 **/*.log
+**/.tox
+**/.git
+**/.ruff_cache
 **/node_modules
 **/Thumbs.db

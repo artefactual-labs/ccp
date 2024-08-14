@@ -38,7 +38,6 @@ services:
   archivematica-ccp:
     build:
       context: "../"
-      dockerfile: "hack/Dockerfile"
       target: "archivematica-ccp"
       args:
         USER_ID: ${USER_ID:-1000}
@@ -66,7 +65,6 @@ services:
   archivematica-worker:
     build:
       context: "../"
-      dockerfile: "hack/Dockerfile"
       target: "archivematica-worker"
       args:
         USER_ID: ${USER_ID:-1000}
