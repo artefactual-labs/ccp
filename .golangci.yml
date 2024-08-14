@@ -1,0 +1,47 @@
+run:
+  timeout: 1m
+
+linters:
+  enable:
+    - misspell
+    - gofumpt
+    - gci
+    - importas
+    - unparam
+    - gosec
+    - unused
+    - intrange
+    - contextcheck
+
+issues:
+  exclude-dirs:
+    - hack
+    - proto
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/artefactual-labs/ccp)
+    custom-order: true
+  gofumpt:
+    extra-rules: true
+  gosec:
+    exclude-generated: false
+    severity: low
+    confidence: low
+    excludes:
+      - G601 # does not apply to go1.22+
+  importas:
+    no-unaliased: true
+    no-extra-aliases: false
+    alias:
+      - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1
+        alias: adminv1
+      - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect
+        alias: adminv1connect

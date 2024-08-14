@@ -89,7 +89,6 @@ jobs:
         id: build
         uses: docker/build-push-action@16ebe778df0e7752d2cfcbd924afdbbd89c1a755 # v6.6.1
         with:
-          file: hack/Dockerfile
           context: .
           target: ${{ matrix.target }}
           build-args: |

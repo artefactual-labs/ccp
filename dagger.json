@@ -11,7 +11,7 @@
       "source": "github.com/sagikazarmark/daggerverse/golangci-lint@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
     }
   ],
-  "source": "hack/ccp/hack/dagger",
+  "source": ".dagger",
   "engineVersion": "v0.12.4",
   "views": [
     {
