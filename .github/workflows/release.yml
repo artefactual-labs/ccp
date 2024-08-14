@@ -20,3 +20,27 @@ jobs:
       packages: write
       id-token: write
       security-events: write
+  update:
+    name: Update deploy
+    runs-on: ubuntu-latest
+    needs: artifacts
+    permissions:
+      contents: write
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        ref: deploy
+    - name: Install kustomize
+      uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2.1.0
+    - name: Update image
+      run: |
+        cd overlays/prod
+        kustomize edit set image ghcr.io/artefactual-labs/ccp:${{ github.ref_name }}
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Bump image tag to ${{ github.ref_name }}"
+        git push
