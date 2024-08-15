@@ -169,7 +169,7 @@ flush-test-dbs: start-mysql
 test-build:  ## Build archivematica-tests image.
 	docker build \
 		-t archivematica-tests \
-		-f $(CURDIR)/Dockerfile \
+		-f $(CURDIR)/../Dockerfile \
 		--target archivematica-tests \
 		--build-arg UBUNTU_VERSION \
 		--build-arg PYTHON_VERSION \
