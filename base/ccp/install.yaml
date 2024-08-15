@@ -35,7 +35,7 @@ spec:
             - name: ARCHIVEMATICA_WORKER_DB_PASSWORD
               value: "admin"
             - name: ARCHIVEMATICA_WORKER_DB_HOST
-              value: "mysql.ccp.svc.cluster.local"
+              value: "ccp-mysql.ccp.svc.cluster.local"
             - name: ARCHIVEMATICA_WORKER_DB_DATABASE
               value: "CCP"
 

@@ -4,7 +4,7 @@ namespace: ccp
 labels:
 - includeSelectors: true
   pairs:
-    app: ccp
+    env: ccp
 resources:
 - namespace.yaml
 - mysql

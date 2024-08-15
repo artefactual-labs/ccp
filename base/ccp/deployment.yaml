@@ -22,7 +22,7 @@ spec:
         command:
         - /wait-for
         args:
-        - --host="mysql.ccp:3306"
+        - --host="ccp-mysql.ccp.svc.cluster.local:3306"
         - --verbose
       volumes:
       - name: shared-dir
@@ -41,7 +41,7 @@ spec:
         - name: CCP_DB_DRIVER
           value: "mysql"
         - name: CCP_DB_DSN
-          value: "root:admin@tcp(mysql.ccp.svc.cluster.local:3306)/CCP"
+          value: "root:admin@tcp(ccp-mysql.ccp.svc.cluster.local:3306)/CCP"
         - name: CCP_API_ADMIN_ADDR
           value: ":8000"
         - name: CCP_WEBUI_ADDR
@@ -71,7 +71,7 @@ spec:
         - name: ARCHIVEMATICA_WORKER_DB_PASSWORD
           value: "admin"
         - name: ARCHIVEMATICA_WORKER_DB_HOST
-          value: "mysql.ccp.svc.cluster.local"
+          value: "ccp-mysql.ccp.svc.cluster.local"
         - name: ARCHIVEMATICA_WORKER_DB_DATABASE
           value: "CCP"
         volumeMounts:

@@ -1,35 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql
+  name: ccp-mysql
 spec:
   selector:
     matchLabels:
-      app: mysql
+      app: ccp-mysql
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: mysql
+        app: ccp-mysql
     spec:
+      serviceAccountName: ccp-mysql
       volumes:
-      - name: mysql-persistent-storage
+      - name: ccp-mysql-persistent-storage
         emptyDir: {}
       containers:
-      - name: mysql
+      - name: ccp-mysql
         image: mysql:8.0
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql
+              name: ccp-mysql
               key: password
         - name: MYSQL_DATABASE
           value: CCP
         ports:
-        - name: mysql
+        - name: ccp-mysql
           containerPort: 3306
         volumeMounts:
-        - name: mysql-persistent-storage
+        - name: ccp-mysql-persistent-storage
           mountPath: /var/lib/mysql

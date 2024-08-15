@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: ccp-mysql
   labels:
-    app: mysql
+    app: ccp-mysql
 spec:
   selector:
-    app: mysql
+    app: ccp-mysql
   ports:
-  - name: mysql
+  - name: ccp-mysql
     port: 3306
