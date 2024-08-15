@@ -1,6 +1,7 @@
 name: Deploy
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Release"]
     types:
@@ -13,8 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     concurrency: prod
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Deploy
-        run: |
-          echo hello world
+    - name: Install ArgoCD
+      run: |
+        curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        install -m 555 argocd-linux-amd64 /usr/local/bin/argocd && rm argocd-linux-amd64
+    - name: Sync
+      run: argocd app sync ccp --server "$ARGOCD_SERVER" --auth-token "$ARGOCD_TOKEN"
+      env:
+        ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+        ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
+        ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+        K8S_CLUSTER_HOSTNAME: ${{ secrets.K8S_CLUSTER_HOSTNAME }}
+    - name: Wait
+      run: argocd app wait ccp --server "$ARGOCD_SERVER" --auth-token "$ARGOCD_TOKEN"
+      env:
+        ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+        ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
+        ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+        K8S_CLUSTER_HOSTNAME: ${{ secrets.K8S_CLUSTER_HOSTNAME }}
