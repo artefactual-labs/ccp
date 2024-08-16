@@ -1,9 +1,14 @@
 import uuid
 from argparse import BooleanOptionalAction
+from time import sleep
+from time import time
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.db import DEFAULT_DB_ALIAS
+from django.db import connections
+from django.db.utils import OperationalError
 from tastypie.models import ApiKey
 
 from worker.main.models import Agent
@@ -12,6 +17,12 @@ from worker.main.models import DashboardSetting
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--wait-for-db",
+            default=False,
+            action=BooleanOptionalAction,
+            help="Wait for the database.",
+        )
         parser.add_argument(
             "--migrate",
             default=False,
@@ -33,6 +44,10 @@ class Command(BaseCommand):
         parser.add_argument("--site-url", required=False)
 
     def handle(self, *args, **options):
+        self.print_banner("Wait for the database")
+        self.wait_for_db()
+        self.print_done()
+
         if options["migrate"] is True:
             self.print_banner("Apply migrations")
             call_command("migrate", interactive=False)
@@ -63,6 +78,33 @@ class Command(BaseCommand):
         border = "+" + "-" * (length + 2) + "+"
         middle = f"+ {text} +"
         self.stdout.write(f"\n{border}\n{middle}\n{border}\n")
+
+    def wait_for_db(self, timeout_seconds=120, stable_for_seconds=3):
+        connection = connections[DEFAULT_DB_ALIAS]
+        sleep_seconds = 1
+        seen_alive_at = None
+        started_at = time()
+        while True:
+            while True:
+                try:
+                    connection.cursor().execute("SELECT 1")
+                    if not seen_alive_at:
+                        seen_alive_at = time()
+                    break
+                except OperationalError as err:
+                    seen_alive_at = None
+                    elapsed_time = int(time() - started_at)
+                    if elapsed_time >= timeout_seconds:
+                        raise TimeoutError from err
+                    err_message = str(err).strip()
+                    self.stdout.write(
+                        f"Waiting for database: {err_message}... ({elapsed_time}s)\n"
+                    )
+                    sleep(sleep_seconds)
+            uptime = int(time() - seen_alive_at)
+            if uptime >= stable_for_seconds:
+                break
+            sleep(sleep_seconds)
 
 
 def get_setting(setting, default=""):

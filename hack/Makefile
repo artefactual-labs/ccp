@@ -100,6 +100,7 @@ bootstrap:  ## Bootstrap the database.
 		--entrypoint /src/worker/manage.py \
 			archivematica-worker \
 				install \
+					--wait-for-db \
 					--migrate \
 					--username="test" \
 					--password="test" \
