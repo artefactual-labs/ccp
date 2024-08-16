@@ -8,6 +8,11 @@ on:
         default: false
         required: false
         type: boolean
+      scan:
+        description: Run Trivy vulnerability scanner
+        default: false
+        required: false
+        type: boolean
     outputs:
       container-image-name:
         description: Container image name
@@ -104,6 +109,7 @@ jobs:
       - name: Set image ref
         id: image-ref
         run: echo "value=${{ steps.image-name.outputs.value }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+        if: inputs.publish
 
       - name: Fetch image
         run: skopeo --insecure-policy copy docker://${{ steps.image-ref.outputs.value }} oci-archive:image.tar
@@ -113,6 +119,7 @@ jobs:
         run: |
           mkdir -p image
           tar -xf image.tar -C image
+        if: inputs.publish
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
@@ -121,8 +128,10 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           timeout: 20m0s
+        if: inputs.publish
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@eb055d739abdc2e8de2e5f4ba1a8b246daa779aa # v3.26.0
         with:
           sarif_file: trivy-results.sarif
+        if: inputs.publish
