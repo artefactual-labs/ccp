@@ -30,7 +30,7 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
     - name: Release
-      run: gh release create ${{ github.ref_name }} --latest=true --generate-notes
+      run: gh release create ${{ github.ref_name }} --latest=true
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   update:
