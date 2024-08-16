@@ -2,9 +2,9 @@
 default:
   @just --list --unsorted
 
-# Deploy prod overlay.
-prod:
-  kubectl kustomize overlays/prod | kubectl apply -f -
+# Remove all the resources within the ccp namespace.
+destroy:
+  kubectl delete all --all --namespace ccp
 
 # Trigger a rolling restart of the ccp deployment.
 restart:
@@ -20,11 +20,3 @@ shell-alpine:
 
 shell-db:
   kubectl run -it --rm --image=mysql:8.0 --namespace ccp debug-shell --command -- mysql -hccp-mysql.ccp.svc.cluster.local -uroot -padmin
-
-# Create the install job.
-install:
-  kubectl create job --from=cronjob/ccp-install ccp-install
-
-# Remove all the resources within the ccp namespace.
-flush-ccp-namespace:
-  kubectl delete all --all --namespace ccp
