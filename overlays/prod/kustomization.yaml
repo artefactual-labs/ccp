@@ -5,4 +5,4 @@ resources:
 - ../../base
 images:
 - name: ghcr.io/artefactual-labs/ccp
-  newTag: v2.0.0-beta.6
+  newTag: v2.0.0-beta.7
