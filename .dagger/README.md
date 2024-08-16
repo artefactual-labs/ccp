@@ -14,7 +14,7 @@ Other modes available are: `USE_CACHED` (rely on existing state) and
 
 The e2e tests load existing SQL dumps by default, but you can update them with:
 
-    dagger call --source=".:default" generate-dumps export --path=hack/ccp/e2e/testdata/dumps
+    dagger call --source=".:default" generate-dumps export --path=e2e/testdata/dumps
 
 ## Troubleshooting
 

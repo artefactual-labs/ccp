@@ -11,7 +11,7 @@ import (
 
 const (
 	dbName     = "CCP"
-	dbDumpsDir = "hack/ccp/e2e/testdata/dumps"
+	dbDumpsDir = "e2e/testdata/dumps"
 )
 
 // Options for the shared Archivematica directory that we provisiong using
@@ -84,7 +84,7 @@ func (m *CCP) Etoe(
 
 	dag.Go(dagger.GoOpts{
 		Container: goModule().
-			WithSource(m.Source.Directory("hack/ccp")).
+			WithSource(m.Source).
 			Container().
 			WithServiceBinding("mysql", mysql).
 			WithServiceBinding("ccp", ccp).

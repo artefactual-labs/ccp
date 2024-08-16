@@ -6,7 +6,7 @@ repos:
     args: [--no-ensure-ascii, --autofix]
     files: |
       (?x)^(
-        hack/ccp/internal/workflow/assets/.*\.json|
+        internal/workflow/assets/.*\.json|
         worker/install/.*\.json
       )
 - repo: https://github.com/astral-sh/ruff-pre-commit
