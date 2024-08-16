@@ -113,13 +113,13 @@ jobs:
 
       - name: Fetch image
         run: skopeo --insecure-policy copy docker://${{ steps.image-ref.outputs.value }} oci-archive:image.tar
-        if: inputs.publish
+        if: inputs.scan
 
       - name: Extract OCI tarball
         run: |
           mkdir -p image
           tar -xf image.tar -C image
-        if: inputs.publish
+        if: inputs.scan
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
@@ -128,10 +128,10 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           timeout: 20m0s
-        if: inputs.publish
+        if: inputs.scan
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@eb055d739abdc2e8de2e5f4ba1a8b246daa779aa # v3.26.0
         with:
           sarif_file: trivy-results.sarif
-        if: inputs.publish
+        if: inputs.scan
