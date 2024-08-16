@@ -6,6 +6,7 @@ permissions:
   contents: read
 jobs:
   lint-protos:
+    name: Lint protos
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -17,6 +18,7 @@ jobs:
         with:
           buf_token: ${{ secrets.BUF_TOKEN }}
   golangci-lint:
+    name: Lint code
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -46,11 +48,7 @@ jobs:
           GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
   test:
     name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -62,7 +60,7 @@ jobs:
       - name: Run tests
         run: go test -race ./...
   mod:
-    name: Check that `go mod tidy` is clean
+    name: Check mod tidy
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
