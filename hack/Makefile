@@ -99,13 +99,8 @@ bootstrap:  ## Bootstrap the database.
 		--no-deps \
 		--entrypoint /src/worker/manage.py \
 			archivematica-worker \
-				migrate --noinput
-	docker compose run \
-		--rm \
-		--no-deps \
-		--entrypoint /src/worker/manage.py \
-			archivematica-worker \
 				install \
+					--migrate \
 					--username="test" \
 					--password="test" \
 					--email="test@test.com" \

@@ -1,12 +1,101 @@
 import uuid
+from argparse import BooleanOptionalAction
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
-from django.utils import termcolors
 from tastypie.models import ApiKey
 
 from worker.main.models import Agent
 from worker.main.models import DashboardSetting
+
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--migrate",
+            default=False,
+            action=BooleanOptionalAction,
+            help="Apply migrations.",
+        )
+        parser.add_argument("--username", required=True)
+        parser.add_argument("--email", required=True)
+        parser.add_argument("--password", required=True)
+        parser.add_argument("--api-key", required=True)
+        parser.add_argument("--org-name", required=True)
+        parser.add_argument("--org-id", required=True)
+        parser.add_argument(
+            "--whitelist",
+            required=False,
+            help="Deprecated. Please use --allowlist instead.",
+        )
+        parser.add_argument("--allowlist", required=False)
+        parser.add_argument("--site-url", required=False)
+
+    def handle(self, *args, **options):
+        if options["migrate"] is True:
+            self.print_banner("Apply migrations")
+            call_command("migrate", interactive=False)
+            self.print_done()
+
+        self.print_banner("Set up pipeline")
+        setup_pipeline(options["org_name"], options["org_id"], options["site_url"])
+        self.print_done()
+
+        self.print_banner("Create superuser")
+        create_super_user(
+            options["username"],
+            options["email"],
+            options["password"],
+            options["api_key"],
+        )
+        self.print_done()
+
+        self.print_banner("Set up API allowlist")
+        set_api_allowlist(options["whitelist"] or options["allowlist"])
+        self.print_done()
+
+    def print_done(self):
+        self.stdout.write(self.style.SUCCESS("Done!\n"))
+
+    def print_banner(self, text):
+        length = len(text)
+        border = "+" + "-" * (length + 2) + "+"
+        middle = f"+ {text} +"
+        self.stdout.write(f"\n{border}\n{middle}\n{border}\n")
+
+
+def get_setting(setting, default=""):
+    try:
+        setting = DashboardSetting.objects.get(name=setting)
+        return setting.value
+    except Exception:
+        return default
+
+
+def set_setting(setting, value=""):
+    try:
+        setting_data = DashboardSetting.objects.get(name=setting)
+    except Exception:
+        setting_data = DashboardSetting.objects.create()
+        setting_data.name = setting
+    # ``DashboardSetting.value`` is a string-based field. The empty string is
+    # the way to represent the lack of data, therefore NULL values are avoided.
+    if value is None:
+        value = ""
+    setting_data.value = value
+    setting_data.save()
+
+
+def set_api_allowlist(allowlist):
+    """Set API allowlist setting.
+
+    ``allowlist`` (str) is a space-separated list of IP addresses with access
+    to the public API. If falsy, all clients are allowed.
+    """
+    if not allowlist:
+        allowlist = ""
+    return set_setting("api_whitelist", allowlist)
 
 
 def create_super_user(username, email, password, key):
@@ -42,67 +131,3 @@ def setup_pipeline(org_name, org_identifier, site_url):
 
     if site_url:
         set_setting("site_url", site_url)
-
-
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument("--username", required=True)
-        parser.add_argument("--email", required=True)
-        parser.add_argument("--password", required=True)
-        parser.add_argument("--api-key", required=True)
-        parser.add_argument("--org-name", required=True)
-        parser.add_argument("--org-id", required=True)
-        parser.add_argument(
-            "--whitelist",
-            required=False,
-            help="Deprecated. Please use --allowlist instead.",
-        )
-        parser.add_argument("--allowlist", required=False)
-        parser.add_argument("--site-url", required=False)
-
-    def handle(self, *args, **options):
-        # Not needed in Django 1.9+.
-        self.style.SUCCESS = termcolors.make_style(opts=("bold",), fg="green")
-
-        setup_pipeline(options["org_name"], options["org_id"], options["site_url"])
-        create_super_user(
-            options["username"],
-            options["email"],
-            options["password"],
-            options["api_key"],
-        )
-        set_api_allowlist(options["whitelist"] or options["allowlist"])
-        self.stdout.write(self.style.SUCCESS("Done!\n"))
-
-
-def get_setting(setting, default=""):
-    try:
-        setting = DashboardSetting.objects.get(name=setting)
-        return setting.value
-    except Exception:
-        return default
-
-
-def set_setting(setting, value=""):
-    try:
-        setting_data = DashboardSetting.objects.get(name=setting)
-    except Exception:
-        setting_data = DashboardSetting.objects.create()
-        setting_data.name = setting
-    # ``DashboardSetting.value`` is a string-based field. The empty string is
-    # the way to represent the lack of data, therefore NULL values are avoided.
-    if value is None:
-        value = ""
-    setting_data.value = value
-    setting_data.save()
-
-
-def set_api_allowlist(allowlist):
-    """Set API allowlist setting.
-
-    ``allowlist`` (str) is a space-separated list of IP addresses with access
-    to the public API. If falsy, all clients are allowed.
-    """
-    if not allowlist:
-        allowlist = ""
-    return set_setting("api_whitelist", allowlist)
