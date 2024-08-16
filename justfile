@@ -21,10 +21,6 @@ shell-alpine:
 shell-db:
   kubectl run -it --rm --image=mysql:8.0 --namespace ccp debug-shell --command -- mysql -hccp-mysql.ccp.svc.cluster.local -uroot -padmin
 
-# Create the migrate job.
-migrate:
-  kubectl create job --from=cronjob/ccp-migrate ccp-migrate
-
 # Create the install job.
 install:
   kubectl create job --from=cronjob/ccp-install ccp-install

@@ -1,41 +1,41 @@
 apiVersion: batch/v1
-kind: CronJob
+kind: Job
 metadata:
   name: ccp-install
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
-  schedule: "0 * * * *"
-  suspend: true
-  jobTemplate:
+  backoffLimit: 0
+  template:
     spec:
-      template:
-        spec:
-          serviceAccountName: ccp
-          restartPolicy: Never
-          containers:
-          - name: ccp-install
-            image: ghcr.io/artefactual-labs/ccp:latest
-            command:
-            - pyenv
-            - exec
-            - python
-            - /src/worker/manage.py
-            - install
-            - --username=test
-            - --password=test
-            - --email=test@test.com
-            - --org-name=test
-            - --org-id=test
-            - --api-key=test
-            - --site-url=http://dashboard
-            env:
-            - name: DJANGO_SECRET_KEY
-              value: "12345"
-            - name: ARCHIVEMATICA_WORKER_DB_USER
-              value: "root"
-            - name: ARCHIVEMATICA_WORKER_DB_PASSWORD
-              value: "admin"
-            - name: ARCHIVEMATICA_WORKER_DB_HOST
-              value: "ccp-mysql.ccp.svc.cluster.local"
-            - name: ARCHIVEMATICA_WORKER_DB_DATABASE
-              value: "CCP"
-
+      restartPolicy: Never
+      containers:
+      - name: ccp-install
+        image: ghcr.io/artefactual-labs/ccp:latest
+        command:
+        - pyenv
+        - exec
+        - python
+        - /src/worker/manage.py
+        - install
+        - --wait-for-db
+        - --migrate
+        - --username=test
+        - --password=test
+        - --email=test@test.com
+        - --org-name=test
+        - --org-id=test
+        - --api-key=test
+        - --site-url=http://dashboard
+        env:
+        - name: DJANGO_SECRET_KEY
+          value: "12345"
+        - name: ARCHIVEMATICA_WORKER_DB_USER
+          value: "root"
+        - name: ARCHIVEMATICA_WORKER_DB_PASSWORD
+          value: "admin"
+        - name: ARCHIVEMATICA_WORKER_DB_HOST
+          value: "ccp-mysql.ccp.svc.cluster.local"
+        - name: ARCHIVEMATICA_WORKER_DB_DATABASE
+          value: "CCP"

@@ -4,5 +4,4 @@ resources:
 - account.yaml
 - deployment.yaml
 - service.yaml
-- migrate.yaml
 - install.yaml
