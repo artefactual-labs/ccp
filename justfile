@@ -44,3 +44,12 @@ release:
     esac
     git tag -m "Release ${version}" $version
     git push origin refs/tags/$version
+
+git-log-recent-upstream:  # Show recent commits in upstream (qa/1.x).
+  #!/usr/bin/env bash
+  if ! git remote get-url upstream > /dev/null 2>&1; then
+      git remote add -f upstream https://github.com/artefactual/archivematica.git
+  else
+      git fetch upstream
+  fi
+  git log --oneline upstream/qa/1.x ^HEAD
