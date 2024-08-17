@@ -21,12 +21,12 @@ from django.utils import timezone
 django.setup()
 
 from worker.client.job import Job
+from worker.clientScripts import transcoder
 from worker.fpr.models import FPRule
 from worker.main.models import Derivation
 from worker.main.models import File
 from worker.main.models import FileFormatVersion
 from worker.main.models import FileID
-from worker.clientScripts import transcoder
 from worker.utils.databaseFunctions import insertIntoDerivations
 from worker.utils.databaseFunctions import insertIntoEvents
 from worker.utils.dicts import ReplacementDict

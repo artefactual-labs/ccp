@@ -114,7 +114,7 @@ restart-am-services:  ## Restart Archivematica services.
 	docker compose restart --no-deps archivematica-worker
 
 compile-requirements:  ## Run pip-compile for Archivematica
-	docker compose run --workdir /src \
+	docker compose run --workdir /src/worker/requirements \
 		-e XDG_CACHE_HOME=/tmp/pip-cache \
 		--rm \
 		--no-deps \
@@ -123,7 +123,7 @@ compile-requirements:  ## Run pip-compile for Archivematica
 			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
 
 upgrade-requirements:  ## Run pip-upgrade for Archivematica
-	docker compose run --workdir /src \
+	docker compose run --workdir /src/worker/requirements \
 		-e XDG_CACHE_HOME=/tmp/pip-cache \
 		--rm \
 		--no-deps \

@@ -10,8 +10,8 @@ from unittest import mock
 import pytest
 import pytest_django
 
-from worker.clientScripts import normalize
 from worker.client.job import Job
+from worker.clientScripts import normalize
 from worker.fpr import models as fprmodels
 from worker.main import models
 
@@ -385,7 +385,8 @@ def default_preservation_rule(
 
 @pytest.mark.django_db
 @mock.patch(
-    "worker.clientScripts.transcoder.CommandLinker", return_value=mock.Mock(**{"execute.return_value": 0})
+    "worker.clientScripts.transcoder.CommandLinker",
+    return_value=mock.Mock(**{"execute.return_value": 0}),
 )
 def test_normalization_falls_back_to_default_rule(
     command_linker: mock.Mock,
@@ -444,7 +445,8 @@ def test_normalization_falls_back_to_default_rule(
 
 @pytest.mark.django_db
 @mock.patch(
-    "worker.clientScripts.transcoder.CommandLinker", return_value=mock.Mock(**{"execute.return_value": 0})
+    "worker.clientScripts.transcoder.CommandLinker",
+    return_value=mock.Mock(**{"execute.return_value": 0}),
 )
 def test_normalization_finds_rule_by_file_format_version(
     command_linker: mock.Mock,
@@ -500,7 +502,8 @@ def test_normalization_finds_rule_by_file_format_version(
 @pytest.mark.django_db
 @mock.patch("os.makedirs", side_effect=OSError("error!"))
 @mock.patch(
-    "worker.clientScripts.transcoder.CommandLinker", return_value=mock.Mock(**{"execute.return_value": 0})
+    "worker.clientScripts.transcoder.CommandLinker",
+    return_value=mock.Mock(**{"execute.return_value": 0}),
 )
 def test_normalization_fails_if_thumbnail_directory_cannot_be_created(
     command_linker: mock.Mock,
@@ -832,7 +835,9 @@ def fpcommand_access(
 
 
 @pytest.mark.django_db
-@mock.patch("worker.clientScripts.transcoder.executeOrRun", return_value=(-1, "", "error!"))
+@mock.patch(
+    "worker.clientScripts.transcoder.executeOrRun", return_value=(-1, "", "error!")
+)
 def test_normalization_fails_if_fallback_default_rule_does_not_exist(
     execute_or_run: mock.Mock,
     sip: models.SIP,

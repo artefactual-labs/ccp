@@ -91,8 +91,18 @@ def fptool() -> fprmodels.FPTool:
 
 
 @pytest.fixture
+def idtool() -> fprmodels.IDTool:
+    return fprmodels.IDTool.objects.create()
+
+
+@pytest.fixture
 def fpcommand(fptool: fprmodels.FPTool) -> fprmodels.FPCommand:
     return fprmodels.FPCommand.objects.create(tool=fptool)
+
+
+@pytest.fixture
+def idcommand(idtool: fprmodels.IDTool) -> fprmodels.IDCommand:
+    return fprmodels.IDCommand.objects.create(tool=idtool, config="PUID")
 
 
 @pytest.fixture
@@ -100,6 +110,13 @@ def fprule(
     fpcommand: fprmodels.FPCommand, format_version: fprmodels.FormatVersion
 ) -> fprmodels.FPRule:
     return fprmodels.FPRule.objects.create(command=fpcommand, format=format_version)
+
+
+@pytest.fixture
+def idrule(
+    idcommand: fprmodels.IDCommand, format_version: fprmodels.FormatVersion
+) -> fprmodels.IDRule:
+    return fprmodels.IDRule.objects.create(command=idcommand, format=format_version)
 
 
 @pytest.fixture()
@@ -137,6 +154,14 @@ def fprule_transcription(fprule: fprmodels.FPRule) -> fprmodels.FPRule:
 @pytest.fixture
 def fprule_preservation(fprule: fprmodels.FPRule) -> fprmodels.FPRule:
     fprule.purpose = fprmodels.FPRule.PRESERVATION
+    fprule.save()
+
+    return fprule
+
+
+@pytest.fixture
+def fprule_policy_check(fprule: fprmodels.FPRule) -> fprmodels.FPRule:
+    fprule.purpose = fprmodels.FPRule.POLICY
     fprule.save()
 
     return fprule

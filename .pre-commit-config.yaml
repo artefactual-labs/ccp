@@ -50,9 +50,7 @@ repos:
   - id: mypy
     files: "^worker/"
     args:
-      - "--config-file=./worker/mypy.ini"
-      - "--ignore-missing-imports"
-      - "--scripts-are-modules"
+      - "--config-file=./worker/pyproject.toml"
     additional_dependencies:
     - types-requests
     - pytest

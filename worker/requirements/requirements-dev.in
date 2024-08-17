@@ -1,6 +1,6 @@
 -r requirements.txt
 
-coverage
+coverage[toml]
 pip-tools
 pytest
 pytest-cov
