@@ -13,10 +13,9 @@ from typing import List
 from typing import Optional
 
 import django
-from django.conf import settings as django_settings
+from django.conf import settings as mcpclient_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
 from django.utils import timezone
 
 django.setup()
@@ -27,137 +26,18 @@ from worker.main.models import Derivation
 from worker.main.models import File
 from worker.main.models import FileFormatVersion
 from worker.main.models import FileID
-from worker.utils import databaseFunctions
-from worker.utils import fileOperations
+from worker.clientScripts import transcoder
+from worker.utils.databaseFunctions import insertIntoDerivations
+from worker.utils.databaseFunctions import insertIntoEvents
 from worker.utils.dicts import ReplacementDict
 from worker.utils.dicts import setup
-from worker.utils.executeOrRunSubProcess import executeOrRun
+from worker.utils.fileOperations import addFileToSIP
+from worker.utils.fileOperations import updateSizeAndChecksum
 
 # Return codes
 SUCCESS = 0
 RULE_FAILED = 1
 NO_RULE_FOUND = 2
-
-
-class Command:
-    def __init__(self, job, command, replacement_dict, on_success=None, opts=None):
-        self.fpcommand = command
-        self.command = command.command
-        self.type = command.script_type
-        self.output_location = command.output_location
-        self.replacement_dict = replacement_dict
-        self.on_success = on_success
-        self.std_out = ""
-        self.exit_code = None
-        self.opts = opts
-        self.job = job
-
-        # Add the output location to the replacement dict - for use in
-        # verification and event detail commands
-        if self.output_location:
-            self.output_location = self.replacement_dict.replace(self.output_location)[
-                0
-            ]
-            self.replacement_dict["%outputLocation%"] = self.output_location
-
-        # Add verification and event detail commands, if they exist
-        self.verification_command = None
-        if self.fpcommand.verification_command:
-            self.verification_command = Command(
-                self.job, self.fpcommand.verification_command, self.replacement_dict
-            )
-
-        self.event_detail_command = None
-        if self.fpcommand.event_detail_command:
-            self.event_detail_command = Command(
-                self.job, self.fpcommand.event_detail_command, self.replacement_dict
-            )
-
-    def __str__(self):
-        return f"[COMMAND] {self.fpcommand}\n\tExecuting: {self.command}\n\tCommand: {self.verification_command}\n\tOutput location: {self.output_location}\n"
-
-    def execute(self, skip_on_success=False):
-        """Execute the the command, and associated verification and event detail commands.
-
-        Returns 0 if all commands succeeded, non-0 if any failed."""
-        # For "command" and "bashScript" type delegate tools, e.g.
-        # individual commandline statements or bash scripts, we interpolate
-        # the necessary values into the script's source
-        args = []
-        if self.type in ["command", "bashScript"]:
-            self.command = self.replacement_dict.replace(self.command)[0]
-        # For other command types, we translate the entries from
-        # replacement_dict into GNU-style long options, e.g.
-        # [%fileName%, foo] => --file-name=foo
-        else:
-            args = self.replacement_dict.to_gnu_options()
-        self.job.print_output("Command to execute:", self.command)
-        self.job.print_output("-----")
-        self.job.print_output("Command stdout:")
-        self.exit_code, self.std_out, std_err = executeOrRun(
-            self.type, self.command, arguments=args, printing=True, capture_output=True
-        )
-        self.job.write_output(self.std_out)
-        self.job.write_error(std_err)
-        self.job.print_output("-----")
-        self.job.print_output("Command exit code:", self.exit_code)
-        if self.exit_code == 0 and self.verification_command:
-            self.job.print_output(
-                "Running verification command", self.verification_command
-            )
-            self.job.print_output("-----")
-            self.job.print_output("Command stdout:")
-            self.exit_code = self.verification_command.execute(skip_on_success=True)
-            self.job.print_output("-----")
-            self.job.print_output("Verification Command exit code:", self.exit_code)
-
-        if self.exit_code == 0 and self.event_detail_command:
-            self.job.print_output(
-                "Running event detail command", self.event_detail_command
-            )
-            self.event_detail_command.execute(skip_on_success=True)
-
-        # If unsuccesful
-        if self.exit_code != 0:
-            self.job.print_error("Failed:", self.fpcommand)
-            self.job.print_error("Standard out:", self.std_out)
-            self.job.print_error("Standard error:", std_err)
-        else:
-            if (not skip_on_success) and self.on_success:
-                self.on_success(self, self.opts, self.replacement_dict)
-        return self.exit_code
-
-
-class CommandLinker:
-    def __init__(self, job, fprule, command, replacement_dict, opts, on_success):
-        self.fprule = fprule
-        self.command = command
-        self.replacement_dict = replacement_dict
-        self.opts = opts
-        self.on_success = on_success
-        self.commandObject = Command(
-            job, self.command, replacement_dict, self.on_success, opts
-        )
-
-    def __str__(self):
-        return (
-            f"[Command Linker] FPRule: {self.fprule.uuid} Command: {self.commandObject}"
-        )
-
-    def execute(self):
-        """Execute the command, and track the success statistics.
-
-        Returns 0 on success, non-0 on failure."""
-        # Track success/failure rates of FP Rules
-        # Use Django's F() to prevent race condition updating the counts
-        self.fprule.count_attempts = F("count_attempts") + 1
-        ret = self.commandObject.execute()
-        if ret:
-            self.fprule.count_not_okay = F("count_not_okay") + 1
-        else:
-            self.fprule.count_okay = F("count_okay") + 1
-        self.fprule.save()
-        return ret
 
 
 @dataclasses.dataclass
@@ -334,13 +214,13 @@ def check_manual_normalization(job: Job, opts: NormalizeArgs) -> Optional[File]:
 
 def once_normalized(
     job: Job,
-    command: Command,
+    command: transcoder.Command,
     opts: NormalizeArgs,
     replacement_dict: ReplacementDict,
 ) -> None:
     """Updates the database if normalization completed successfully.
 
-    Callback from Command.
+    Callback from transcoder.Command
 
     For preservation files, adds a normalization event, and derivation, as well
     as updating the size and checksum for the new file in the DB.  Adds format
@@ -377,7 +257,7 @@ def once_normalized(
         # TODO Add manual normalization for files of same name mapping?
         # Add the new file to the SIP
         path_relative_to_sip = ef.replace(opts.sip_path, "%SIPDirectory%", 1)
-        fileOperations.addFileToSIP(
+        addFileToSIP(
             path_relative_to_sip,
             output_file_uuid,  # File UUID
             opts.sip_uuid,  # SIP UUID
@@ -388,7 +268,7 @@ def once_normalized(
         )
 
         # Calculate new file checksum
-        fileOperations.updateSizeAndChecksum(
+        updateSizeAndChecksum(
             output_file_uuid,  # File UUID, same as task UUID for preservation
             ef,  # File path
             today,  # Date
@@ -435,7 +315,7 @@ def once_normalized(
 
 def once_normalized_callback(job: Job) -> Callable[..., None]:
     def wrapper(
-        command: Command,
+        command: transcoder.Command,
         opts: NormalizeArgs,
         replacement_dict: ReplacementDict,
     ) -> None:
@@ -456,7 +336,7 @@ def insert_derivation_event(
     if today is None:
         today = timezone.now()
     # Add event information to current file
-    databaseFunctions.insertIntoEvents(
+    insertIntoEvents(
         fileUUID=original_uuid,
         eventIdentifierUUID=derivation_uuid,
         eventType="normalization",
@@ -467,7 +347,7 @@ def insert_derivation_event(
     )
 
     # Add linking information between files
-    databaseFunctions.insertIntoDerivations(
+    insertIntoDerivations(
         sourceFileUUID=original_uuid,
         derivedFileUUID=output_uuid,
         relatedEventUUID=derivation_uuid,
@@ -538,9 +418,7 @@ def main(job: Job, opts: NormalizeArgs) -> int:
         )
         # Don't create events for thumbnail files
         if opts.purpose != "thumbnail":
-            databaseFunctions.insertIntoEvents(
-                fileUUID=derivative.derived_file_id, eventType="deletion"
-            )
+            insertIntoEvents(fileUUID=derivative.derived_file_id, eventType="deletion")
     if derivatives_to_delete:
         Derivation.objects.filter(id__in=derivatives_to_delete).delete()
 
@@ -611,7 +489,7 @@ def main(job: Job, opts: NormalizeArgs) -> int:
     job.print_output("Format Policy Command", command.description)
 
     replacement_dict = get_replacement_dict(job, opts)
-    cl = CommandLinker(
+    cl = transcoder.CommandLinker(
         job, rule, command, replacement_dict, opts, once_normalized_callback(job)
     )
     exitstatus = cl.execute()
@@ -656,7 +534,7 @@ def main(job: Job, opts: NormalizeArgs) -> int:
             job.print_output("Fallback Format Policy Command", command.description)
 
             # Use existing replacement dict
-            cl = CommandLinker(
+            cl = transcoder.CommandLinker(
                 job,
                 fallback_rule,
                 command,
@@ -671,7 +549,7 @@ def main(job: Job, opts: NormalizeArgs) -> int:
     if "thumbnail" in opts.purpose:
         thumbnail_filepath = cl.commandObject.output_location
         thumbnail_storage_dir = os.path.join(
-            django_settings.SHARED_DIRECTORY, "www", "thumbnails", opts.sip_uuid
+            mcpclient_settings.SHARED_DIRECTORY, "www", "thumbnails", opts.sip_uuid
         )
         try:
             os.makedirs(thumbnail_storage_dir)
