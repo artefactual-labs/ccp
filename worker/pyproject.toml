@@ -34,7 +34,6 @@ ignore = [
     "B904",
     "E402",
     "E501",
-    "E731", # do i still need this?
     "UP031",
 ]
 
@@ -53,14 +52,20 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = [
     "worker.client.*",
+    "worker.clientScripts.characterize_file",
+    "worker.clientScripts.has_packages",
     "worker.clientScripts.identify_file_format",
     "worker.clientScripts.normalize",
     "worker.clientScripts.policy_check",
+    "worker.clientScripts.transcribe_file",
     "worker.clientScripts.validate_file",
     "tests.conftest",
+    "tests.test_characterize_file",
+    "tests.test_has_packages",
     "tests.test_identify_file_format",
     "tests.test_normalize",
     "tests.test_policy_check",
+    "tests.test_transcribe_file",
     "tests.test_validate_file",
 ]
 check_untyped_defs = true
@@ -84,7 +89,7 @@ legacy_tox_ini = """
         migrations
         linting
 
-    [testenv]
+[testenv]
     skip_install = True
     deps = -r{toxinidir}/requirements/requirements-dev.txt
     commands = py.test {posargs}

@@ -2,25 +2,18 @@ import pathlib
 from unittest import mock
 
 import pytest
+import pytest_django
 
 from worker.client.job import Job
 from worker.clientScripts import transcribe_file
+from worker.fpr import models as fprmodels
 from worker.main import models
 
 EXECUTE_OR_RUN_STDOUT = "Hello"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def execute_or_run():
-    with mock.patch(
-        "worker.clientScripts.transcribe_file.executeOrRun",
-        return_value=(0, EXECUTE_OR_RUN_STDOUT, ""),
-    ):
-        yield
-
-
 @pytest.fixture()
-def sip(sip):
+def sip(sip: models.SIP) -> models.SIP:
     # ReplacementDict expands SIP paths based on the shared directory.
     sip.currentpath = "%sharedPath%"
     sip.save()
@@ -29,7 +22,7 @@ def sip(sip):
 
 
 @pytest.fixture
-def create_sip_file(sip_directory_path, sip_file):
+def create_sip_file(sip_directory_path: pathlib.Path, sip_file: models.File) -> None:
     file_path = pathlib.Path(
         sip_file.currentlocation.decode().replace("%SIPDirectory%", "")
     )
@@ -41,7 +34,9 @@ def create_sip_file(sip_directory_path, sip_file):
 
 
 @pytest.fixture
-def fpcommand(fpcommand, sip_file):
+def fpcommand(
+    fpcommand: fprmodels.FPCommand, sip_file: models.File
+) -> fprmodels.FPCommand:
     fpcommand.output_location = sip_file.currentlocation.decode()
     fpcommand.save()
 
@@ -49,29 +44,35 @@ def fpcommand(fpcommand, sip_file):
 
 
 @pytest.fixture
-def derivation(sip_file, preservation_file):
+def derivation(
+    sip_file: models.File, preservation_file: models.File
+) -> models.Derivation:
     return models.Derivation.objects.create(
         source_file=sip_file, derived_file=preservation_file
     )
 
 
 @pytest.fixture
-def preservation_file_format_version(preservation_file, format_version):
+def preservation_file_format_version(
+    preservation_file: models.File, format_version: fprmodels.FormatVersion
+) -> models.FileFormatVersion:
     return models.FileFormatVersion.objects.create(
         file_uuid=preservation_file, format_version=format_version
     )
 
 
 @pytest.mark.django_db
+@mock.patch("worker.clientScripts.transcribe_file.executeOrRun", return_value=(0, EXECUTE_OR_RUN_STDOUT, ""))
 def test_main(
-    sip_file,
-    task,
-    fprule_transcription,
-    sip_file_format_version,
-    settings,
-    sip_directory_path,
-    create_sip_file,
-):
+    execute_or_run: mock.Mock,
+    sip_file: models.File,
+    task: models.Task,
+    fprule_transcription: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+    settings: pytest_django.fixtures.SettingsWrapper,
+    sip_directory_path: pathlib.Path,
+    create_sip_file: None,
+) -> None:
     job = mock.Mock(spec=Job)
     settings.SHARED_DIRECTORY = f"{sip_directory_path}/"
 
@@ -117,8 +118,12 @@ def test_main(
 
 @pytest.mark.django_db
 def test_main_if_filegroup_is_not_original(
-    preservation_file, task, fprule_transcription, sip_file_format_version, capsys
-):
+    preservation_file: models.File,
+    task: models.Task,
+    fprule_transcription: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     job = mock.Mock(spec=Job)
 
     result = transcribe_file.main(
@@ -135,7 +140,12 @@ def test_main_if_filegroup_is_not_original(
 
 
 @pytest.mark.django_db
-def test_main_if_no_rules_exist(sip_file, task, sip_file_format_version, capsys):
+def test_main_if_no_rules_exist(
+    sip_file: models.File,
+    task: models.Task,
+    sip_file_format_version: models.FileFormatVersion,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     job = mock.Mock(spec=Job)
 
     result = transcribe_file.main(job, task_uuid=task.taskuuid, file_uuid=sip_file.uuid)
@@ -153,8 +163,10 @@ def test_main_if_no_rules_exist(sip_file, task, sip_file_format_version, capsys)
 
 @pytest.mark.django_db
 def test_fetch_rules_for_derivatives_if_rules_are_absent_for_derivates(
-    derivation, fprule_transcription, sip_file_format_version
-):
+    derivation: models.Derivation,
+    fprule_transcription: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     result = transcribe_file.fetch_rules_for_derivatives(file_=derivation.source_file)
 
     assert result == (None, [])
@@ -162,8 +174,10 @@ def test_fetch_rules_for_derivatives_if_rules_are_absent_for_derivates(
 
 @pytest.mark.django_db
 def test_fetch_rules_for_derivatives(
-    derivation, fprule_transcription, preservation_file_format_version
-):
+    derivation: models.Derivation,
+    fprule_transcription: fprmodels.FPRule,
+    preservation_file_format_version: models.FileFormatVersion,
+) -> None:
     derived_file, rules_of_derived_file = transcribe_file.fetch_rules_for_derivatives(
         file_=derivation.source_file
     )
@@ -181,7 +195,9 @@ def test_fetch_rules_for_derivatives(
 
 
 @pytest.fixture
-def disabled_fprule_transcription(fprule_transcription):
+def disabled_fprule_transcription(
+    fprule_transcription: fprmodels.FPRule,
+) -> fprmodels.FPRule:
     fprule_transcription.enabled = 0
     fprule_transcription.save()
 
@@ -190,8 +206,11 @@ def disabled_fprule_transcription(fprule_transcription):
 
 @pytest.mark.django_db
 def test_main_if_fprule_is_disabled(
-    sip_file, task, disabled_fprule_transcription, sip_file_format_version
-):
+    sip_file: models.File,
+    task: models.Task,
+    disabled_fprule_transcription: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     job = mock.Mock(spec=Job)
 
     result = transcribe_file.main(job, task_uuid=task.taskuuid, file_uuid=sip_file.uuid)
@@ -236,14 +255,14 @@ def test_main_if_fprule_is_disabled(
 @pytest.mark.django_db
 @mock.patch("worker.clientScripts.transcribe_file.executeOrRun")
 def test_main_if_command_is_not_bash_script(
-    _execute_or_run,
-    fpcommand,
-    sip_file,
-    task,
-    fprule_transcription,
-    sip_file_format_version,
-):
-    _execute_or_run.return_value = (0, fpcommand.command, "")
+    execute_or_run: mock.Mock,
+    fpcommand: fprmodels.FPCommand,
+    sip_file: models.File,
+    task: models.Task,
+    fprule_transcription: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
+    execute_or_run.return_value = (0, fpcommand.command, "")
     job = mock.Mock(spec=Job)
 
     result = transcribe_file.main(job, task_uuid=task.taskuuid, file_uuid=sip_file.uuid)
@@ -256,10 +275,10 @@ def test_main_if_command_is_not_bash_script(
     assert job.write_output.mock_calls == [mock.call(fpcommand.command)]
 
     # executeOrRun is called once.
-    transcribe_file.executeOrRun.assert_called_once()
+    execute_or_run.assert_called_once()
 
     # Get the call to executeOrRun.
-    execute_or_run_call = transcribe_file.executeOrRun.mock_calls[0]
+    execute_or_run_call = execute_or_run.mock_calls[0]
     call_kwargs = execute_or_run_call[-1]
 
     # Ensure the arguments passed is a list.

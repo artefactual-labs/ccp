@@ -1,7 +1,13 @@
 #!/usr/bin/env python
+import argparse
+import dataclasses
 import multiprocessing
 import os
-from uuid import uuid4
+import uuid
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
 
 import django
 from django.core.exceptions import ValidationError
@@ -10,6 +16,7 @@ from django.utils import timezone
 
 django.setup()
 
+from worker.client.job import Job
 from worker.fpr.models import FPRule
 from worker.main.models import Derivation
 from worker.main.models import File
@@ -21,11 +28,19 @@ from worker.utils.dicts import setup
 from worker.utils.executeOrRunSubProcess import executeOrRun
 
 
-def concurrent_instances():
+@dataclasses.dataclass
+class TranscribeFileArgs:
+    task_uuid: uuid.UUID
+    file_uuid: uuid.UUID
+
+
+def concurrent_instances() -> int:
     return multiprocessing.cpu_count()
 
 
-def insert_transcription_event(status, file_uuid, rule, relative_location):
+def insert_transcription_event(
+    status: int, file_uuid: uuid.UUID, rule: FPRule, relative_location: str
+) -> str:
     outcome = "transcribed" if status == 0 else "not transcribed"
 
     tool = rule.command.tool
@@ -33,7 +48,7 @@ def insert_transcription_event(status, file_uuid, rule, relative_location):
         tool.description, tool.version, rule.command.command.replace('"', r"\"")
     )
 
-    event_uuid = str(uuid4())
+    event_uuid = str(uuid.uuid4())
 
     databaseFunctions.insertIntoEvents(
         fileUUID=file_uuid,
@@ -48,9 +63,14 @@ def insert_transcription_event(status, file_uuid, rule, relative_location):
 
 
 def insert_file_into_database(
-    task_uuid, file_uuid, sip_uuid, event_uuid, rule, output_path, relative_path
-):
-    transcription_uuid = str(uuid4())
+    task_uuid: uuid.UUID,
+    file_uuid: uuid.UUID,
+    sip_uuid: str,
+    event_uuid: str,
+    output_path: str,
+    relative_path: str,
+) -> None:
+    transcription_uuid = str(uuid.uuid4())
     today = timezone.now()
     fileOperations.addFileToSIP(
         relative_path,
@@ -63,7 +83,7 @@ def insert_file_into_database(
     )
 
     fileOperations.updateSizeAndChecksum(
-        transcription_uuid, output_path, today, str(uuid4())
+        transcription_uuid, output_path, today, str(uuid.uuid4())
     )
 
     databaseFunctions.insertIntoDerivations(
@@ -73,17 +93,18 @@ def insert_file_into_database(
     )
 
 
-def fetch_rules_for(file_):
+def fetch_rules_for(file_: File) -> Sequence[FPRule]:
     try:
         format = FileFormatVersion.objects.get(file_uuid=file_)
-        return FPRule.active.filter(
+        result: Sequence[FPRule] = FPRule.active.filter(
             format=format.format_version, purpose="transcription"
         )
+        return result
     except (FileFormatVersion.DoesNotExist, ValidationError):
         return []
 
 
-def fetch_rules_for_derivatives(file_):
+def fetch_rules_for_derivatives(file_: File) -> Tuple[Optional[File], Sequence[FPRule]]:
     derivs = Derivation.objects.filter(source_file=file_)
     for deriv in derivs:
         derived_file = deriv.derived_file
@@ -98,7 +119,7 @@ def fetch_rules_for_derivatives(file_):
     return None, []
 
 
-def main(job, task_uuid, file_uuid):
+def main(job: Job, task_uuid: uuid.UUID, file_uuid: uuid.UUID) -> int:
     setup()
 
     succeeded = True
@@ -160,7 +181,6 @@ def main(job, task_uuid, file_uuid):
                 file_uuid,
                 rd["%SIPUUID%"],
                 event,
-                rule,
                 output_path,
                 relative_path,
             )
@@ -168,11 +188,26 @@ def main(job, task_uuid, file_uuid):
     return 0 if succeeded else 1
 
 
-def call(jobs):
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Transcribe file.")
+    parser.add_argument("task_uuid", type=uuid.UUID)
+    parser.add_argument("file_uuid", type=uuid.UUID)
+
+    return parser
+
+
+def parse_args(parser: argparse.ArgumentParser, job: Job) -> TranscribeFileArgs:
+    namespace = parser.parse_args(job.args[1:])
+
+    return TranscribeFileArgs(**vars(namespace))
+
+
+def call(jobs: List[Job]) -> None:
+    parser = get_parser()
+
     with transaction.atomic():
         for job in jobs:
             with job.JobContext():
-                task_uuid = job.args[1]
-                file_uuid = job.args[2]
+                args = parse_args(parser, job)
 
-                job.set_status(main(job, task_uuid, file_uuid))
+                job.set_status(main(job, args.task_uuid, args.file_uuid))

@@ -9,7 +9,9 @@ from worker.main import models
 
 
 @pytest.fixture
-def rule_with_xml_output_format(format_version):
+def rule_with_xml_output_format(
+    format_version: fprmodels.FormatVersion,
+) -> fprmodels.FPRule:
     return fprmodels.FPRule.objects.create(
         command=fprmodels.FPCommand.objects.create(
             output_format=fprmodels.FormatVersion.objects.get(pronom_id="fmt/101")
@@ -20,25 +22,28 @@ def rule_with_xml_output_format(format_version):
 
 
 @pytest.fixture
-def fpcommand_output(sip_file, fprule_characterization):
+def fpcommand_output(
+    sip_file: models.File, fprule_characterization: fprmodels.FPRule
+) -> models.FPCommandOutput:
     return models.FPCommandOutput.objects.create(
         file=sip_file, rule=fprule_characterization
     )
 
 
 @pytest.fixture
-def delete_characterization_rules(db):
+def delete_characterization_rules() -> None:
     fprmodels.FPRule.objects.filter(
         purpose__in=["characterization", "default_characterization"]
     ).delete()
 
 
 @pytest.mark.django_db
-def test_job_succeeds_if_file_is_already_characterized(sip_file, sip, fpcommand_output):
+def test_job_succeeds_if_file_is_already_characterized(
+    sip_file: models.File, sip: models.SIP, fpcommand_output: models.FPCommandOutput
+) -> None:
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
@@ -53,12 +58,11 @@ def test_job_succeeds_if_file_is_already_characterized(sip_file, sip, fpcommand_
 
 @pytest.mark.django_db
 def test_job_succeeds_if_no_characterization_rules_exist(
-    sip_file, sip, delete_characterization_rules
-):
+    sip_file: models.File, sip: models.SIP, delete_characterization_rules: None
+) -> None:
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
@@ -79,13 +83,13 @@ def test_job_succeeds_if_no_characterization_rules_exist(
 )
 @mock.patch("worker.clientScripts.characterize_file.executeOrRun")
 def test_job_executes_command(
-    execute_or_run,
-    script_type,
-    sip_file,
-    sip,
-    fprule_characterization,
-    sip_file_format_version,
-):
+    execute_or_run: mock.Mock,
+    script_type: str,
+    sip_file: models.File,
+    sip: models.SIP,
+    fprule_characterization: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     fprule_characterization.command.script_type = script_type
     fprule_characterization.command.save()
     exit_code = 0
@@ -95,7 +99,6 @@ def test_job_executes_command(
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
@@ -118,8 +121,12 @@ def test_job_executes_command(
 @pytest.mark.django_db
 @mock.patch("worker.clientScripts.characterize_file.executeOrRun")
 def test_job_fails_if_command_fails(
-    execute_or_run, sip_file, sip, fprule_characterization, sip_file_format_version
-):
+    execute_or_run: mock.Mock,
+    sip_file: models.File,
+    sip: models.SIP,
+    fprule_characterization: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     exit_code = 1
     stdout = ""
     stderr = "error!"
@@ -127,7 +134,6 @@ def test_job_fails_if_command_fails(
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
@@ -152,14 +158,14 @@ def test_job_fails_if_command_fails(
 @mock.patch("worker.clientScripts.characterize_file.etree")
 @mock.patch("worker.clientScripts.characterize_file.executeOrRun")
 def test_job_saves_valid_xml_command_output(
-    execute_or_run,
-    etree,
-    insert_into_fp_command_output,
-    sip_file,
-    sip,
-    rule_with_xml_output_format,
-    sip_file_format_version,
-):
+    execute_or_run: mock.Mock,
+    etree: mock.Mock,
+    insert_into_fp_command_output: mock.Mock,
+    sip_file: models.File,
+    sip: models.SIP,
+    rule_with_xml_output_format: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     exit_code = 0
     stdout = "<mock>success</mock>"
     stderr = ""
@@ -167,7 +173,6 @@ def test_job_saves_valid_xml_command_output(
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
@@ -187,19 +192,19 @@ def test_job_saves_valid_xml_command_output(
     job.write_error.assert_called_once_with(stderr)
     etree.fromstring.assert_called_once_with(stdout.encode())
     insert_into_fp_command_output.assert_called_once_with(
-        str(sip_file.uuid), stdout, rule_with_xml_output_format.uuid
+        sip_file.uuid, stdout, rule_with_xml_output_format.uuid
     )
 
 
 @pytest.mark.django_db
 @mock.patch("worker.clientScripts.characterize_file.executeOrRun")
 def test_job_fails_with_invalid_xml_command_output(
-    execute_or_run,
-    sip_file,
-    sip,
-    rule_with_xml_output_format,
-    sip_file_format_version,
-):
+    execute_or_run: mock.Mock,
+    sip_file: models.File,
+    sip: models.SIP,
+    rule_with_xml_output_format: fprmodels.FPRule,
+    sip_file_format_version: models.FileFormatVersion,
+) -> None:
     exit_code = 0
     stdout = "invalid xml"
     stderr = ""
@@ -207,7 +212,6 @@ def test_job_fails_with_invalid_xml_command_output(
     job = mock.Mock(
         args=[
             "characterize_file",
-            "file_path_not_used",
             str(sip_file.uuid),
             str(sip.uuid),
         ],
