@@ -1,12 +1,12 @@
 ---
 
 services:
-  archivematica-tests:
-    image: "archivematica-tests:latest"
+  worker-tests:
+    image: "worker-tests:latest"
     build:
       context: "../"
       dockerfile: "hack/Dockerfile"
-      target: "archivematica-tests"
+      target: "worker-tests"
       args:
         UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}
         PYTHON_VERSION: ${PYTHON_VERSION:-3.12.5}

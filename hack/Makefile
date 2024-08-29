@@ -27,7 +27,7 @@ define run_toxenvs
 			--workdir /src/worker \
 			--rm \
 			--entrypoint tox \
-				archivematica-tests \
+				worker-tests \
 					-e $(subst $(SPACE),$(COMMA),$(strip $(1))) \
 					${TOXARGS})
 endef
@@ -38,7 +38,7 @@ start-mysql: test-build
 			--user $(CALLER_UID):$(CALLER_GID) \
 			--rm \
 			--entrypoint bash \
-				archivematica-tests \
+				worker-tests \
 					/src/hack/helpers/wait-for-it.sh mysql:3306 --timeout=30)
 
 define create_db
@@ -80,8 +80,8 @@ build:  # Build Compose services.
 
 run:
 	$(MAKE) flush-shared-dir
-	docker compose up -d --force-recreate --build --no-deps mysql archivematica-ccp archivematica-worker
-	docker compose logs -f archivematica-ccp archivematica-worker
+	docker compose up -d --force-recreate --build --no-deps mysql ccp worker
+	docker compose logs -f ccp worker
 
 manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
 	docker compose run \
@@ -89,7 +89,7 @@ manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as 
 		--rm \
 		--no-deps \
 		--entrypoint /src/manage.py \
-			archivematica-worker \
+			worker \
 				$(ARG)
 
 bootstrap:  ## Bootstrap the database.
@@ -98,7 +98,7 @@ bootstrap:  ## Bootstrap the database.
 		--rm \
 		--no-deps \
 		--entrypoint /src/manage.py \
-			archivematica-worker \
+			worker \
 				install \
 					--wait-for-db \
 					--migrate \
@@ -110,8 +110,8 @@ bootstrap:  ## Bootstrap the database.
 					--api-key="test" \
 					--site-url="http://archivematica-dashboard:8000"
 
-restart-am-services:  ## Restart Archivematica services.
-	docker compose restart --no-deps archivematica-worker
+restart:  ## Restart Archivematica services.
+	docker compose restart --no-deps ccp worker
 
 compile-requirements:  ## Run pip-compile for Archivematica
 	docker compose run --workdir /src/worker/requirements \
@@ -119,7 +119,7 @@ compile-requirements:  ## Run pip-compile for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-worker \
+		--entrypoint bash worker \
 			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
 
 upgrade-requirements:  ## Run pip-upgrade for Archivematica
@@ -128,7 +128,7 @@ upgrade-requirements:  ## Run pip-upgrade for Archivematica
 		--rm \
 		--no-deps \
 		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash archivematica-worker \
+		--entrypoint bash worker \
 			-c "pip-compile --allow-unsafe --upgrade --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --upgrade --output-file requirements-dev.txt requirements-dev.in"
 
 db:  ## Connect to the MySQL server using the CLI.
@@ -140,12 +140,12 @@ dbdump:  ## Dump database.
 dbschemadump:  ## Dump shema.
 	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 --no-data --skip-add-drop-table CCP
 
-flush: flush-shared-dir bootstrap restart-am-services  ## Delete ALL user data.
+flush: flush-shared-dir bootstrap restart  ## Delete ALL user data.
 
 flush-shared-dir-mcp-configs:  ## Delete processing configurations - it restarts the server.
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/defaultProcessingMCP.xml
 	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/automatedProcessingMCP.xml
-	docker compose restart --no-deps archivematica-ccp
+	docker compose restart --no-deps ccp
 
 flush-shared-dir:  ## Delete contents of the shared directory data volume.
 	rm -rf ${AM_PIPELINE_DATA}/*
@@ -162,11 +162,11 @@ __TEST_DBS := $(__TEST_DBS_WORKER) $(__TEST_DBS_MIGRATIONS) test_CCP
 flush-test-dbs: start-mysql
 	$(foreach test_db,$(__TEST_DBS),$(call drop_db,$(test_db));)
 
-test-build:  ## Build archivematica-tests image.
+test-build:  ## Build worker-tests image.
 	docker build \
-		-t archivematica-tests \
+		-t worker-tests \
 		-f $(CURDIR)/../Dockerfile \
-		--target archivematica-worker \
+		--target worker \
 		--build-arg UBUNTU_VERSION \
 		--build-arg PYTHON_VERSION \
 			../

@@ -16,14 +16,14 @@ type Build struct {
 func (m *Build) WorkerImage() *dagger.Container {
 	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 		Dockerfile: "Dockerfile",
-		Target:     "archivematica-worker",
+		Target:     "worker",
 	})
 }
 
 func (m *Build) CCPImage() *dagger.Container {
 	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 		Dockerfile: "Dockerfile",
-		Target:     "archivematica-ccp",
+		Target:     "ccp",
 	})
 }
 

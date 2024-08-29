@@ -35,10 +35,10 @@ services:
     cap_add:
       - "SYS_NICE"
 
-  archivematica-ccp:
+  ccp:
     build:
       context: "../"
-      target: "archivematica-ccp"
+      target: "ccp"
       args:
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
@@ -62,10 +62,10 @@ services:
       - "63030:8000"
       - "63031:8001"
 
-  archivematica-worker:
+  worker:
     build:
       context: "../"
-      target: "archivematica-worker"
+      target: "worker"
       args:
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
@@ -73,7 +73,7 @@ services:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.12.5}
     environment:
       DJANGO_SECRET_KEY: "12345"
-      ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "archivematica-ccp:4730"
+      ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "ccp:4730"
       ARCHIVEMATICA_WORKER_CAPTURE_CLIENT_SCRIPT_OUTPUT: "true"
       ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_PORT: "7999"
       ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_ADDRESS: "0.0.0.0"
@@ -86,4 +86,4 @@ services:
       - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
     links:
       - "mysql"
-      - "archivematica-ccp"
+      - "ccp"

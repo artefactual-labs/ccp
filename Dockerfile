@@ -9,7 +9,7 @@ ARG MEDIAAREA_VERSION=1.0-24
 
 # -----------------------------------------------------------------------------
 
-FROM ubuntu:${UBUNTU_VERSION} AS archivematica-worker-base
+FROM ubuntu:${UBUNTU_VERSION} AS worker-base
 
 ARG USER_ID
 ARG GROUP_ID
@@ -102,7 +102,7 @@ FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
 
 # -----------------------------------------------------------------------------
 
-FROM archivematica-worker-base AS archivematica-worker
+FROM worker-base AS worker
 
 ARG PYTHON_VERSION
 
@@ -141,7 +141,7 @@ ENTRYPOINT ["python", "-m", "worker"]
 
 # -----------------------------------------------------------------------------
 
-FROM base AS archivematica-tests
+FROM base AS worker-tests
 
 # -----------------------------------------------------------------------------
 
@@ -173,7 +173,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 
 # -----------------------------------------------------------------------------
 
-FROM alpine:3.20.0 AS archivematica-ccp
+FROM alpine:3.20.0 AS ccp
 ARG USER_ID
 ARG GROUP_ID
 RUN addgroup -g ${GROUP_ID} -S ccp
@@ -184,6 +184,6 @@ CMD ["/home/ccp/bin/ccp", "server"]
 
 # -----------------------------------------------------------------------------
 
-FROM archivematica-worker AS archivematica-full
+FROM worker AS full
 COPY --from=go-builder --link /out/ccp /var/archivematica/bin/ccp
 CMD ["/var/archivematica/bin/ccp", "server"]
