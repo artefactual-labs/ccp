@@ -11,6 +11,7 @@ services:
         UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}
         PYTHON_VERSION: ${PYTHON_VERSION:-3.12.5}
     volumes:
-      - "../:/src"
+      - "../worker:/src"
+      - "/src/.venv"
     links:
       - "mysql"

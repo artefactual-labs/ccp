@@ -120,24 +120,24 @@ RUN set -ex \
 	&& chown -R archivematica:archivematica /var/archivematica
 USER archivematica
 
-# Create virtual environment.
-RUN --mount=type=cache,target=/root/.cache/uv uv venv /var/archivematica/venv
-ENV PATH="/var/archivematica/venv/bin:$PATH"
-
 WORKDIR /src
 
-# Install requirements.
-ADD worker/requirements/requirements-dev.txt requirements/requirements-dev.txt
-RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements/requirements-dev.txt
+# Install the requirements.
+ADD worker/uv.lock uv.lock
+ADD worker/pyproject.toml pyproject.toml
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --dev --frozen --no-install-project
 
 # Copy the sources.
 COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --dev --frozen
+
+ENV PATH="/src/.venv/bin:$PATH"
 
 # Assets needed by FPR scripts.
 COPY --link worker/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
 COPY --link worker/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
-ENTRYPOINT ["python", "-m", "worker"]
+ENTRYPOINT ["worker"]
 
 # -----------------------------------------------------------------------------
 

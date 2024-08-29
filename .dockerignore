@@ -17,5 +17,6 @@
 **/.tox
 **/.git
 **/.ruff_cache
+**/.venv
 **/node_modules
 **/Thumbs.db

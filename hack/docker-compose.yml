@@ -82,6 +82,7 @@ services:
       ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
     volumes:
       - "../worker:/src"
+      - "/src/.venv"
       - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
     links:
       - "mysql"

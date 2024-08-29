@@ -28,5 +28,8 @@
 *.pprof
 *.svg
 cover.out
+*.egg-info
+
+/worker/archivematica-test.db
 
 /internal/webui/assets/*

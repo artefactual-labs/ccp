@@ -26,7 +26,7 @@ define run_toxenvs
 			--user $(CALLER_UID):$(CALLER_GID) \
 			--workdir /src/worker \
 			--rm \
-			--entrypoint tox \
+			--entrypoint uv run tox \
 				worker-tests \
 					-e $(subst $(SPACE),$(COMMA),$(strip $(1))) \
 					${TOXARGS})
