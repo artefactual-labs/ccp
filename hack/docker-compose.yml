@@ -70,7 +70,7 @@ services:
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
         UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}
-        PYTHON_VERSION: ${PYTHON_VERSION:-3.12.4}
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12.5}
     environment:
       DJANGO_SECRET_KEY: "12345"
       ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "archivematica-ccp:4730"
