@@ -60,7 +60,7 @@ spec:
           mountPath: /var/archivematica/sharedDirectory
       - name: archivematica-worker
         image: ghcr.io/artefactual-labs/ccp:latest
-        command: ["python", "-m", "worker"]
+        command: ["worker"]
         env:
         - name: DJANGO_SECRET_KEY
           value: "12345"
