@@ -88,7 +88,7 @@ manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as 
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--rm \
 		--no-deps \
-		--entrypoint /src/worker/manage.py \
+		--entrypoint /src/manage.py \
 			archivematica-worker \
 				$(ARG)
 
@@ -97,7 +97,7 @@ bootstrap:  ## Bootstrap the database.
 	docker compose run \
 		--rm \
 		--no-deps \
-		--entrypoint /src/worker/manage.py \
+		--entrypoint /src/manage.py \
 			archivematica-worker \
 				install \
 					--wait-for-db \
@@ -166,7 +166,7 @@ test-build:  ## Build archivematica-tests image.
 	docker build \
 		-t archivematica-tests \
 		-f $(CURDIR)/../Dockerfile \
-		--target archivematica-tests \
+		--target archivematica-worker \
 		--build-arg UBUNTU_VERSION \
 		--build-arg PYTHON_VERSION \
 			../

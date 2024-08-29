@@ -135,7 +135,7 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
 
 	if _, err := ctr.
-		WithExec([]string{"/src/worker/manage.py", "migrate", "--noinput"}).
+		WithExec([]string{"manage.py", "migrate", "--noinput"}).
 		Sync(ctx); err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 
 	if _, err := ctr.
 		WithExec([]string{
-			"/src/worker/manage.py", "install",
+			"manage.py", "install",
 			`--username=test`,
 			`--password=test`,
 			`--email=test@test.com`,

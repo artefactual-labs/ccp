@@ -3,16 +3,17 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG PYTHON_VERSION=3.12.5
 ARG GO_VERSION=1.22.5
+ARG UV_VERSION=0.4.0
 ARG NODE_VERSION=20
-ARG PYENV_DIR=/pyenv
-ARG SELENIUM_DIR=/selenium
 ARG MEDIAAREA_VERSION=1.0-24
 
 # -----------------------------------------------------------------------------
 
-FROM ubuntu:${UBUNTU_VERSION} AS base-builder
+FROM ubuntu:${UBUNTU_VERSION} AS archivematica-worker-base
 
-ARG PYENV_DIR
+ARG USER_ID
+ARG GROUP_ID
+ARG MEDIAAREA_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -21,6 +22,7 @@ RUN set -ex \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		ca-certificates \
+		clang \
 		curl \
 		git \
 		gnupg \
@@ -38,54 +40,6 @@ RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
-
-ENV PYENV_ROOT=${PYENV_DIR}/data
-ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
-
-# -----------------------------------------------------------------------------
-
-FROM base-builder AS pyenv-builder
-
-ARG PYTHON_VERSION
-
-RUN set -ex \
-	&& apt-get update \
-	&& apt-get install -y --no-install-recommends \
-		build-essential \
-		libbz2-dev \
-		libffi-dev \
-		liblzma-dev \
-		libncursesw5-dev \
-		libreadline-dev \
-		libsqlite3-dev \
-		libssl-dev \
-		libxml2-dev \
-		libxmlsec1-dev \
-		tk-dev \
-		xz-utils \
-		zlib1g-dev \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
-
-RUN set -ex \
-	&& curl --retry 3 -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash \
-	&& pyenv install ${PYTHON_VERSION} \
-	&& pyenv global ${PYTHON_VERSION}
-
-COPY --link worker/requirements/requirements-dev.txt /src/worker/requirements/requirements-dev.txt
-
-RUN set -ex \
-	&& pyenv exec python -m pip install --upgrade pip setuptools \
-	&& pyenv exec python -m pip install --requirement /src/worker/requirements/requirements-dev.txt \
-	&& pyenv rehash
-
-# -----------------------------------------------------------------------------
-
-FROM base-builder AS base
-
-ARG USER_ID
-ARG GROUP_ID
-ARG PYENV_DIR
-ARG MEDIAAREA_VERSION
 
 RUN set -ex \
 	&& curl --retry 3 -fsSL https://packages.archivematica.org/1.16.x/key.asc | gpg --dearmor -o /etc/apt/keyrings/archivematica-1.16.x.gpg \
@@ -139,33 +93,53 @@ RUN set -ex \
 		uuid \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
+# Download ClamAV virus signatures.
+RUN freshclam --quiet
+
+# -----------------------------------------------------------------------------
+
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+
+# -----------------------------------------------------------------------------
+
+FROM archivematica-worker-base AS archivematica-worker
+
+ARG PYTHON_VERSION
+
+# Install Python.
+COPY --from=uv /uv /bin/uv
+ENV UV_PYTHON=${PYTHON_VERSION}
+ENV UV_PYTHON_PREFERENCE=only-managed
+RUN --mount=type=cache,target=/root/.cache/uv uv python install
+
+# Use a regular user.
 RUN set -ex \
 	&& groupadd --gid ${GROUP_ID} --system archivematica \
 	&& useradd --uid ${USER_ID} --gid ${GROUP_ID} --home-dir /var/archivematica --system archivematica \
 	&& mkdir -p /var/archivematica/sharedDirectory \
 	&& chown -R archivematica:archivematica /var/archivematica
-
-# Download ClamAV virus signatures
-RUN freshclam --quiet
-
 USER archivematica
 
-COPY --chown=${USER_ID}:${GROUP_ID} --from=pyenv-builder --link ${PYENV_DIR} ${PYENV_DIR}
-COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src/worker
+# Create virtual environment.
+RUN --mount=type=cache,target=/root/.cache/uv uv venv /var/archivematica/venv
+ENV PATH="/var/archivematica/venv/bin:$PATH"
 
-WORKDIR /src/worker
+WORKDIR /src
 
-# -----------------------------------------------------------------------------
+# Install requirements.
+ADD worker/requirements/requirements-dev.txt requirements/requirements-dev.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements/requirements-dev.txt
 
-FROM base AS archivematica-worker
-
-ENV DJANGO_SETTINGS_MODULE=settings.common
+# Copy the sources.
+COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src
 
 # Assets needed by FPR scripts.
 COPY --link worker/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
 COPY --link worker/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
-ENTRYPOINT ["pyenv", "exec", "python", "-m", "worker"]
+ENV DJANGO_SETTINGS_MODULE=settings.common
+
+ENTRYPOINT ["python", "-m", "worker"]
 
 # -----------------------------------------------------------------------------
 

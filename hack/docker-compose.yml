@@ -81,10 +81,8 @@ services:
       ARCHIVEMATICA_WORKER_DB_PASSWORD: "demo"
       ARCHIVEMATICA_WORKER_DB_HOST: "mysql"
       ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
-      ARCHIVEMATICA_WORKER_METADATA_XML_VALIDATION_ENABLED: "true"
-      ARCHIVEMATICA_WORKER_METADATA_XML_VALIDATION_SETTINGS_FILE: "/src/hack/submodules/archivematica-sampledata/xml-validation/xml_validation.py"
     volumes:
-      - "../:/src"
+      - "../worker:/src"
       - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
     links:
       - "mysql"
