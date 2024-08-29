@@ -42,7 +42,6 @@ services:
       args:
         USER_ID: ${USER_ID:-1000}
         GROUP_ID: ${GROUP_ID:-1000}
-    entrypoint: ["/home/ccp/bin/ccp", "server"]
     restart: "on-failure"
     environment:
       - "CCP_DEBUG=true"

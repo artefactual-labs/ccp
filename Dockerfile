@@ -173,14 +173,12 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 
 # -----------------------------------------------------------------------------
 
-FROM alpine:3.20.0 AS ccp
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:8dd8d3ca2cf283383304fd45a5c9c74d5f2cd9da8d3b077d720e264880077c65 AS ccp
+COPY --from=go-builder /out/ccp /ccp
 ARG USER_ID
 ARG GROUP_ID
-RUN addgroup -g ${GROUP_ID} -S ccp
-RUN adduser -u ${USER_ID} -S -D ccp ccp
-COPY --from=go-builder --link /out/ccp /home/ccp/bin/ccp
-USER ccp
-CMD ["/home/ccp/bin/ccp", "server"]
+USER ${USER_ID}:${GROUP_ID}
+CMD ["/ccp", "server"]
 
 # -----------------------------------------------------------------------------
 
