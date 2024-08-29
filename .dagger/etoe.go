@@ -135,7 +135,7 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 		WithEnvVariable("CACHEBUSTER", time.Now().Format(time.RFC3339Nano))
 
 	if _, err := ctr.
-		WithExec([]string{"manage.py", "migrate", "--noinput"}).
+		WithExec([]string{"/src/manage.py", "migrate", "--noinput"}).
 		Sync(ctx); err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 
 	if _, err := ctr.
 		WithExec([]string{
-			"manage.py", "install",
+			"/src/manage.py", "install",
 			`--username=test`,
 			`--password=test`,
 			`--email=test@test.com`,
@@ -166,7 +166,6 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 func (m *CCP) bootstrapWorker(mysql, ccp *dagger.Service) *dagger.Service {
 	return m.Build().WorkerImage().
 		WithEnvVariable("DJANGO_SECRET_KEY", "12345").
-		WithEnvVariable("DJANGO_SETTINGS_MODULE", "settings.common").
 		WithEnvVariable("ARCHIVEMATICA_WORKER_DB_USER", "root").
 		WithEnvVariable("ARCHIVEMATICA_WORKER_DB_PASSWORD", "12345").
 		WithEnvVariable("ARCHIVEMATICA_WORKER_DB_HOST", "mysql").

@@ -137,8 +137,6 @@ COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src
 COPY --link worker/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
 COPY --link worker/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
 
-ENV DJANGO_SETTINGS_MODULE=settings.common
-
 ENTRYPOINT ["python", "-m", "worker"]
 
 # -----------------------------------------------------------------------------

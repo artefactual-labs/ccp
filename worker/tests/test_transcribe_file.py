@@ -62,7 +62,10 @@ def preservation_file_format_version(
 
 
 @pytest.mark.django_db
-@mock.patch("worker.clientScripts.transcribe_file.executeOrRun", return_value=(0, EXECUTE_OR_RUN_STDOUT, ""))
+@mock.patch(
+    "worker.clientScripts.transcribe_file.executeOrRun",
+    return_value=(0, EXECUTE_OR_RUN_STDOUT, ""),
+)
 def test_main(
     execute_or_run: mock.Mock,
     sip_file: models.File,
