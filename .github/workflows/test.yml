@@ -12,6 +12,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ github.token }}
       - uses: bufbuild/buf-lint-action@v1
       - uses: bufbuild/buf-push-action@v1
         if: github.ref_name == 'ccp'
@@ -31,8 +33,7 @@ jobs:
       - name: Get date
         id: get-date
         shell: bash
-        run: |
-          echo "::set-output name=date::$(date -u "+%Y-%m")"
+        run: echo "date=$(date -u '+%Y-%')" >> "$GITHUB_OUTPUT"
       - name: Restore golangci-lint cache
         uses: actions/cache@v4
         timeout-minutes: 10
