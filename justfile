@@ -53,3 +53,15 @@ git-log-recent-upstream:  # Show recent commits in upstream (qa/1.x).
       git fetch upstream
   fi
   git log --oneline upstream/qa/1.x ^HEAD
+
+worker-update-deps:  # Update worker dependencies.
+  #!/usr/bin/env bash
+  cd worker
+  uv sync --dev --frozen
+  uv lock --upgrade
+
+worker-list-outdated-deps:  # List outdated worker dependencies.
+  #!/usr/bin/env bash
+  cd worker
+  uv sync --dev --frozen
+  uv run --with=pip pip list --outdated
