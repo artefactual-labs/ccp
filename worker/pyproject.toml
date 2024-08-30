@@ -64,6 +64,12 @@ include = [
 ]
 branch = true
 
+[tool.ruff]
+# We target py38 to remain as close as possible to vanilla Archivematica to
+# simplify merges, e.g. if we target py312 we'd be using modern typing
+# annotations not available in order releases.
+target-version = "py38"
+
 [tool.ruff.lint]
 # Rule reference: https://docs.astral.sh/ruff/rules/
 select = [
