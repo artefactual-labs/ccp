@@ -13,10 +13,7 @@ spec:
       - name: ccp-install
         image: ghcr.io/artefactual-labs/ccp:latest
         command:
-        - pyenv
-        - exec
-        - python
-        - /src/worker/manage.py
+        - /src/manage.py
         - install
         - --wait-for-db
         - --migrate
