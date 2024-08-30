@@ -24,9 +24,8 @@ define run_toxenvs
 			-e DJANGO_SETTINGS_MODULE=settings.testmysql \
 			-e PYTEST_ADDOPTS=$(subst $(SPACE),\$(SPACE),${PYTEST_ADDOPTS}) \
 			--user $(CALLER_UID):$(CALLER_GID) \
-			--workdir /src/worker \
 			--rm \
-			--entrypoint uv run tox \
+			--entrypoint tox \
 				worker-tests \
 					-e $(subst $(SPACE),$(COMMA),$(strip $(1))) \
 					${TOXARGS})
@@ -38,8 +37,9 @@ start-mysql: test-build
 			--user $(CALLER_UID):$(CALLER_GID) \
 			--rm \
 			--entrypoint bash \
+			--workdir /src/tests \
 				worker-tests \
-					/src/hack/helpers/wait-for-it.sh mysql:3306 --timeout=30)
+					./wait-for-it.sh mysql:3306 --timeout=30)
 
 define create_db
 	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e '\
@@ -112,24 +112,6 @@ bootstrap:  ## Bootstrap the database.
 
 restart:  ## Restart Archivematica services.
 	docker compose restart --no-deps ccp worker
-
-compile-requirements:  ## Run pip-compile for Archivematica
-	docker compose run --workdir /src/worker/requirements \
-		-e XDG_CACHE_HOME=/tmp/pip-cache \
-		--rm \
-		--no-deps \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash worker \
-			-c "pip-compile --allow-unsafe --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --output-file requirements-dev.txt requirements-dev.in"
-
-upgrade-requirements:  ## Run pip-upgrade for Archivematica
-	docker compose run --workdir /src/worker/requirements \
-		-e XDG_CACHE_HOME=/tmp/pip-cache \
-		--rm \
-		--no-deps \
-		--user $(CALLER_UID):$(CALLER_GID) \
-		--entrypoint bash worker \
-			-c "pip-compile --allow-unsafe --upgrade --output-file requirements.txt requirements.in && pip-compile --allow-unsafe --upgrade --output-file requirements-dev.txt requirements-dev.in"
 
 db:  ## Connect to the MySQL server using the CLI.
 	docker compose exec mysql mysql -hlocalhost -uroot -p12345
