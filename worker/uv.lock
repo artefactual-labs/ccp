@@ -37,8 +37,8 @@ wheels = [
 
 [[package]]
 name = "bagit"
-version = "1.8.1.dev26+g5b77243"
-source = { git = "https://github.com/LibraryOfCongress/bagit-python?rev=5b7724356d8c5c3a3be9120814d4d996574485a9#5b7724356d8c5c3a3be9120814d4d996574485a9" }
+version = "0.1.dev485+g902051d"
+source = { git = "https://github.com/artefactual-labs/bagit-python?rev=902051d8410219f6c5f4ce6d43e5b272cf29e89b#902051d8410219f6c5f4ce6d43e5b272cf29e89b" }
 
 [[package]]
 name = "cachetools"
@@ -601,7 +601,7 @@ dev = [
 requires-dist = [
     { name = "agentarchives", specifier = ">=0.9.0" },
     { name = "ammcpc", specifier = ">=0.2.0" },
-    { name = "bagit", git = "https://github.com/LibraryOfCongress/bagit-python?rev=5b7724356d8c5c3a3be9120814d4d996574485a9" },
+    { name = "bagit", git = "https://github.com/artefactual-labs/bagit-python?rev=902051d8410219f6c5f4ce6d43e5b272cf29e89b" },
     { name = "clamd", specifier = ">=1.0.2" },
     { name = "django", specifier = ">=4.2,<5" },
     { name = "django-autoslug", specifier = ">=1.9.9" },

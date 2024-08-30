@@ -39,7 +39,7 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-bagit = { git = "https://github.com/LibraryOfCongress/bagit-python", rev = "5b7724356d8c5c3a3be9120814d4d996574485a9" }
+bagit = { git = "https://github.com/artefactual-labs/bagit-python", rev = "902051d8410219f6c5f4ce6d43e5b272cf29e89b" }
 gearman3 = { git = "https://github.com/artefactual-labs/python-gearman.git", rev = "b68efc868c7a494dd6a2d2e820fb098a6da9f797" }
 opf-fido = { git = "https://github.com/artefactual-labs/fido.git", rev = "564ceb8018a8650fe931cf20e6780ee008e60fca" }
 
