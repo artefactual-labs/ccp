@@ -17,6 +17,9 @@ volumes:
     name: "ccp-am-pipeline-data"
     external: true
 
+  grafana_data:
+  prometheus_data:
+
 services:
 
   mysql:
@@ -87,3 +90,30 @@ services:
     links:
       - "mysql"
       - "ccp"
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - 63090:9090
+    profiles:
+      - "observability"
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: "test"
+      GF_SECURITY_ADMIN_PASSWORD: "test"
+    volumes:
+      - ./etc/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - 63091:3000
+    links:
+      - "prometheus"
+    profiles:
+      - "observability"
