@@ -1,24 +1,37 @@
 set shell := ["bash", "-uc"]
 
 [private]
-default:
+default: _check_uv
   @just --list --unsorted
 
+_check_uv:
+  #!/usr/bin/env bash
+  if ! command -v uv > /dev/null; then
+    echo "uv is not installed. Please install uv to proceed."
+    exit 1
+  fi
+
+# Run the generate-dumps Dagger pipeline.
 e2e-dump:
   dagger call --progress=plain --source=".:default" generate-dumps export --path=e2e/testdata/dumps
 
+# Run the e2e Dagger pipeline.
 e2e:
   dagger call --progress=plain --source=".:default" etoe
 
+# Launch amflow.
 amflow:
   amflow edit --file ./internal/workflow/assets/workflow.json
 
+# Launch grpcui.
 grpcui:
   grpcui -plaintext -H "Authorization: ApiKey test:test" localhost:63030
 
+# Run the development environment.
 run:
   make -C hack run
 
+# Submit a transfer in the dev environment using the Admin API.
 transfer:
   ./hack/helpers/transfer-via-api.sh
 
@@ -45,7 +58,8 @@ release:
     git tag -m "Release ${version}" $version
     git push origin refs/tags/$version
 
-git-log-recent-upstream:  # Show recent commits in upstream (qa/1.x).
+# Show recent commits in upstream (qa/1.x).
+git-log-recent-upstream:
   #!/usr/bin/env bash
   if ! git remote get-url upstream > /dev/null 2>&1; then
       git remote add -f upstream https://github.com/artefactual/archivematica.git
@@ -54,14 +68,35 @@ git-log-recent-upstream:  # Show recent commits in upstream (qa/1.x).
   fi
   git log --oneline upstream/qa/1.x ^HEAD
 
-worker-update-deps:  # Update worker dependencies.
+# Update worker dependencies.
+worker-update-deps:
   #!/usr/bin/env bash
   cd worker
-  uv sync --dev --frozen
+  uv sync --frozen
   uv lock --upgrade
 
-worker-list-outdated-deps:  # List outdated worker dependencies.
+# List outdated worker dependencies.
+worker-list-outdated-deps:
   #!/usr/bin/env bash
   cd worker
-  uv sync --dev --frozen
+  uv sync --frozen
   uv run --with=pip pip list --outdated
+
+# Test worker migrations.
+worker-test-migrations:
+  #!/usr/bin/env bash
+  cd worker
+  uv sync --frozen
+  uv run django-admin makemigrations --settings=settings.test --check --dry-run
+
+# Test worker application.
+worker-test-application *args:
+  #!/usr/bin/env bash
+  # TODO: missing test using mysql
+  cd worker
+  uv sync --frozen
+  uv run pytest {{args}}
+
+# Run pre-commit.
+pre-commit:
+  uvx pre-commit run --all-files

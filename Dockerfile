@@ -125,11 +125,11 @@ WORKDIR /src
 # Install the requirements.
 ADD worker/uv.lock uv.lock
 ADD worker/pyproject.toml pyproject.toml
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --dev --frozen --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-install-project
 
 # Copy the sources.
 COPY --chown=${USER_ID}:${GROUP_ID} --link ./worker /src
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --dev --frozen
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
 
 ENV PATH="/src/.venv/bin:$PATH"
 

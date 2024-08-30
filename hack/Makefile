@@ -14,33 +14,6 @@ define compose_all
 	docker compose -f docker-compose.yml -f docker-compose.acceptance-tests.yml -f docker-compose.pmm.yml $(1)
 endef
 
-define compose_tests
-	docker compose -f docker-compose.yml -f docker-compose.tests.yml $(1)
-endef
-
-define run_toxenvs
-	$(call compose_tests, \
-		run \
-			-e DJANGO_SETTINGS_MODULE=settings.testmysql \
-			-e PYTEST_ADDOPTS=$(subst $(SPACE),\$(SPACE),${PYTEST_ADDOPTS}) \
-			--user $(CALLER_UID):$(CALLER_GID) \
-			--rm \
-			--entrypoint tox \
-				worker-tests \
-					-e $(subst $(SPACE),$(COMMA),$(strip $(1))) \
-					${TOXARGS})
-endef
-
-start-mysql: test-build
-	$(call compose_tests, \
-		run \
-			--user $(CALLER_UID):$(CALLER_GID) \
-			--rm \
-			--entrypoint bash \
-			--workdir /src/tests \
-				worker-tests \
-					./wait-for-it.sh mysql:3306 --timeout=30)
-
 define create_db
 	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e '\
 		DROP DATABASE IF EXISTS `$(1)`; \
@@ -51,18 +24,6 @@ endef
 define grant_all_on_db
 	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e '\
 		GRANT ALL ON `$(1)`.* TO "archivematica"@"%";'
-endef
-
-define drop_db
-	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e 'DROP DATABASE IF EXISTS `$(1)`;'
-endef
-
-define create_dbs
-	$(foreach test_db,$(1),$(call create_db,$(test_db));)
-endef
-
-define grant_all_on_dbs
-	$(foreach test_db,$(1),$(call grant_all_on_db,$(test_db));)
 endef
 
 create-volumes:  ## Create external data volumes.
@@ -134,43 +95,6 @@ flush-shared-dir:  ## Delete contents of the shared directory data volume.
 
 flush-logs:  ## Delete container logs - requires root privileges.
 	@./helpers/flush-docker-logs.sh
-
-# These include the database names used in the settings.testmysql
-# modules plus the prefixed and suffixed variations used by Django and
-# tox when running in parallel mode
-__TEST_DBS_WORKER = WORKERTEST test_WORKERTEST test_WORKERTEST_worker
-__TEST_DBS_MIGRATIONS = WORKERTEST
-__TEST_DBS := $(__TEST_DBS_WORKER) $(__TEST_DBS_MIGRATIONS) test_CCP
-flush-test-dbs: start-mysql
-	$(foreach test_db,$(__TEST_DBS),$(call drop_db,$(test_db));)
-
-test-build:  ## Build worker-tests image.
-	docker build \
-		-t worker-tests \
-		-f $(CURDIR)/../Dockerfile \
-		--target worker \
-		--build-arg UBUNTU_VERSION \
-		--build-arg PYTHON_VERSION \
-			../
-
-__TOXENVS_WORKER = worker
-test-worker: start-mysql  ## Run worker tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_WORKER))
-	$(call run_toxenvs,$(__TOXENVS_WORKER))
-
-__TOXENVS_MIGRATIONS = migrations
-test-migrations: start-mysql  ## Check there are no pending migrations.
-	$(call create_dbs,$(__TEST_DBS_MIGRATIONS))
-	$(call run_toxenvs,$(__TOXENVS_MIGRATIONS))
-
-__TOXENVS_LINTING = linting
-test-linting:  ## Check linting.
-	$(call run_toxenvs,$(__TOXENVS_LINTING))
-
-__TOXENVS_ALL := $(__TOXENVS_WORKER)
-test-all: start-mysql  ## Run all tests.
-	$(call grant_all_on_dbs,$(__TEST_DBS_WORKER))
-	$(call run_toxenvs,$(__TOXENVS_ALL))
 
 stop:  # Stop all containers.
 	$(call compose_all, stop)
