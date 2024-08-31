@@ -1,7 +1,8 @@
 package main
 
 import (
-	"errors"
+	"context"
+	"fmt"
 
 	"dagger/ccp/internal/dagger"
 )
@@ -17,33 +18,54 @@ const (
 )
 
 type CCP struct {
-	// Project source directory
-	// This will become useful once pulling from remote becomes available
+	// Root source directory.
 	//
 	// +private
-	Source *dagger.Directory
+	Root *dagger.Directory
+
+	// Frontend source directory.
+	//
+	// +private
+	Frontend *dagger.Directory
 }
 
 func New(
-	// Project source directory.
-	// +optional
-	source *dagger.Directory,
+	// Root source directory.
+	//
+	// +defaultPath="/"
+	// +ignore=["**/.git", "**/.venv", "**/node_modules", "hack/submodules/archivematica-sampledata"]
+	root *dagger.Directory,
 
-	// Checkout the repository (at the designated ref) and use it as the source
-	// directory instead of the local one.
-	// +optional
-	ref string,
+	// Frontend source directory.
+	//
+	// +defaultPath="/web"
+	// +ignore=["node_modules", "test-results", "playwright-report"]
+	frontend *dagger.Directory,
 ) (*CCP, error) {
-	if source == nil && ref != "" {
-		opts := dagger.GitOpts{KeepGitDir: true}
-		source = dag.Git(gitURL, opts).Ref(ref).Tree()
-	}
-
-	if source == nil {
-		return nil, errors.New("either source or ref is required")
-	}
-
 	return &CCP{
-		Source: source,
+		Root:     root,
+		Frontend: frontend,
 	}, nil
+}
+
+func (c *CCP) Info(ctx context.Context) error {
+	fmt.Println("====> Root")
+	entries, err := c.Root.Entries(ctx)
+	if err != nil {
+		return err
+	}
+	for _, item := range entries {
+		fmt.Println(item)
+	}
+
+	fmt.Println("====> Frontend")
+	entries, err = c.Frontend.Entries(ctx)
+	if err != nil {
+		return err
+	}
+	for _, item := range entries {
+		fmt.Println(item)
+	}
+
+	return nil
 }

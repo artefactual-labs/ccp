@@ -84,7 +84,7 @@ func (m *CCP) Etoe(
 
 	dag.Go(dagger.GoOpts{
 		Container: goModule().
-			WithSource(m.Source).
+			WithSource(m.Root).
 			Container().
 			WithServiceBinding("mysql", mysql).
 			WithServiceBinding("ccp", ccp).
@@ -120,7 +120,7 @@ func (m *CCP) populateDatabase(ctx context.Context, mysql *dagger.Service, dbMod
 	}
 
 	if dbMode == UseDumps {
-		dumpFile := m.Source.File(filepath.Join(dbDumpsDir, fmt.Sprintf("%s.sql.bz2", dbName)))
+		dumpFile := m.Root.File(filepath.Join(dbDumpsDir, fmt.Sprintf("%s.sql.bz2", dbName)))
 		if err := loadDump(ctx, mysql, dbName, dumpFile); err != nil {
 			return err
 		}

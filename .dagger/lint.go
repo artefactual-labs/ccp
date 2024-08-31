@@ -4,7 +4,7 @@ import "dagger/ccp/internal/dagger"
 
 func (m *CCP) Lint() *Lint {
 	return &Lint{
-		Source: m.Source,
+		Source: m.Root,
 	}
 }
 

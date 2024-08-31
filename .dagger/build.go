@@ -4,7 +4,7 @@ import "dagger/ccp/internal/dagger"
 
 func (m *CCP) Build() *Build {
 	return &Build{
-		Source: m.Source,
+		Source: m.Root,
 	}
 }
 

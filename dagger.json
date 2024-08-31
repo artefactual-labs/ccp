@@ -12,15 +12,5 @@
     }
   ],
   "source": ".dagger",
-  "engineVersion": "v0.12.4",
-  "views": [
-    {
-      "name": "default",
-      "patterns": [
-        "!**/.git",
-        "!**/node_modules",
-        "!hack/submodules/archivematica-sampledata"
-      ]
-    }
-  ]
+  "engineVersion": "v0.12.6"
 }

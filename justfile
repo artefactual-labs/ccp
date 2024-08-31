@@ -13,11 +13,11 @@ _check_uv:
 
 # Run the generate-dumps Dagger pipeline.
 e2e-dump:
-  dagger call --progress=plain --source=".:default" generate-dumps export --path=e2e/testdata/dumps
+  dagger call --progress=plain generate-dumps export --path=e2e/testdata/dumps
 
 # Run the e2e Dagger pipeline.
 e2e:
-  dagger call --progress=plain --source=".:default" etoe
+  dagger call --progress=plain etoe
 
 # Launch amflow.
 amflow:
