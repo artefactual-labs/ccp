@@ -21,7 +21,6 @@ include hack/make/dep_goenum.mk
 include hack/make/dep_golangci_lint.mk
 include hack/make/dep_gotestsum.mk
 include hack/make/dep_mockgen.mk
-include hack/make/dep_oapi_codegen.mk
 include hack/make/dep_sqlc.mk
 include hack/make/dep_tparse.mk
 include hack/make/enums.mk
@@ -32,7 +31,6 @@ TOOLS = $(BUF) \
 	$(GOLANGCI_LINT) \
 	$(GOTESTSUM) \
 	$(MOCKGEN) \
-	$(OAPI_CODEGEN) \
 	$(SQLC) \
 	$(TPARSE)
 
