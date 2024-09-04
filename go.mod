@@ -1,6 +1,6 @@
 module github.com/artefactual-labs/ccp
 
-go 1.22.5
+go 1.23.0
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2

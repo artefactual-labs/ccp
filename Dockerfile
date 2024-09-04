@@ -2,7 +2,7 @@ ARG UBUNTU_VERSION=22.04
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG PYTHON_VERSION=3.12.5
-ARG GO_VERSION=1.22.5
+ARG GO_VERSION=1.23.0
 ARG UV_VERSION=0.4.0
 ARG NODE_VERSION=20
 ARG MEDIAAREA_VERSION=1.0-24
@@ -154,7 +154,7 @@ RUN npm run build
 
 # -----------------------------------------------------------------------------
 
-FROM golang:$GO_VERSION-alpine AS go-builder
+FROM golang:$GO_VERSION AS go-builder
 ARG VERSION_PATH=github.com/artefactual-labs/ccp/internal/version
 ARG VERSION_NUMBER
 ARG VERSION_GIT_COMMIT

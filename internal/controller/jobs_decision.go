@@ -182,7 +182,7 @@ func (d *decision) convert() *adminv1.Decision {
 
 	for i, item := range d.choices {
 		ret.Choice = append(ret.Choice, &adminv1.Choice{
-			Id:    int32(i),
+			Id:    int32(i), //nolint:gosec // (G115) no risk of overflow
 			Label: item.label,
 		})
 	}
