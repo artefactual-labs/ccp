@@ -14,7 +14,7 @@ type Lint struct {
 
 func (m *Lint) Go() *dagger.Container {
 	return dag.GolangciLint(dagger.GolangciLintOpts{
-		Version:   golangciLintVersion,
+		Version:   "v" + golangciLintVersion,
 		GoVersion: goVersion,
 	}).
 		Run(m.Source, dagger.GolangciLintRunOpts{

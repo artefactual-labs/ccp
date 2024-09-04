@@ -7,15 +7,7 @@ import (
 	"dagger/ccp/internal/dagger"
 )
 
-const (
-	goVersion           = "1.22.5"
-	golangciLintVersion = "v1.59.1"
-
-	gitURL = "https://github.com/artefactual-labs/ccp.git"
-
-	alpineImage = "alpine:3.20.1"
-	mysqlImage  = "mysql:8.4.1"
-)
+const gitURL = "https://github.com/artefactual-labs/ccp.git"
 
 type CCP struct {
 	// Root source directory.
@@ -33,7 +25,7 @@ func New(
 	// Root source directory.
 	//
 	// +defaultPath="/"
-	// +ignore=["**/.git", "**/.venv", "**/node_modules", "hack/submodules/archivematica-sampledata"]
+	// +ignore=["**/.git", "**/.venv", "**/node_modules", "**/__pycache__", "internal/webui/assets", "internal/worker/runc/assets", "hack/submodules/archivematica-sampledata"]
 	root *dagger.Directory,
 
 	// Frontend source directory.

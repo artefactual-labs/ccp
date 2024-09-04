@@ -16,6 +16,7 @@ import (
 	"github.com/artefactual-labs/ccp/internal/controller"
 	"github.com/artefactual-labs/ccp/internal/store"
 	"github.com/artefactual-labs/ccp/internal/webui"
+	"github.com/artefactual-labs/ccp/internal/worker"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
 
@@ -143,6 +144,15 @@ func (s *Server) Run() error {
 	s.webui = webui.New(s.logger.WithName("webui"), s.config.webui, s.admin.Addr())
 	if err := s.webui.Run(); err != nil {
 		return fmt.Errorf("error creating web UI: %v", err)
+	}
+
+	// TODO!
+	pool, err := worker.New()
+	if err != nil {
+		return fmt.Errorf("error creating worker pool: %v", err)
+	} else {
+		pool.Start()
+		s.logger.V(1).Info("Pool created!", "pool", pool)
 	}
 
 	s.logger.V(1).Info("Ready.")
