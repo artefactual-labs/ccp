@@ -46,6 +46,7 @@ opf-fido = { git = "https://github.com/artefactual-labs/fido.git", rev = "564ceb
 include = ["worker.*"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 addopts = "--reuse-db -p no:cacheprovider"
 DJANGO_SETTINGS_MODULE = "settings.test"
 
@@ -59,7 +60,7 @@ omit = [
     "**/wsgi.py",
     "**/manage.py",
 ]
-include = ["**/worker/*"]
+include = ["worker/*"]
 branch = true
 
 [tool.ruff]
