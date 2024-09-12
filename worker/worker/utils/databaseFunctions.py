@@ -125,7 +125,7 @@ def insertIntoEvents(
     eventOutcome="",
     eventOutcomeDetailNote="",
     agents=None,
-):
+) -> Event:
     """Creates a new entry in the Events table using the supplied arguments.
 
     :param str fileUUID: The UUID of the file with which this event is
