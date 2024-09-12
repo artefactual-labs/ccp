@@ -12,7 +12,6 @@ SUPPORTED_MODULES = {
     "archivematicaclamscan_v0.0": "archivematica_clamscan",
     "createevent_v0.0": "create_event",
     "examinecontents_v0.0": "examine_contents",
-    "fits_v0.0": "fits",
     "identifydspacefiles_v0.0": "identify_dspace_files",
     "identifydspacemetsfiles_v0.0": "identify_dspace_mets_files",
     "identifyfileformat_v0.0": "identify_file_format",

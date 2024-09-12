@@ -95,6 +95,7 @@ module = [
     "worker.clientScripts.policy_check",
     "worker.clientScripts.transcribe_file",
     "worker.clientScripts.validate_file",
+    "worker.utils.executeOrRunSubProcess",
     "worker.tests.conftest",
     "worker.tests.test_characterize_file",
     "worker.tests.test_has_packages",
@@ -103,6 +104,7 @@ module = [
     "worker.tests.test_policy_check",
     "worker.tests.test_transcribe_file",
     "worker.tests.test_validate_file",
+    "worker.tests.utils.test_execute_function",
 ]
 check_untyped_defs = true
 disallow_any_generics = true

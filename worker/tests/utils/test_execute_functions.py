@@ -1,6 +1,9 @@
+import pathlib
 import shlex
 import tempfile
+from typing import Generator
 from unittest.mock import ANY
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -9,7 +12,7 @@ from worker.utils.executeOrRunSubProcess import createAndRunScript
 from worker.utils.executeOrRunSubProcess import launchSubProcess
 
 
-def test_capture_output():
+def test_capture_output() -> None:
     """Tests behaviour of capture_output when executing sub processes."""
 
     # Test that stdout and stderr are not captured by default
@@ -51,7 +54,7 @@ def test_capture_output():
 
 
 @pytest.fixture
-def temp_path(tmp_path):
+def temp_path(tmp_path: pathlib.Path) -> Generator[str, None, None]:
     """Creates custom temp path, yields the value, and resets to original value."""
 
     original_tempdir = tempfile.tempdir
@@ -63,7 +66,9 @@ def temp_path(tmp_path):
 
 
 @patch("worker.utils.executeOrRunSubProcess.launchSubProcess")
-def test_createAndRunScript_creates_tmpfile_in_custom_dir(launchSubProcess, temp_path):
+def test_createAndRunScript_creates_tmpfile_in_custom_dir(
+    launchSubProcess: Mock, temp_path: str
+) -> None:
     """Tests execution of launchSubProcess when executing createAndRunScript."""
 
     script_content = "#!/bin/bash\necho 'Script output'\nexit 0"
@@ -79,3 +84,22 @@ def test_createAndRunScript_creates_tmpfile_in_custom_dir(launchSubProcess, temp
     )
     args, _ = launchSubProcess.call_args
     assert args[0][0].startswith(temp_path)
+
+
+@patch("subprocess.Popen")
+def test_launchSubProcess_replaces_non_utf8_output_with_replacement_characters(
+    popen: Mock,
+) -> None:
+    communicate_return_code = 0
+    communicate_output = b"Output \xae"
+    communicate_error = b"Error \xae"
+    popen.return_value = Mock(
+        returncode=communicate_return_code,
+        **{"communicate.return_value": (communicate_output, communicate_error)},
+    )
+
+    code, stdout, stderr = launchSubProcess("mycommand", capture_output=True)
+
+    assert code == communicate_return_code
+    assert stdout == communicate_output.decode(errors="replace")
+    assert stderr == communicate_error.decode(errors="replace")
