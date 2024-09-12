@@ -98,5 +98,5 @@ worker-test-application *args:
   uv run pytest {{args}}
 
 # Run pre-commit.
-pre-commit:
-  uvx pre-commit run --all-files
+pre-commit *args:
+  uvx pre-commit run --all-files {{args}}
