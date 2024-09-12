@@ -59,9 +59,7 @@ omit = [
     "**/wsgi.py",
     "**/manage.py",
 ]
-include = [
-    "**/worker/*",
-]
+include = ["**/worker/*"]
 branch = true
 
 [tool.ruff]
@@ -72,22 +70,8 @@ target-version = "py38"
 
 [tool.ruff.lint]
 # Rule reference: https://docs.astral.sh/ruff/rules/
-select = [
-    "B",
-    "C4",
-    "E",
-    "F",
-    "I",
-    "UP",
-    "W",
-]
-ignore = [
-    "B018",
-    "B904",
-    "E402",
-    "E501",
-    "UP031",
-]
+select = ["B", "C4", "E", "F", "I", "UP", "W"]
+ignore = ["B018", "B904", "E402", "E501", "UP031"]
 
 [tool.ruff.lint.per-file-ignores]
 "settings/*" = ["F403"]
@@ -111,14 +95,14 @@ module = [
     "worker.clientScripts.policy_check",
     "worker.clientScripts.transcribe_file",
     "worker.clientScripts.validate_file",
-    "tests.conftest",
-    "tests.test_characterize_file",
-    "tests.test_has_packages",
-    "tests.test_identify_file_format",
-    "tests.test_normalize",
-    "tests.test_policy_check",
-    "tests.test_transcribe_file",
-    "tests.test_validate_file",
+    "worker.tests.conftest",
+    "worker.tests.test_characterize_file",
+    "worker.tests.test_has_packages",
+    "worker.tests.test_identify_file_format",
+    "worker.tests.test_normalize",
+    "worker.tests.test_policy_check",
+    "worker.tests.test_transcribe_file",
+    "worker.tests.test_validate_file",
 ]
 check_untyped_defs = true
 disallow_any_generics = true
