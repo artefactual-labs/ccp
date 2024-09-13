@@ -74,12 +74,12 @@ wheels = [
 ]
 
 [[package]]
-name = "clamd"
-version = "1.0.2"
+name = "clamav-client"
+version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/14/8b/55332f1f79f28a5ccc50f66364087e64fae8e4ed62e52007ca82b3072221/clamd-1.0.2.tar.gz", hash = "sha256:d82a2fd814684a35a1b31feadafb2e69c8ebde9403613f6bdaa5d877c0f29560", size = 8218 }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/34/556300be3f992627749ab205055e2faf149c56b2a42dc3335291c9b84f6a/clamav_client-0.5.1.tar.gz", hash = "sha256:cfab214aeff3ea2ff293f4c164c1eb2330b5c34081d4a0aa3012e481ab7ab137", size = 29643 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/d0/84614de2a53ad52370adc9f9260bea420e53e0c228a248ec0eacfa65ccbb/clamd-1.0.2-py2.py3-none-any.whl", hash = "sha256:5c32546b7d1eb00fd6be00a889d79e00fbf980ed082826ccfa369bce3dcff5e7", size = 6684 },
+    { url = "https://files.pythonhosted.org/packages/5d/39/6b4b05a2900de88c69d6e35400bb8bed12b91a28ed9bb4112ce2c2d59af0/clamav_client-0.5.1-py3-none-any.whl", hash = "sha256:1f5c8465f09e5158fe3f10bb552ccc7ff1e0c7e10c597ed481c9ba1d75b74803", size = 13593 },
 ]
 
 [[package]]
@@ -481,7 +481,7 @@ dependencies = [
     { name = "agentarchives" },
     { name = "ammcpc" },
     { name = "bagit" },
-    { name = "clamd" },
+    { name = "clamav-client" },
     { name = "django" },
     { name = "django-autoslug" },
     { name = "django-tastypie" },
@@ -510,7 +510,7 @@ requires-dist = [
     { name = "agentarchives", specifier = ">=0.9.0" },
     { name = "ammcpc", specifier = ">=0.2.0" },
     { name = "bagit", git = "https://github.com/artefactual-labs/bagit-python?rev=902051d8410219f6c5f4ce6d43e5b272cf29e89b" },
-    { name = "clamd", specifier = ">=1.0.2" },
+    { name = "clamav-client", specifier = ">=0.5.1" },
     { name = "django", specifier = ">=4.2,<5" },
     { name = "django-autoslug", specifier = ">=1.9.9" },
     { name = "django-tastypie", specifier = ">=0.14.7" },

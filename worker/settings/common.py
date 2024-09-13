@@ -172,7 +172,7 @@ prometheus_detailed_metrics = false
 server = /var/run/clamav/clamd.ctl
 pass_by_stream = True
 client_timeout = 86400
-client_backend = clamdscanner    ; Options: clamdscanner or clamscanner
+client_backend = clamscanner     ; Options: clamdscanner or clamscanner
 client_max_file_size = 42        ; MB
 client_max_scan_size = 42        ; MB
 

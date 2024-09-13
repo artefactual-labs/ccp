@@ -7,7 +7,7 @@ dependencies = [
     "agentarchives>=0.9.0",
     "ammcpc>=0.2.0",
     "bagit",
-    "clamd>=1.0.2",
+    "clamav-client>=0.5.1",
     "django-autoslug>=1.9.9",
     "django-tastypie>=0.14.7",
     "gearman3",
@@ -89,6 +89,7 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = [
     "worker.client.*",
+    "worker.clientScripts.archivematica_clamscan",
     "worker.clientScripts.characterize_file",
     "worker.clientScripts.has_packages",
     "worker.clientScripts.identify_file_format",
@@ -98,6 +99,7 @@ module = [
     "worker.clientScripts.validate_file",
     "worker.utils.executeOrRunSubProcess",
     "worker.tests.conftest",
+    "worker.tests.test_antivirus",
     "worker.tests.test_characterize_file",
     "worker.tests.test_has_packages",
     "worker.tests.test_identify_file_format",
