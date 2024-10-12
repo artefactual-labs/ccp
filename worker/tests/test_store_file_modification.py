@@ -3,6 +3,8 @@ import shutil
 import tempfile
 
 from django.test import TestCase
+from django.test import override_settings
+from django.utils.timezone import get_current_timezone
 
 from worker.clientScripts import store_file_modification_dates
 from worker.main import models
@@ -26,6 +28,7 @@ class TestStoreFileModification(TestCase):
         )
         shutil.rmtree(transfer_path)
 
+    @override_settings(TIME_ZONE="US/Eastern")
     def test_store_file_modification_dates(self):
         """Test store_file_modification_dates.
 
@@ -48,19 +51,22 @@ class TestStoreFileModification(TestCase):
                 os.makedirs(dirname)
             with open(path, "wb") as f:
                 f.write(path.encode("utf8"))
-            os.utime(path, (1339485682, 1339485682))
+            os.utime(path, (1049597970, 1049597970))
 
         # Store file modification dates
-        store_file_modification_dates.main(self.transfer_uuid, self.temp_dir + "/")
+        store_file_modification_dates.main(
+            self.transfer_uuid, self.temp_dir + "/", get_current_timezone()
+        )
 
         # Assert files have expected modification times
+        expected_time = "2003-04-06 02:59:30+00:00"
         assert (
             str(
                 models.File.objects.get(
                     pk="47813453-6872-442b-9d65-6515be3c5aa1"
                 ).modificationtime
             )
-            == "2012-06-12 07:21:22+00:00"
+            == expected_time
         )
         assert (
             str(
@@ -68,7 +74,7 @@ class TestStoreFileModification(TestCase):
                     pk="60e5c61b-14ef-4e92-89ec-9b9201e68adb"
                 ).modificationtime
             )
-            == "2012-06-12 07:21:22+00:00"
+            == expected_time
         )
         assert (
             str(
@@ -76,7 +82,7 @@ class TestStoreFileModification(TestCase):
                     pk="791e07ea-ad44-4315-b55b-44ec771e95cf"
                 ).modificationtime
             )
-            == "2012-06-12 07:21:22+00:00"
+            == expected_time
         )
         assert (
             str(
@@ -84,5 +90,5 @@ class TestStoreFileModification(TestCase):
                     pk="8a1f0b59-cf94-47ef-8078-647b77c8a147"
                 ).modificationtime
             )
-            == "2012-06-12 07:21:22+00:00"
+            == expected_time
         )
