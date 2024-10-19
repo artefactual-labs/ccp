@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"connectrpc.com/authn"
@@ -19,7 +20,7 @@ func authenticate(logger logr.Logger, store store.Store) authn.AuthFunc {
 }
 
 func multiAuthenticate(methods ...authn.AuthFunc) authn.AuthFunc {
-	return func(ctx context.Context, req authn.Request) (any, error) {
+	return func(ctx context.Context, req *http.Request) (any, error) {
 		var lastErr error
 		for _, method := range methods {
 			result, err := method(ctx, req)
@@ -33,8 +34,8 @@ func multiAuthenticate(methods ...authn.AuthFunc) authn.AuthFunc {
 }
 
 func authApiKey(logger logr.Logger, store store.Store) authn.AuthFunc {
-	return func(ctx context.Context, req authn.Request) (any, error) {
-		auth := req.Header().Get("Authorization")
+	return func(ctx context.Context, req *http.Request) (any, error) {
+		auth := req.Header.Get("Authorization")
 		if auth == "" {
 			return nil, errInvalidAuth
 		}

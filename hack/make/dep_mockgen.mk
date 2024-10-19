@@ -4,7 +4,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/uber-go/mock/releases
-MOCKGEN_VERSION ?= 0.4.0
+MOCKGEN_VERSION ?= 0.5.0
 
 MOCKGEN := $(CACHE_VERSIONS)/mockgen/$(MOCKGEN_VERSION)
 $(MOCKGEN):

@@ -6,7 +6,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/bufbuild/buf/releases
-BUF_VERSION ?= 1.39.0
+BUF_VERSION ?= 1.45.0
 
 BUF := $(CACHE_VERSIONS)/buf/$(BUF_VERSION)
 $(BUF):

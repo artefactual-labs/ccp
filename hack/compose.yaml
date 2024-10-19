@@ -7,6 +7,8 @@ volumes:
   # These are not accessible outside of the docker host and are maintained by
   # Docker.
   mysql_data:
+  grafana_data:
+  prometheus_data:
 
   # External named volumes.
   # These are intended to be accessible beyond the docker host (e.g. via NFS).
@@ -17,8 +19,6 @@ volumes:
     name: "ccp-am-pipeline-data"
     external: true
 
-  grafana_data:
-  prometheus_data:
 
 services:
 

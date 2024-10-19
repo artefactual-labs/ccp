@@ -8,13 +8,16 @@ managed:
     - file_option: go_package_prefix
       value: github.com/artefactual-labs/ccp/internal/api/gen
 plugins:
-  - remote: buf.build/protocolbuffers/go:v1.34.2
+  - remote: buf.build/protocolbuffers/go:v1.35.1
     out: internal/api/gen
     opt: paths=source_relative
-  - remote: buf.build/connectrpc/go:v1.16.2
+  - remote: buf.build/connectrpc/go:v1.17.0
     out: internal/api/gen
     opt: paths=source_relative
-  - remote: buf.build/connectrpc/es:v1.4.0
+
+  # Migration to v2 is uncomplete.
+  # https://github.com/bufbuild/protovalidate/issues/253#issuecomment-2352262336
+  - remote: buf.build/connectrpc/es:v1.6.1
     out: web/src/gen
     opt: target=ts
   - remote: buf.build/bufbuild/es:v1.10.0

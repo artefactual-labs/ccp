@@ -27,9 +27,9 @@ function useAdminServiceClient(): AdminServiceClient {
 }
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-  req.header.set("Authorization", "ApiKey test:test") // TODO
+  req.header.set('Authorization', 'ApiKey test:test') // TODO
   return await next(req)
-};
+}
 
 function client(app: App) {
   const loc = window.location
