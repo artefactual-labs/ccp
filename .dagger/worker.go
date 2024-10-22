@@ -34,6 +34,10 @@ type ClientModulesReport struct {
 	Dir *dagger.Directory
 }
 
+func (r *ClientModulesReport) Report(ctx context.Context) (*dagger.File, error) {
+	return r.generate(ctx)
+}
+
 func (r *ClientModulesReport) Review(ctx context.Context) (*dagger.Container, error) {
 	report, err := r.generate(ctx)
 	if err != nil {
