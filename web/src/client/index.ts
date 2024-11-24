@@ -1,11 +1,11 @@
 import { inject } from 'vue'
 import type { InjectionKey, App } from 'vue'
-import type { Transport, PromiseClient, Interceptor } from '@connectrpc/connect'
-import { AdminService } from '../gen/archivematica/ccp/admin/v1beta1/service_connect'
-import { createPromiseClient } from '@connectrpc/connect'
+import type { Transport, Client, Interceptor } from '@connectrpc/connect'
+import { AdminService } from '../gen/archivematica/ccp/admin/v1beta1/service_pb'
+import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 
-type AdminServiceClient = PromiseClient<typeof AdminService>
+type AdminServiceClient = Client<typeof AdminService>
 
 const transportKey: InjectionKey<Transport> & symbol = Symbol()
 const adminClientKey: InjectionKey<AdminServiceClient> & symbol = Symbol()
@@ -37,7 +37,7 @@ function client(app: App) {
   const transport = createConnectTransport({ baseUrl, interceptors: [authInterceptor] })
   app.provide(transportKey, transport)
 
-  const client = createPromiseClient(AdminService, transport)
+  const client = createClient(AdminService, transport)
   app.provide(adminClientKey, client)
 }
 
