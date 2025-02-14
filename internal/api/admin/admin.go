@@ -40,7 +40,7 @@ type Server struct {
 	form   *workflow.ProcessingConfigForm
 	server *http.Server
 	ln     net.Listener
-	v      *protovalidate.Validator
+	v      protovalidate.Validator
 
 	// cache provides an in-memory cache with expiration to prevent concurrent
 	// clients from overloading the system.

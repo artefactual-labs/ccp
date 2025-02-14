@@ -21,7 +21,7 @@ func TestEvalMap(t *testing.T) {
 }
 
 func BenchmarkEvalMap(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		python.EvalMap(literal)
 	}
 }

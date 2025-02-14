@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/elliotchance/orderedmap/v2"
+	"github.com/elliotchance/orderedmap/v3"
 
 	"github.com/artefactual-labs/ccp/internal/python"
 	"github.com/artefactual-labs/ccp/internal/workflow"
