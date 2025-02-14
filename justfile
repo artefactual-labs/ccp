@@ -80,14 +80,7 @@ worker-list-outdated-deps:
   #!/usr/bin/env bash
   cd worker
   uv sync --frozen
-  # TODO: https://github.com/astral-sh/uv/issues/2150
-  # - uv has not implemented yet: `uv pip list --outdated`.
-  # - this works but it's slow: `uv run --with=pip pip list --outdated`
-  uv pip list --format=freeze | \
-    sed 's/==.*//' | \
-    uv pip compile - --no-deps --no-header | \
-    uv pip compile - --no-deps --no-header | \
-    diff <(uv pip list --format=freeze) - -y --suppress-common-lines || :
+  uv pip list --outdated
 
 # Test worker migrations.
 worker-test-migrations:

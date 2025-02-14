@@ -269,6 +269,6 @@ def settings(
     shared_directory_path: pathlib.Path,
 ) -> pytest_django.fixtures.SettingsWrapper:
     settings.SHARED_DIRECTORY = f"{shared_directory_path}/"
-    settings.PROCESSING_DIRECTORY = f'{shared_directory_path / "currentlyProcessing"}/'
+    settings.PROCESSING_DIRECTORY = f"{shared_directory_path / 'currentlyProcessing'}/"
 
     return settings

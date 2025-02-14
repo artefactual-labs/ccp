@@ -76,9 +76,9 @@ class TestHashsum:
         configured to work with the file path provided.
         """
         if fixture[1]:
-            assert isinstance(
-                Hashsum(fixture[0]), Hashsum
-            ), "Hashsum object not instantiated correctly"
+            assert isinstance(Hashsum(fixture[0]), Hashsum), (
+                "Hashsum object not instantiated correctly"
+            )
         else:
             with pytest.raises(NoHashCommandAvailable):
                 Hashsum(fixture[0])
@@ -100,9 +100,9 @@ class TestHashsum:
         with mock.patch.object(
             hashsum, "_call", return_value=version_string
         ) as mock_call:
-            assert (
-                hashsum.version() == "md5sum (GNU coreutils) 8.28"
-            ), "Hashsum version retrieved is incorrect"
+            assert hashsum.version() == "md5sum (GNU coreutils) 8.28", (
+                "Hashsum version retrieved is incorrect"
+            )
             mock_call.assert_called_once_with("--version")
             expected_provenance = 'program="md5sum -c --strict metadata/checksum.md5"; version="md5sum (GNU coreutils) 8.28"'
             with mock.patch.object(
@@ -111,9 +111,9 @@ class TestHashsum:
                 (hashsum.COMMAND,) + ("-c", "--strict", hash_file),
             ):
                 provenance_output = hashsum.get_command_detail()
-                assert (
-                    provenance_output == expected_provenance
-                ), f"Provenance output is incorrect: {provenance_output}"
+                assert provenance_output == expected_provenance, (
+                    f"Provenance output is incorrect: {provenance_output}"
+                )
 
     def test_provenance_string_no_command(self):
         """When nothing has happened, e.g. the checksums haven't been validated
@@ -147,10 +147,11 @@ class TestHashsum:
             "sha256: objects/nested/ファイル3.bin: FAILED\n"
             "sha256: objects/readonly.file: FAILED open or read"
         )
-        with mock.patch.object(
-            hashsum, "_call", return_value=output_string
-        ) as mock_call, mock.patch.object(
-            hashsum, "count_and_compare_lines", return_value=True
+        with (
+            mock.patch.object(
+                hashsum, "_call", return_value=output_string
+            ) as mock_call,
+            mock.patch.object(hashsum, "count_and_compare_lines", return_value=True),
         ):
             mock_call.side_effect = subprocess.CalledProcessError(
                 returncode=1, cmd=toolname, output=output_string
@@ -160,9 +161,9 @@ class TestHashsum:
                 "-c", "--strict", hash_file, transfer_dir=objects_dir
             )
             assert ret == 1, self.assert_return_value.format(ret)
-            assert (
-                job.get_stderr().strip() == exception_string
-            ), self.assert_exception_string
+            assert job.get_stderr().strip() == exception_string, (
+                self.assert_exception_string
+            )
 
     def test_compare_hashes_with_bad_files(self):
         """Ensure that the formatting of errors is consistent if improperly
@@ -187,10 +188,11 @@ class TestHashsum:
             "sha1: comparison exited with status: 1. Please check the formatting of the checksums or integrity of the files.\n"
             "sha1: sha1sum: WARNING: 1 line is improperly formatted"
         )
-        with mock.patch.object(
-            hashsum, "_call", return_value=no_proper_output
-        ) as mock_call, mock.patch.object(
-            hashsum, "count_and_compare_lines", return_value=True
+        with (
+            mock.patch.object(
+                hashsum, "_call", return_value=no_proper_output
+            ) as mock_call,
+            mock.patch.object(hashsum, "count_and_compare_lines", return_value=True),
         ):
             mock_call.side_effect = subprocess.CalledProcessError(
                 returncode=1, cmd=toolname, output=no_proper_output
@@ -199,9 +201,9 @@ class TestHashsum:
             mock_call.assert_called_once_with(
                 "-c", "--strict", hash_file, transfer_dir=objects_dir
             )
-            assert (
-                job.get_stderr().strip() == except_string_no_proper_out
-            ), self.assert_exception_string
+            assert job.get_stderr().strip() == except_string_no_proper_out, (
+                self.assert_exception_string
+            )
             assert ret == 1, self.assert_return_value.format(ret)
             # Flush job.error as it isn't flushed automatically.
             job.error = ""
@@ -212,9 +214,9 @@ class TestHashsum:
                     returncode=1, cmd="sha1sum", output=improper_formatting
                 )
                 ret = hashsum.compare_hashes("")
-                assert (
-                    job.get_stderr().strip() == except_string_improper_format
-                ), self.assert_exception_string
+                assert job.get_stderr().strip() == except_string_improper_format, (
+                    self.assert_exception_string
+                )
                 mock_call.assert_called_once_with(
                     "-c", "--strict", hash_file, transfer_dir=objects_dir
                 )
@@ -227,10 +229,9 @@ class TestHashsum:
         hash_file = "metadata/checksum.sha1"
         hashsum = self.setup_hashsum(hash_file, Job("stub", "stub", ["", ""]))
         toolname = "sha1sum"
-        with mock.patch.object(
-            hashsum, "_call", return_value=None
-        ) as mock_call, mock.patch.object(
-            hashsum, "count_and_compare_lines", return_value=False
+        with (
+            mock.patch.object(hashsum, "_call", return_value=None) as mock_call,
+            mock.patch.object(hashsum, "count_and_compare_lines", return_value=False),
         ):
             mock_call.side_effect = subprocess.CalledProcessError(
                 returncode=1, cmd=toolname, output=None
@@ -252,9 +253,9 @@ class TestHashsum:
     )
     def test_get_ext(self, fixture):
         """get_ext helps to format usefully."""
-        assert (
-            Hashsum.get_ext(fixture[0]) == fixture[1]
-        ), "Incorrect extension returned from Hashsum"
+        assert Hashsum.get_ext(fixture[0]) == fixture[1], (
+            "Incorrect extension returned from Hashsum"
+        )
 
     @staticmethod
     def test_decode_and_version_string():
@@ -265,12 +266,12 @@ class TestHashsum:
             b"sha256sum (GNU coreutils) 8.28\n"
             b"Copyright (C) 2017 Free Software Foundation, Inc."
         )
-        assert Hashsum._decode(version_string)[
-            0
-        ], "Version string incorrectly decoded by Hashsum"
-        assert (
-            Hashsum._decode(version_string)[0] == "sha256sum (GNU coreutils) 8.28"
-        ), "Invalid version string decoded by Hashsum"
+        assert Hashsum._decode(version_string)[0], (
+            "Version string incorrectly decoded by Hashsum"
+        )
+        assert Hashsum._decode(version_string)[0] == "sha256sum (GNU coreutils) 8.28", (
+            "Invalid version string decoded by Hashsum"
+        )
 
     @pytest.mark.django_db
     def test_write_premis_event_to_db(self, transfer, transfer_file):
@@ -306,21 +307,21 @@ class TestHashsum:
             event_detail = f"{algorithm}: {detail}"
             write_premis_event_per_file(file_objs_queryset, package_uuid, event_detail)
         file_uuids = File.objects.filter(**kwargs).values_list("uuid")
-        assert (
-            file_uuids
-        ), "Files couldn't be retrieved for the transfer from the database"
+        assert file_uuids, (
+            "Files couldn't be retrieved for the transfer from the database"
+        )
         event_algorithms = []
         for uuid_ in file_uuids:
             events = Event.objects.filter(file_uuid=uuid_, event_type=event_type)
-            assert len(events) == len(
-                algorithms
-            ), f"Length of the event objects is not '1', it is: {len(events)}"
-            assert (
-                events[0].event_outcome == event_outcome
-            ), f"Event outcome retrieved from the database is incorrect: {events[0].event_outcome}"
-            assert (
-                detail in events[0].event_detail
-            ), f"Event detail retrieved from the database is incorrect: {events[0].event_detail}"
+            assert len(events) == len(algorithms), (
+                f"Length of the event objects is not '1', it is: {len(events)}"
+            )
+            assert events[0].event_outcome == event_outcome, (
+                f"Event outcome retrieved from the database is incorrect: {events[0].event_outcome}"
+            )
+            assert detail in events[0].event_detail, (
+                f"Event detail retrieved from the database is incorrect: {events[0].event_detail}"
+            )
             # Ensure that UUID creation has happened as anticipated. Will raise
             # a TypeError if otherwise.
             (events[0].event_id)
@@ -335,26 +336,26 @@ class TestHashsum:
                     idtypes.append(agent.identifiertype)
                     agentnames.append(agent.name)
                     agenttypes.append(agent.agenttype)
-                assert set(idvalues) == set(
-                    identifier_values
-                ), "agent identifier values returned don't match"
-                assert set(idtypes) == set(
-                    identifier_types
-                ), "agent type values returned don't match"
-                assert set(agentnames) == set(
-                    agent_names
-                ), "agent name values returned don't match"
+                assert set(idvalues) == set(identifier_values), (
+                    "agent identifier values returned don't match"
+                )
+                assert set(idtypes) == set(identifier_types), (
+                    "agent type values returned don't match"
+                )
+                assert set(agentnames) == set(agent_names), (
+                    "agent name values returned don't match"
+                )
                 assert set(agenttypes) == set(agent_types), "agent types don't match"
-                assert (
-                    _agent_count == number_of_expected_agents
-                ), f"Number of agents is incorrect: {_agent_count} expected: {number_of_expected_agents}"
+                assert _agent_count == number_of_expected_agents, (
+                    f"Number of agents is incorrect: {_agent_count} expected: {number_of_expected_agents}"
+                )
             # Collect the different checksum algorithms written to ensure they
             # were all written independently in the function.
             for event in events:
                 event_algorithms.append(event.event_detail.split(":", 1)[0])
-        assert set(event_algorithms) == set(
-            algorithms
-        ), "No all algorithms written to PREMIS events"
+        assert set(event_algorithms) == set(algorithms), (
+            "No all algorithms written to PREMIS events"
+        )
 
     @pytest.mark.django_db
     def test_get_file_obj_queryset(self, transfer, transfer_file):

@@ -1422,7 +1422,7 @@ def create_object_metadata(job, struct_map, baseDirectoryPath, state):
     )
     bag_info = [find_bag_metadata(job, path) for path in paths]
 
-    if not transfer and not source and not bag_info:
+    if not transfer and not source and not any(bag_info):
         return
 
     state.globalAmdSecCounter += 1
@@ -1479,7 +1479,7 @@ def create_object_metadata(job, struct_map, baseDirectoryPath, state):
                     bag_tag = etree.SubElement(bag_metadata, key)
                 except ValueError:
                     job.pyprint(
-                        f"Skipping bag key {key}; not a valid" " XML tag name",
+                        f"Skipping bag key {key}; not a valid XML tag name",
                         file=sys.stderr,
                     )
                     continue

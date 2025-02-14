@@ -238,9 +238,9 @@ def test_bind_pids_no_config(
     processing configuration but no handle server information configured.
     """
     DashboardSetting.objects.filter(scope="handle").delete()
-    assert (
-        bind_pids.main(mcp_job, None, None) == 1
-    ), "Incorrect return value for bind_pids with incomplete configuration."
+    assert bind_pids.main(mcp_job, None, None) == 1, (
+        "Incorrect return value for bind_pids with incomplete configuration."
+    )
     assert caplog.records[0].message.startswith(INCOMPLETE_CONFIG_MSG)
 
 
@@ -273,9 +273,9 @@ def test_bind_pids(
     bind_pids.main(mcp_job, str(sip.uuid), "")
 
     sip_mdl = SIP.objects.filter(uuid=sip.uuid).first()
-    assert len(sip_mdl.identifiers.all()) == len(
-        BOUND_IDENTIFIER_TYPES
-    ), "Number of SIP identifiers is greater than anticipated"
+    assert len(sip_mdl.identifiers.all()) == len(BOUND_IDENTIFIER_TYPES), (
+        "Number of SIP identifiers is greater than anticipated"
+    )
     dirs = Directory.objects.filter(sip=sip).all()
     # At time of writing, the Bind PIDs functions only binds to the content
     # folders and the SIP itself, it doesn't bind to the metadata or
@@ -288,9 +288,9 @@ def test_bind_pids(
         pid_types = []
         for pid in bound:
             pid_types.append(pid[0])
-        assert (
-            "hdl" in pid_types
-        ), "An expected hdl persistent identifier isn't in the result set"
+        assert "hdl" in pid_types, (
+            "An expected hdl persistent identifier isn't in the result set"
+        )
         assert "URI" in pid_types, "An expected URI isn't in the result set"
         bound_hdl = f"{BOUND_HDL}{mdl.pk}"
         bound_uri = f"{BOUND_URI}{mdl.pk}"
@@ -351,16 +351,16 @@ def test_bind_pid(
         "METS.xml",
         "identifiers.json",
     ]
-    assert len(files) is len(
-        package_files
-    ), "Number of files returned from package is incorrect"
+    assert len(files) is len(package_files), (
+        "Number of files returned from package is incorrect"
+    )
     for file_ in files:
         bind_pid.main(mcp_job, file_.pk)
     for file_mdl in files:
         bound = {idfr.type: idfr.value for idfr in file_mdl.identifiers.all()}
-        assert (
-            "hdl" in bound
-        ), "An expected hdl persistent identifier isn't in the result set"
+        assert "hdl" in bound, (
+            "An expected hdl persistent identifier isn't in the result set"
+        )
         assert "URI" in bound, "An expected URI isn't in the result set"
         bound_hdl = f"{BOUND_HDL}{file_mdl.pk}"
         bound_uri = f"{BOUND_URI}{file_mdl.pk}"
@@ -379,9 +379,9 @@ def test_bind_pid(
         id_values = [item.text for item in id_value]
         identifiers_dict = dict(list(zip(id_types, id_values)))
         for key in identifiers_dict.keys():
-            assert key in chain(
-                TRADITIONAL_IDENTIFIERS, BOUND_IDENTIFIER_TYPES
-            ), "Identifier type not in expected schemes list"
+            assert key in chain(TRADITIONAL_IDENTIFIERS, BOUND_IDENTIFIER_TYPES), (
+                "Identifier type not in expected schemes list"
+            )
         assert bound_hdl in list(identifiers_dict.values())
         assert bound_uri in list(identifiers_dict.values())
 
@@ -451,9 +451,9 @@ def test_pid_declaration(
     for mdl in chain((sip_mdl,), files, dir_mdl):
         bound = {idfr.type: idfr.value for idfr in mdl.identifiers.all()}
         assert len(bound) == 2, "Number of identifiers is incorrect"
-        assert set(bound.keys()) == set(
-            DECLARED_IDENTIFIER_TYPES
-        ), "Returned keys are not in expected list"
+        assert set(bound.keys()) == set(DECLARED_IDENTIFIER_TYPES), (
+            "Returned keys are not in expected list"
+        )
         for key, value in bound.items():
             assert value, "Returned an empty value for an identifier"
             if key == PID_EXID:
@@ -471,12 +471,12 @@ def test_pid_declaration(
         id_value = dir_dmd_sec.xpath(
             "//premis:objectIdentifierValue", namespaces={"premis": ns.premisNS}
         )
-        assert len(id_type) == len(
-            all_identifier_types
-        ), "Identifier type count is incorrect"
-        assert len(id_value) == len(
-            all_identifier_types
-        ), "Identifier value count is incorrect"
+        assert len(id_type) == len(all_identifier_types), (
+            "Identifier type count is incorrect"
+        )
+        assert len(id_value) == len(all_identifier_types), (
+            "Identifier value count is incorrect"
+        )
         for key, value in dict(list(zip(id_type, id_value))).items():
             if key == PID_EXID:
                 assert example_uri in value, "Example URI not preserved"
@@ -492,12 +492,12 @@ def test_pid_declaration(
         id_value = file_level_premis.xpath(
             "//premis:objectIdentifierValue", namespaces={"premis": ns.premisNS}
         )
-        assert len(id_type) == len(
-            all_identifier_types
-        ), "Identifier type count is incorrect"
-        assert len(id_value) == len(
-            all_identifier_types
-        ), "Identifier value count is incorrect"
+        assert len(id_type) == len(all_identifier_types), (
+            "Identifier type count is incorrect"
+        )
+        assert len(id_value) == len(all_identifier_types), (
+            "Identifier value count is incorrect"
+        )
         for key, value in dict(list(zip(id_type, id_value))).items():
             if key == PID_EXID:
                 assert example_uri in value, "Example URI not preserved"
@@ -517,9 +517,9 @@ def test_pid_declaration_exceptions(
     DeclarePIDs(mcp_job).pid_declaration(
         unit_uuid="eb6b860e-611c-45c8-8d3e-b9396ed6c751", sip_directory=""
     )
-    assert (
-        "No identifiers.json file found" in mcp_job.get_stderr().strip()
-    ), "Expecting no identifiers.json file, but got something else"
+    assert "No identifiers.json file found" in mcp_job.get_stderr().strip(), (
+        "Expecting no identifiers.json file, but got something else"
+    )
     with mock.patch(
         "worker.clientScripts.pid_declaration.DeclarePIDs._retrieve_identifiers_path",
         return_value=os.path.join(
@@ -530,6 +530,6 @@ def test_pid_declaration_exceptions(
             DeclarePIDs(mcp_job).pid_declaration(unit_uuid="", sip_directory="")
         except DeclarePIDsException as err:
             json_error = "Expecting value: line 15 column 1 (char 336)"
-            assert json_error in str(
-                err
-            ), "Error message something other than anticipated for invalid JSON"
+            assert json_error in str(err), (
+                "Error message something other than anticipated for invalid JSON"
+            )

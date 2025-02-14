@@ -1,7 +1,6 @@
 import os
 import shlex
 from pathlib import Path
-from typing import List
 
 from django.conf import settings
 from django.utils import timezone
@@ -10,7 +9,7 @@ from django.utils import timezone
 ASSETS_DIR = os.path.join(str((Path(__file__).parent.parent / "assets").absolute()), "")
 
 
-def parse_command_line(s: str) -> List[str]:
+def parse_command_line(s: str) -> list[str]:
     return [_shlex_unescape(x) for x in shlex.split(s)]
 
 

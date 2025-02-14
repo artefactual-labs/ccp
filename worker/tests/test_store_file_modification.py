@@ -28,7 +28,7 @@ class TestStoreFileModification(TestCase):
         )
         shutil.rmtree(transfer_path)
 
-    @override_settings(TIME_ZONE="US/Eastern")
+    @override_settings(TIME_ZONE="EST5EDT")
     def test_store_file_modification_dates(self):
         """Test store_file_modification_dates.
 

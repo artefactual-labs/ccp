@@ -10,7 +10,6 @@ import argparse
 import dataclasses
 import multiprocessing
 import uuid
-from typing import List
 
 import django
 from django.core.exceptions import ValidationError
@@ -138,7 +137,7 @@ def parse_args(parser: argparse.ArgumentParser, job: Job) -> CharacterizeFileArg
     return CharacterizeFileArgs(**vars(namespace))
 
 
-def call(jobs: List[Job]) -> None:
+def call(jobs: list[Job]) -> None:
     parser = get_parser()
 
     with transaction.atomic():

@@ -13,10 +13,7 @@ Arguments::
 
 import json
 import os
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 
 import django
 from django.core.exceptions import ValidationError
@@ -116,8 +113,7 @@ class PolicyChecker:
         rules = self._get_rules()
         if not rules:
             self.job.pyprint(
-                "Not performing a policy check because there are no relevant"
-                " FPR rules"
+                "Not performing a policy check because there are no relevant FPR rules"
             )
             return NOT_APPLICABLE_CODE
         rule_outputs = []
@@ -314,7 +310,7 @@ class PolicyChecker:
             )
         return result
 
-    def _get_command_to_execute(self, rule: FPRule) -> Tuple[str, List[str]]:
+    def _get_command_to_execute(self, rule: FPRule) -> tuple[str, list[str]]:
         """Return a 2-tuple consisting of a) the FPR rule ``rule``'s command
         and b) a list of arguments to pass to it.
         """
@@ -331,14 +327,14 @@ class PolicyChecker:
         else:
             return (rule.command.command, [self.file_path, self.policies_dir])
 
-    def _save_to_logs_dir(self, output: Dict[str, str]) -> None:
+    def _save_to_logs_dir(self, output: dict[str, str]) -> None:
         """Save the MediaConch policy file as well as the raw MediaConch stdout
         for the target file to the logs/ directory of the SIP.
         """
         self._save_stdout_to_logs_dir(output)
         self._save_policy_to_subm_doc_dir(output)
 
-    def _save_stdout_to_logs_dir(self, output: Dict[str, str]) -> None:
+    def _save_stdout_to_logs_dir(self, output: dict[str, str]) -> None:
         """Save the output of running MediaConch's policy checker against the
         input file to
         logs/policyChecks/<policy_filename>/<input_filename>.xml in the SIP.
@@ -355,7 +351,7 @@ class PolicyChecker:
             with open(stdout_path, "w") as f:
                 f.write(mc_stdout)
 
-    def _save_policy_to_subm_doc_dir(self, output: Dict[str, str]) -> None:
+    def _save_policy_to_subm_doc_dir(self, output: dict[str, str]) -> None:
         """Save the policy file text in ``output['policy']`` to a file named
         ``output['policyFileName']`` in
         metadata/submissionDocumentation/policies/ in the SIP, if it is not
@@ -463,7 +459,7 @@ class PolicyChecker:
         return self._sip_policy_checks_dir
 
 
-def call(jobs: List[Job]) -> None:
+def call(jobs: list[Job]) -> None:
     with transaction.atomic():
         for job in jobs:
             with job.JobContext(logger=logger):

@@ -1,6 +1,4 @@
 import uuid
-from typing import List
-from typing import Tuple
 
 import autoslug.fields
 from django.db import migrations
@@ -10,7 +8,7 @@ from worker.main.models import UUIDField
 
 
 class Migration(migrations.Migration):
-    dependencies: List[Tuple[str, str]] = []
+    dependencies: list[tuple[str, str]] = []
 
     operations = [
         migrations.CreateModel(

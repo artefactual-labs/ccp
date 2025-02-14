@@ -94,8 +94,7 @@ def data_migration(apps, schema_editor):
         id=dir_uuid_stc_uuid,
         execute="assignUUIDsToDirectories_v0.0",
         arguments=(
-            '"%SIPDirectory%" "%SIPUUID%" --include-dirs'
-            ' "%AssignUUIDsToDirectories%"'
+            '"%SIPDirectory%" "%SIPUUID%" --include-dirs "%AssignUUIDsToDirectories%"'
         ),
     )
 

@@ -1,7 +1,6 @@
 import importlib
 import warnings
 from types import ModuleType
-from typing import Dict
 from typing import Optional
 
 # Keys must use lowercase.
@@ -126,7 +125,7 @@ def get_module_concurrency(module: ModuleType) -> int:
         return 1
 
 
-def load_job_modules() -> Dict[str, Optional[ModuleType]]:
+def load_job_modules() -> dict[str, Optional[ModuleType]]:
     """Return a dict of {client script name: module}."""
     supported_modules = SUPPORTED_MODULES
 
