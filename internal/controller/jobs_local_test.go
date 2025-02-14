@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -25,7 +24,7 @@ func TestSetUnitVarLinkJob(t *testing.T) {
 		st.EXPECT().CreateUnitVar(mockutil.Context(), job.pkg.id, enums.PackageTypeTransfer, "normalizationThumbnailProcessing", "", uuid.MustParse("180ae3d0-aa6c-4ed4-ab94-d0a2121e7f21"), true).Times(1)
 		st.EXPECT().UpdateJobStatus(mockutil.Context(), job.id, "STATUS_COMPLETED_SUCCESSFULLY").Return(nil).Times(1)
 
-		linkID, err := job.exec(context.Background())
+		linkID, err := job.exec(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, linkID, uuid.MustParse("498f7a6d-1b8c-431a-aa5d-83f14f3c5e65"))
 	})
@@ -44,7 +43,7 @@ func TestGetUnitVarLinkJob(t *testing.T) {
 		st.EXPECT().UpdateJobStatus(mockutil.Context(), job.id, "STATUS_COMPLETED_SUCCESSFULLY").Return(nil).Times(1)
 		st.EXPECT().ReadUnitLinkID(mockutil.Context(), job.pkg.id, enums.PackageTypeTransfer, "normalizationThumbnailProcessing").Return(nextLinkID, nil).Times(1)
 
-		linkID, err := job.exec(context.Background())
+		linkID, err := job.exec(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, linkID, nextLinkID)
 	})
@@ -58,7 +57,7 @@ func TestGetUnitVarLinkJob(t *testing.T) {
 		st.EXPECT().UpdateJobStatus(mockutil.Context(), job.id, "STATUS_COMPLETED_SUCCESSFULLY").Return(nil).Times(1)
 		st.EXPECT().ReadUnitLinkID(mockutil.Context(), job.pkg.id, enums.PackageTypeTransfer, "loadOptionsToCreateSIP").Return(uuid.MustParse("bb194013-597c-4e4a-8493-b36d190f8717"), nil).Times(1)
 
-		linkID, err := job.exec(context.Background())
+		linkID, err := job.exec(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, linkID, uuid.MustParse("bb194013-597c-4e4a-8493-b36d190f8717"))
 	})

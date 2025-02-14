@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -27,7 +26,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("e9eaef1e-c2e0-4e3b-b942-bfb537162795"))
 		assert.NilError(t, err)
 	})
@@ -40,7 +39,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Generate transfer structure report", []choice{
@@ -49,7 +48,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		})
 
 		decision.resolveWithPos(0)
-		nextLink, err := decision.await(context.Background())
+		nextLink, err := decision.await(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("df54fec1-dae1-4ea6-8d17-a839ee7ac4a7"))
 	})
@@ -62,7 +61,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
@@ -71,7 +70,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		})
 
 		decision.resolveWithPos(0)
-		nextLink, err := decision.await(context.Background())
+		nextLink, err := decision.await(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969"))
 	})
@@ -84,7 +83,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
@@ -93,7 +92,7 @@ func TestNextChainDecisionJob(t *testing.T) {
 		})
 
 		decision.resolveWithChoice("61cfa825-120e-4b17-83e6-51a42b67d969")
-		nextLink, err := decision.await(context.Background())
+		nextLink, err := decision.await(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("61cfa825-120e-4b17-83e6-51a42b67d969"))
 	})
@@ -117,7 +116,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 			nil,
 		)
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("ff89a530-0540-4625-8884-5a2198dea05a"))
 		assert.NilError(t, err)
 
@@ -136,7 +135,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c"))
 		assert.NilError(t, err)
 
@@ -153,7 +152,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
 		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(context.Background())
+		id, err := job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Assign UUIDs to directories?", []choice{
@@ -162,7 +161,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 		})
 
 		decision.resolveWithPos(0)
-		nextLink, err := decision.await(context.Background())
+		nextLink, err := decision.await(t.Context())
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c"))
 

@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -41,7 +40,7 @@ func TestServerCreatePackage(t *testing.T) {
 		}
 		req.Header().Set("Authorization", "ApiKey test:test")
 
-		resp, err := client.ListPackages(context.Background(), req)
+		resp, err := client.ListPackages(t.Context(), req)
 		assert.NilError(t, err)
 
 		t.Log(resp.Msg.Package)

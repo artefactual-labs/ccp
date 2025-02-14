@@ -12,6 +12,7 @@ linters:
     - unused
     - intrange
     - contextcheck
+    - usetesting
 
 issues:
   exclude-dirs:

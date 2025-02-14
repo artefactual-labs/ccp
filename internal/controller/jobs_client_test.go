@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"testing"
@@ -56,7 +55,7 @@ func TestDirectoryClientScriptJob(t *testing.T) {
 		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 		store.EXPECT().CreateTasks(mockutil.Context(), gomock.Any()).Return(nil).AnyTimes()
 
-		_, err := job.exec(context.Background())
+		_, err := job.exec(t.Context())
 		assert.ErrorIs(t, err, io.EOF) // End of chain.
 		assert.Equal(t, jobs, 1)
 	})

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -63,7 +62,7 @@ func TestTaskBackend(t *testing.T) {
 	tmpDir := fs.NewDir(t, "ccp")
 
 	var runs int
-	ctx := context.Background()
+	ctx := t.Context()
 	srv := gearmintest.Server(t, map[string]gearmintest.Handler{
 		fnName: func(job worker.Job) ([]byte, error) {
 			runs++

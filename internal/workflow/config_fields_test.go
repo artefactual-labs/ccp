@@ -1,7 +1,6 @@
 package workflow_test
 
 import (
-	"context"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -14,7 +13,7 @@ func TestProcessingConfigForm(t *testing.T) {
 
 	wf, _ := workflow.Default()
 	form := workflow.NewProcessingConfigForm(wf)
-	fields, err := form.Fields(context.Background())
+	fields, err := form.Fields(t.Context())
 	assert.NilError(t, err)
 
 	assert.Equal(t, len(fields), 25)
