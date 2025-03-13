@@ -4,8 +4,8 @@ This directory contains the Archivematica worker. Its main responsibility is to
 perform the tasks assigned by CCP. These tasks are dispatched via Gearman.
 
 The programs responsible for performing the Gearman jobs are contained in the
-`clientScripts/` directory. Each program is a Python module that implements the
-following function:
+`clientScripts/` directory. Each program is a Python module that
+implements the following function:
 
     def call(jobs)
 

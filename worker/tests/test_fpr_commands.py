@@ -4,7 +4,7 @@ from typing import TypedDict
 import pytest
 
 from worker.fpr.models import FPCommand
-from worker.worker.utils.executeOrRunSubProcess import executeOrRun
+from worker.utils.executeOrRunSubProcess import executeOrRun
 
 
 class QueryFilters(TypedDict):
