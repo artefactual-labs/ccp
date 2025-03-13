@@ -6,6 +6,7 @@ ARG GO_VERSION=1.24.1
 ARG UV_VERSION=0.5.31
 ARG NODE_VERSION=20
 ARG MEDIAAREA_VERSION=1.0-25
+ARG JHOVE_VERSION=1.26.1-1~22.04
 
 # -----------------------------------------------------------------------------
 
@@ -14,6 +15,7 @@ FROM ubuntu:${UBUNTU_VERSION} AS worker-base
 ARG USER_ID
 ARG GROUP_ID
 ARG MEDIAAREA_VERSION
+ARG JHOVE_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -28,19 +30,19 @@ RUN set -ex \
 RUN set -ex \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
-		ca-certificates \
-		clang \
-		curl \
-		git \
-		gnupg \
-		libldap2-dev \
-		libmysqlclient-dev \
-		libsasl2-dev \
-		libsqlite3-dev \
-		locales \
-		make \
-		pkg-config \
-		tzdata \
+	ca-certificates \
+	clang \
+	curl \
+	git \
+	gnupg \
+	libldap2-dev \
+	libmysqlclient-dev \
+	libsasl2-dev \
+	libsqlite3-dev \
+	locales \
+	make \
+	pkg-config \
+	tzdata \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 RUN locale-gen en_US.UTF-8
@@ -56,46 +58,46 @@ RUN set -ex \
 	&& rm /tmp/repo-mediaarea.deb \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
-		atool \
-		bulk-extractor \
-		clamav \
-		coreutils \
-		ffmpeg \
-		g++ \
-		gcc \
-		gearman \
-		gettext \
-		ghostscript \
-		hashdeep \
-		imagemagick \
-		inkscape \
-		jhove \
-		libffi-dev \
-		libimage-exiftool-perl \
-		libldap2-dev \
-		libmysqlclient-dev \
-		libsasl2-dev \
-		libssl-dev \
-		libxml2-dev \
-		libxslt1-dev \
-		logapp \
-		md5deep \
-		mediaconch \
-		mediainfo \
-		nfs-common \
-		openjdk-8-jre-headless \
-		p7zip-full \
-		pbzip2 \
-		pst-utils \
-		python3-lxml \
-		rsync \
-		siegfried \
-		sleuthkit \
-		tesseract-ocr \
-		tree \
-		unar \
-		unrar-free \
-		uuid \
+	atool \
+	bulk-extractor \
+	clamav \
+	coreutils \
+	ffmpeg \
+	g++ \
+	gcc \
+	gearman \
+	gettext \
+	ghostscript \
+	hashdeep \
+	imagemagick \
+	inkscape \
+	jhove=${JHOVE_VERSION} \
+	libffi-dev \
+	libimage-exiftool-perl \
+	libldap2-dev \
+	libmysqlclient-dev \
+	libsasl2-dev \
+	libssl-dev \
+	libxml2-dev \
+	libxslt1-dev \
+	logapp \
+	md5deep \
+	mediaconch \
+	mediainfo \
+	nfs-common \
+	openjdk-8-jre-headless \
+	p7zip-full \
+	pbzip2 \
+	pst-utils \
+	python3-lxml \
+	rsync \
+	siegfried \
+	sleuthkit \
+	tesseract-ocr \
+	tree \
+	unar \
+	unrar-free \
+	uuid \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 # Download ClamAV virus signatures.
