@@ -1,16 +1,20 @@
 {
   "name": "CCP",
-  "sdk": "go",
+  "engineVersion": "v0.16.3",
+  "sdk": {
+    "source": "go"
+  },
   "dependencies": [
     {
       "name": "go",
-      "source": "github.com/sagikazarmark/daggerverse/go@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
+      "source": "github.com/sagikazarmark/daggerverse/go@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab",
+      "pin": "447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
     },
     {
       "name": "golangci-lint",
-      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@447a362a4fb98d05bbbeb8a290ed9aff7c5eccab",
+      "pin": "447a362a4fb98d05bbbeb8a290ed9aff7c5eccab"
     }
   ],
-  "source": ".dagger",
-  "engineVersion": "v0.13.5"
+  "source": ".dagger"
 }
