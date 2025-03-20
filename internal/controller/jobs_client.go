@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/artefactual-labs/ccp/internal/python"
 	"github.com/artefactual-labs/ccp/internal/store"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
@@ -178,14 +177,14 @@ func (l *filesClientScriptJob) filterSubDir(ctx context.Context) (string, error)
 		}
 		return "", err
 	}
-
 	if val == "" {
 		return filterSubDir, nil
 	}
-	if m, err := python.EvalMap(val); err != nil {
-		if override, ok := m["filterSubDir"]; ok {
-			filterSubDir = override
-		}
+
+	if ret, err := decodeUnitVariableMapWithKey(val, "filterSubDir"); err != nil {
+		return "", err
+	} else if ret != "" {
+		filterSubDir = ret
 	}
 
 	return filterSubDir, nil

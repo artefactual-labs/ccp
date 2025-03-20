@@ -28,7 +28,6 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/tailscale/hujson v0.0.0-20250226034555-ec1d1c113d33
 	go.artefactual.dev/tools v0.18.0
-	go.starlark.net v0.0.0-20250225190231-0d3f41d403af
 	go.uber.org/mock v0.5.0
 	golang.org/x/net v0.37.0
 	golang.org/x/sync v0.12.0

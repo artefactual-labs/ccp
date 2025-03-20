@@ -6453,7 +6453,7 @@
         "@manager": "linkTaskManagerSetUnitVariable",
         "@model": "TaskConfigSetUnitVariable",
         "variable": "normalize_v1.0",
-        "variable_value": "{'filterSubDir':'objects/attachments'}"
+        "variable_value": "{\"filterSubDir\": \"objects/attachments\"}"
       },
       "description": {
         "en": "Set files to normalize",
@@ -8770,7 +8770,7 @@
         "@manager": "linkTaskManagerSetUnitVariable",
         "@model": "TaskConfigSetUnitVariable",
         "variable": "identifyFileFormat_v0.0",
-        "variable_value": "{'filterSubDir':'objects/attachments'}"
+        "variable_value": "{\"filterSubDir\": \"objects/attachments\"}"
       },
       "description": {
         "en": "Set files to identify",

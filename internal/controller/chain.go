@@ -6,7 +6,6 @@ import (
 
 	"github.com/elliotchance/orderedmap/v3"
 
-	"github.com/artefactual-labs/ccp/internal/python"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
 
@@ -66,7 +65,7 @@ func (c *chain) load(ctx context.Context, pkg *Package) error {
 		if item.Value == nil {
 			continue
 		}
-		m, err := python.EvalMap(*item.Value)
+		m, err := decodeUnitVariableMap(*item.Value)
 		if err != nil {
 			pkg.logger.Error(err, "Failed to eval unit variable value %q.", *item.Value)
 			continue

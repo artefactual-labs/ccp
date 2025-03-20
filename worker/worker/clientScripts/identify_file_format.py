@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import dataclasses
+import json
 import multiprocessing
 import uuid
 from typing import Optional
@@ -53,10 +54,10 @@ def _save_id_preference(file_: File, value: bool) -> None:
     # run during the transfer.
     unit = file_.sip or file_.transfer
 
-    rd = {"%IDCommand%": str(value)}
+    rd = json.dumps({"%IDCommand%": str(value)})
 
     UnitVariable.objects.create(
-        unituuid=unit.pk, variable="replacementDict", variablevalue=str(rd)
+        unituuid=unit.pk, variable="replacementDict", variablevalue=rd
     )
 
 
