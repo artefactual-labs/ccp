@@ -20,7 +20,7 @@ var (
 	sharedDir                = "/var/archivematica/sharedDirectory"
 	sharedDirVolume          = dag.CacheVolume("share")
 	sharedDirVolumeMountOpts = dagger.ContainerWithMountedCacheOpts{
-		Sharing: dagger.Shared,
+		Sharing: dagger.CacheSharingModeShared,
 		Owner:   "1000:1000",
 	}
 )
