@@ -54,10 +54,10 @@ def _save_id_preference(file_: File, value: bool) -> None:
     # run during the transfer.
     unit = file_.sip or file_.transfer
 
-    rd = json.dumps({"%IDCommand%": str(value)})
+    rd = {"%IDCommand%": str(value)}
 
     UnitVariable.objects.create(
-        unituuid=unit.pk, variable="replacementDict", variablevalue=rd
+        unituuid=unit.pk, variable="replacementDict", variablevalue=json.dumps(rd)
     )
 
 

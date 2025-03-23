@@ -3,7 +3,6 @@ import os
 import pytest
 
 from worker.main import models
-from worker.utils.dicts import ChoicesDict
 from worker.utils.dicts import ReplacementDict
 from worker.utils.dicts import setup
 
@@ -42,21 +41,6 @@ def FILE(db, TRANSFER):
 @pytest.fixture(scope="module", autouse=True)
 def with_dicts():
     setup()
-
-
-def test_alternate_replacementdict_constructor():
-    """
-    This constructor allows serialized Python strings to be expanded
-    into ReplacementDict instances.
-    """
-
-    d = {"foo": "bar"}
-    assert ReplacementDict(d) == ReplacementDict.fromstring(str(d))
-
-
-def test_alternate_choicesdict_constructor():
-    d = {"foo": "bar"}
-    assert ChoicesDict(d) == ChoicesDict.fromstring(str(d))
 
 
 def test_replacementdict_replace():
