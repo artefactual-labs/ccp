@@ -6,7 +6,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/mfridman/tparse/releases
-TPARSE_VERSION ?= 0.14.0
+TPARSE_VERSION ?= 0.17.0
 
 TPARSE := $(CACHE_VERSIONS)/tparse/$(TPARSE_VERSION)
 $(TPARSE):

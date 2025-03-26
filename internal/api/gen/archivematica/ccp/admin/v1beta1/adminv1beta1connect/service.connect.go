@@ -61,20 +61,6 @@ const (
 	AdminServiceApprovePartialReingestProcedure = "/archivematica.ccp.admin.v1beta1.AdminService/ApprovePartialReingest"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	adminServiceServiceDescriptor                                 = v1beta1.File_archivematica_ccp_admin_v1beta1_service_proto.Services().ByName("AdminService")
-	adminServiceCreatePackageMethodDescriptor                     = adminServiceServiceDescriptor.Methods().ByName("CreatePackage")
-	adminServiceReadPackageMethodDescriptor                       = adminServiceServiceDescriptor.Methods().ByName("ReadPackage")
-	adminServiceListPackagesMethodDescriptor                      = adminServiceServiceDescriptor.Methods().ByName("ListPackages")
-	adminServiceListDecisionsMethodDescriptor                     = adminServiceServiceDescriptor.Methods().ByName("ListDecisions")
-	adminServiceResolveDecisionMethodDescriptor                   = adminServiceServiceDescriptor.Methods().ByName("ResolveDecision")
-	adminServiceListProcessingConfigurationFieldsMethodDescriptor = adminServiceServiceDescriptor.Methods().ByName("ListProcessingConfigurationFields")
-	adminServiceApproveJobMethodDescriptor                        = adminServiceServiceDescriptor.Methods().ByName("ApproveJob")
-	adminServiceApproveTransferByPathMethodDescriptor             = adminServiceServiceDescriptor.Methods().ByName("ApproveTransferByPath")
-	adminServiceApprovePartialReingestMethodDescriptor            = adminServiceServiceDescriptor.Methods().ByName("ApprovePartialReingest")
-)
-
 // AdminServiceClient is a client for the archivematica.ccp.admin.v1beta1.AdminService service.
 type AdminServiceClient interface {
 	// CreatePackage ...
@@ -128,59 +114,60 @@ type AdminServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewAdminServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AdminServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	adminServiceMethods := v1beta1.File_archivematica_ccp_admin_v1beta1_service_proto.Services().ByName("AdminService").Methods()
 	return &adminServiceClient{
 		createPackage: connect.NewClient[v1beta1.CreatePackageRequest, v1beta1.CreatePackageResponse](
 			httpClient,
 			baseURL+AdminServiceCreatePackageProcedure,
-			connect.WithSchema(adminServiceCreatePackageMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("CreatePackage")),
 			connect.WithClientOptions(opts...),
 		),
 		readPackage: connect.NewClient[v1beta1.ReadPackageRequest, v1beta1.ReadPackageResponse](
 			httpClient,
 			baseURL+AdminServiceReadPackageProcedure,
-			connect.WithSchema(adminServiceReadPackageMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ReadPackage")),
 			connect.WithClientOptions(opts...),
 		),
 		listPackages: connect.NewClient[v1beta1.ListPackagesRequest, v1beta1.ListPackagesResponse](
 			httpClient,
 			baseURL+AdminServiceListPackagesProcedure,
-			connect.WithSchema(adminServiceListPackagesMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ListPackages")),
 			connect.WithClientOptions(opts...),
 		),
 		listDecisions: connect.NewClient[v1beta1.ListDecisionsRequest, v1beta1.ListDecisionsResponse](
 			httpClient,
 			baseURL+AdminServiceListDecisionsProcedure,
-			connect.WithSchema(adminServiceListDecisionsMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ListDecisions")),
 			connect.WithClientOptions(opts...),
 		),
 		resolveDecision: connect.NewClient[v1beta1.ResolveDecisionRequest, v1beta1.ResolveDecisionResponse](
 			httpClient,
 			baseURL+AdminServiceResolveDecisionProcedure,
-			connect.WithSchema(adminServiceResolveDecisionMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ResolveDecision")),
 			connect.WithClientOptions(opts...),
 		),
 		listProcessingConfigurationFields: connect.NewClient[v1beta1.ListProcessingConfigurationFieldsRequest, v1beta1.ListProcessingConfigurationFieldsResponse](
 			httpClient,
 			baseURL+AdminServiceListProcessingConfigurationFieldsProcedure,
-			connect.WithSchema(adminServiceListProcessingConfigurationFieldsMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ListProcessingConfigurationFields")),
 			connect.WithClientOptions(opts...),
 		),
 		approveJob: connect.NewClient[v1beta1.ApproveJobRequest, v1beta1.ApproveJobResponse](
 			httpClient,
 			baseURL+AdminServiceApproveJobProcedure,
-			connect.WithSchema(adminServiceApproveJobMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ApproveJob")),
 			connect.WithClientOptions(opts...),
 		),
 		approveTransferByPath: connect.NewClient[v1beta1.ApproveTransferByPathRequest, v1beta1.ApproveTransferByPathResponse](
 			httpClient,
 			baseURL+AdminServiceApproveTransferByPathProcedure,
-			connect.WithSchema(adminServiceApproveTransferByPathMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ApproveTransferByPath")),
 			connect.WithClientOptions(opts...),
 		),
 		approvePartialReingest: connect.NewClient[v1beta1.ApprovePartialReingestRequest, v1beta1.ApprovePartialReingestResponse](
 			httpClient,
 			baseURL+AdminServiceApprovePartialReingestProcedure,
-			connect.WithSchema(adminServiceApprovePartialReingestMethodDescriptor),
+			connect.WithSchema(adminServiceMethods.ByName("ApprovePartialReingest")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -302,58 +289,59 @@ type AdminServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	adminServiceMethods := v1beta1.File_archivematica_ccp_admin_v1beta1_service_proto.Services().ByName("AdminService").Methods()
 	adminServiceCreatePackageHandler := connect.NewUnaryHandler(
 		AdminServiceCreatePackageProcedure,
 		svc.CreatePackage,
-		connect.WithSchema(adminServiceCreatePackageMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("CreatePackage")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceReadPackageHandler := connect.NewUnaryHandler(
 		AdminServiceReadPackageProcedure,
 		svc.ReadPackage,
-		connect.WithSchema(adminServiceReadPackageMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ReadPackage")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceListPackagesHandler := connect.NewUnaryHandler(
 		AdminServiceListPackagesProcedure,
 		svc.ListPackages,
-		connect.WithSchema(adminServiceListPackagesMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ListPackages")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceListDecisionsHandler := connect.NewUnaryHandler(
 		AdminServiceListDecisionsProcedure,
 		svc.ListDecisions,
-		connect.WithSchema(adminServiceListDecisionsMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ListDecisions")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceResolveDecisionHandler := connect.NewUnaryHandler(
 		AdminServiceResolveDecisionProcedure,
 		svc.ResolveDecision,
-		connect.WithSchema(adminServiceResolveDecisionMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ResolveDecision")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceListProcessingConfigurationFieldsHandler := connect.NewUnaryHandler(
 		AdminServiceListProcessingConfigurationFieldsProcedure,
 		svc.ListProcessingConfigurationFields,
-		connect.WithSchema(adminServiceListProcessingConfigurationFieldsMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ListProcessingConfigurationFields")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceApproveJobHandler := connect.NewUnaryHandler(
 		AdminServiceApproveJobProcedure,
 		svc.ApproveJob,
-		connect.WithSchema(adminServiceApproveJobMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ApproveJob")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceApproveTransferByPathHandler := connect.NewUnaryHandler(
 		AdminServiceApproveTransferByPathProcedure,
 		svc.ApproveTransferByPath,
-		connect.WithSchema(adminServiceApproveTransferByPathMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ApproveTransferByPath")),
 		connect.WithHandlerOptions(opts...),
 	)
 	adminServiceApprovePartialReingestHandler := connect.NewUnaryHandler(
 		AdminServiceApprovePartialReingestProcedure,
 		svc.ApprovePartialReingest,
-		connect.WithSchema(adminServiceApprovePartialReingestMethodDescriptor),
+		connect.WithSchema(adminServiceMethods.ByName("ApprovePartialReingest")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/archivematica.ccp.admin.v1beta1.AdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -6,8 +6,8 @@ cloud:
 plugins:
   - name: golang
     wasm:
-      url: https://downloads.sqlc.dev/plugin/sqlc-gen-go_1.4.0.wasm
-      sha256: a0d96d63000b017f1aeb7857b0a864744fb5e968d5a11dded27170c9a44c7397
+      url: https://github.com/sqlc-dev/sqlc-gen-go/releases/download/v1.5.0/sqlc-gen-go_1.5.0.wasm
+      sha256: 4ca52949f4dc04b55188439f5de0ae20af2a71e3534b87907f2a7f466bda59ec
 
 sql:
   - schema: mysql/schema.sql

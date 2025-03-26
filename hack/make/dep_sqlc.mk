@@ -4,7 +4,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/sqlc-dev/sqlc
-SQLC_VERSION ?= 1.27.0
+SQLC_VERSION ?= 1.28.0
 
 SQLC := $(CACHE_VERSIONS)/sqlc/$(SQLC_VERSION)
 $(SQLC):

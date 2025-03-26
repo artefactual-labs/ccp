@@ -6,7 +6,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/gotestyourself/gotestsum/releases
-GOTESTSUM_VERSION ?= 1.12.0
+GOTESTSUM_VERSION ?= 1.12.1
 
 GOTESTSUM := $(CACHE_VERSIONS)/gotestsum/$(GOTESTSUM_VERSION)
 $(GOTESTSUM):

@@ -6,7 +6,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/abice/go-enum/releases
-GOENUM_VERSION ?= 0.6.0
+GOENUM_VERSION ?= 0.6.1
 
 GOENUM := $(CACHE_VERSIONS)/go-enum/$(GOENUM_VERSION)
 $(GOENUM):
