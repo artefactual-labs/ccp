@@ -103,16 +103,20 @@ pre-commit *args:
 
 # List all of the modules that are dependencies of your current Go module.
 list-go-deps-all:
-  go list -u -m -json all | go tool github.com/psampaz/go-mod-outdated
+  go list -u -m -json all | go tool bine run go-mod-outdated
 
 # List direct dependencies.
 list-go-deps-direct:
-  go list -u -m -json all | go tool github.com/psampaz/go-mod-outdated -direct
+  go list -u -m -json all | go tool bine run go-mod-outdated -direct
 
 # List dependencies with updates available.
 list-go-deps-updates-all:
-  go list -u -m -json all | go tool github.com/psampaz/go-mod-outdated -update
+  go list -u -m -json all | go tool bine run go-mod-outdated -update
 
 # List direct dependencies with updates available.
 list-go-deps-updates-direct:
-  go list -u -m -json all | go tool github.com/psampaz/go-mod-outdated -update -direct
+  go list -u -m -json all | go tool bine run go-mod-outdated -update -direct
+
+# Install all bine tools.
+tools:
+  go tool bine sync

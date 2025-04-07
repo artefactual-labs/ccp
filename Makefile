@@ -15,24 +15,7 @@ else
     MAKEFLAGS += -s
 endif
 
-include hack/make/bootstrap.mk
-include hack/make/dep_buf.mk
-include hack/make/dep_goenum.mk
-include hack/make/dep_golangci_lint.mk
-include hack/make/dep_gotestsum.mk
-include hack/make/dep_mockgen.mk
-include hack/make/dep_sqlc.mk
-include hack/make/dep_tparse.mk
 include hack/make/enums.mk
-
-# Lazy-evaluated list of tools.
-TOOLS = $(BUF) \
-	$(GOENUM) \
-	$(GOLANGCI_LINT) \
-	$(GOTESTSUM) \
-	$(MOCKGEN) \
-	$(SQLC) \
-	$(TPARSE)
 
 define NEWLINE
 
@@ -48,22 +31,23 @@ PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
-tools: # @HELP Install tools.
-tools: $(TOOLS)
+# Configure bine.
+include hack/make/tools.mk
+export PATH := $(shell go tool bine path):$(PATH)
 
 env: # @HELP Print Go env variables.
 env:
 	go env
 
 tparse: # @HELP Run all tests and output a coverage report using tparse.
-tparse: $(TPARSE)
+tparse: tool-tparse
 	go test -count=1 -json -cover $(TEST_PACKAGES) | tparse -follow -all -notests
 
 test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
 test: GOTEST_FLAGS ?=
 test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
-test: $(GOTESTSUM)
+test: tool-gotestsum
 	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
 
 test-race: # @HELP Run all tests with the race detector.
@@ -84,31 +68,31 @@ list-ignored-packages:
 
 fmt: # @HELP Format the project Go files with golangci-lint.
 fmt: FMT_FLAGS ?=
-fmt: $(GOLANGCI_LINT)
+fmt: tool-golangci-lint
 	golangci-lint fmt $(FMT_FLAGS)
 
 lint: # @HELP Lint the project Go files with golangci-lint.
 lint: OUT_FORMAT ?= --output.text.colors
 lint: LINT_FLAGS ?= --timeout=5m --fix
-lint: $(GOLANGCI_LINT)
+lint: tool-golangci-lint
 	golangci-lint run $(OUT_FORMAT) $(LINT_FLAGS)
 
 gen: # @HELP Generage code.
 gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web
 
 gen-mocks: # @HELP Generate mocks.
-gen-mocks: $(MOCKGEN)
+gen-mocks: tool-mockgen
 	mockgen -typed -source=./internal/store/store.go -destination=./internal/store/storemock/mock_store.go -package=storemock Store
 
 gen-sqlc: # @HELP Generate sqlc code.
-gen-sqlc: $(SQLC)
+gen-sqlc: tool-sqlc
 	sqlc generate --file=$(CURDIR)/internal/store/sqlc/sqlc.yaml
 
 gen-enums: # @HELP Generate enums.
-gen-enums: $(ENUMS)
+gen-enums: tool-go-enum
 
 gen-buf: # @HELP Generate buf.build assets.
-gen-buf: $(BUF)
+gen-buf: tool-buf
 	buf generate
 
 gen-web: # @HELP Generate webui assets.
