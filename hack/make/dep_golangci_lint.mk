@@ -6,7 +6,7 @@ $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
 # https://github.com/golangci/golangci-lint/releases
-GOLANGCI_LINT_VERSION ?= 1.64.8
+GOLANGCI_LINT_VERSION ?= 2.0.2
 
 ARCH := $(UNAME_ARCH)
 ifeq ($(UNAME_ARCH),x86_64)

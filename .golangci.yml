@@ -1,48 +1,63 @@
+version: "2"
+
 run:
   timeout: 1m
 
 linters:
+  default: standard
   enable:
-    - misspell
-    - gofumpt
-    - gci
-    - importas
-    - unparam
-    - gosec
-    - unused
-    - intrange
     - contextcheck
+    - gosec
+    - importas
+    - intrange
+    - misspell
+    - unparam
     - usetesting
+  settings:
+    importas:
+      alias:
+        - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1
+          alias: adminv1
+        - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect
+          alias: adminv1connect
+      no-unaliased: true
+      no-extra-aliases: false
+  exclusions:
+    generated: strict
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+        path: _test\.go
+    paths:
+      - hack
+      - proto
+      - third_party$
+      - builtin$
+      - examples$
 
-issues:
-  exclude-dirs:
-    - hack
-    - proto
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-
-linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/artefactual-labs/ccp)
-    custom-order: true
-  gofumpt:
-    extra-rules: true
-  gosec:
-    exclude-generated: false
-    severity: low
-    confidence: low
-    excludes:
-      - G601 # does not apply to go1.22+
-  importas:
-    no-unaliased: true
-    no-extra-aliases: false
-    alias:
-      - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1
-        alias: adminv1
-      - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect
-        alias: adminv1connect
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+      custom-order: true
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: strict
+    paths:
+      - hack
+      - proto
+      - third_party$
+      - builtin$
+      - examples$

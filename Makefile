@@ -82,11 +82,16 @@ list-ignored-packages: # @HELP Print a list of packages ignored in testing.
 list-ignored-packages:
 	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
+fmt: # @HELP Format the project Go files with golangci-lint.
+fmt: FMT_FLAGS ?=
+fmt: $(GOLANGCI_LINT)
+	golangci-lint fmt $(FMT_FLAGS)
+
 lint: # @HELP Lint the project Go files with golangci-lint.
-lint: OUT_FORMAT ?= colored-line-number
+lint: OUT_FORMAT ?= --output.text.colors
 lint: LINT_FLAGS ?= --timeout=5m --fix
 lint: $(GOLANGCI_LINT)
-	golangci-lint run --out-format $(OUT_FORMAT) $(LINT_FLAGS)
+	golangci-lint run $(OUT_FORMAT) $(LINT_FLAGS)
 
 gen: # @HELP Generage code.
 gen: gen-mocks gen-sqlc gen-enums gen-buf gen-web
