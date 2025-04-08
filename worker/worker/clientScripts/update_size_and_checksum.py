@@ -20,11 +20,10 @@ import os
 import uuid
 
 import django
+import metsrw
 from django.db import transaction
 
 django.setup()
-
-import metsrw
 
 from worker.clientScripts import parse_mets_to_db
 from worker.main.models import File

@@ -19,3 +19,4 @@
 **/.venv
 **/node_modules
 **/Thumbs.db
+**/*.egg-info

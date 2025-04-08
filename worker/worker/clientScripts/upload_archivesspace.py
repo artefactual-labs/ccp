@@ -4,12 +4,12 @@ import logging
 import os
 
 import django
-
-django.setup()
 from agentarchives.archivesspace import ArchivesSpaceClient
 from agentarchives.archivesspace import ArchivesSpaceError
 from django.core.exceptions import ValidationError
 from django.db import transaction
+
+django.setup()
 
 from worker.fpr.models import FormatVersion
 from worker.main.models import ArchivesSpaceDIPObjectResourcePairing

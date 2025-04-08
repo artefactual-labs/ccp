@@ -22,9 +22,9 @@ from dis import opmap
 import django
 import prometheus_client
 
-from worker.client.loader import SUPPORTED_MODULES
-
 django.setup()
+
+from worker.client.loader import SUPPORTED_MODULES
 
 GLOBAL_OPS = opmap["LOAD_GLOBAL"], opmap["STORE_GLOBAL"]
 

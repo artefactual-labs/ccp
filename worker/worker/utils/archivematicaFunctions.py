@@ -521,7 +521,8 @@ import subprocess
 import sys
 
 from lxml import etree
-from namespaces import jhoveBNS
+
+from worker.utils.namespaces import jhoveBNS
 
 class JhoveException(Exception):
     pass

@@ -37,6 +37,7 @@ import django
 from django.db import transaction
 
 django.setup()
+
 from worker.main.models import Event
 from worker.main.models import File
 from worker.main.models import Transfer

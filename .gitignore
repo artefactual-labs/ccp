@@ -23,7 +23,7 @@
 *.pprof
 *.svg
 cover.out
-*.egg-info
+**/*.egg-info
 
 /worker/archivematica-test.db
 

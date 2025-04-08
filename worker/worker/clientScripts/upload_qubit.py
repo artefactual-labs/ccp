@@ -26,11 +26,11 @@ import time
 
 import django
 import requests
-
-django.setup()
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+
+django.setup()
 
 from worker.main import models
 from worker.utils.custom_handlers import get_script_logger
