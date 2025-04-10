@@ -6,19 +6,23 @@ import (
 	"github.com/artefactual-labs/ccp/internal/api/admin"
 	"github.com/artefactual-labs/ccp/internal/cmd/rootcmd"
 	"github.com/artefactual-labs/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual-labs/ccp/internal/provisioner"
 	"github.com/artefactual-labs/ccp/internal/webui"
+	"github.com/artefactual-labs/ccp/internal/workhub"
 )
 
 type Config struct {
-	rootConfig *rootcmd.Config
-	out        io.Writer
-	sharedDir  string
-	workflow   string
-	db         databaseConfig
-	api        apiConfig
-	gearmin    gearminConfig
-	webui      webui.Config
-	metrics    metrics.Config
+	rootConfig  *rootcmd.Config
+	out         io.Writer
+	sharedDir   string
+	workflow    string
+	db          databaseConfig
+	api         apiConfig
+	gearmin     gearminConfig
+	webui       webui.Config
+	metrics     metrics.Config
+	hub         workhub.Config
+	provisioner provisioner.Config
 }
 
 type databaseConfig struct {

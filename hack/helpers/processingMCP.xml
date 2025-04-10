@@ -1,7 +1,9 @@
 <!--
-Copy of automated with:
+Copy of the "automated" with:
 - Virus scanning disabled.
 - SIPs are sent to backlog.
+
+This is used by our tests in the internal/workflow package.
 -->
 <processingMCP>
   <preconfiguredChoices>

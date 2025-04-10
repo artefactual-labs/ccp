@@ -12,6 +12,7 @@ package storemock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	adminv1beta1 "github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	store "github.com/artefactual-labs/ccp/internal/store"
@@ -939,7 +940,7 @@ func (c *MockStoreRunningCall) DoAndReturn(f func() bool) *MockStoreRunningCall 
 }
 
 // UpdateJobStatus mocks base method.
-func (m *MockStore) UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (m *MockStore) UpdateJobStatus(ctx context.Context, id uuid.UUID, status enums.JobStatus) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateJobStatus", ctx, id, status)
 	ret0, _ := ret[0].(error)
@@ -965,13 +966,13 @@ func (c *MockStoreUpdateJobStatusCall) Return(arg0 error) *MockStoreUpdateJobSta
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockStoreUpdateJobStatusCall) Do(f func(context.Context, uuid.UUID, string) error) *MockStoreUpdateJobStatusCall {
+func (c *MockStoreUpdateJobStatusCall) Do(f func(context.Context, uuid.UUID, enums.JobStatus) error) *MockStoreUpdateJobStatusCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockStoreUpdateJobStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, string) error) *MockStoreUpdateJobStatusCall {
+func (c *MockStoreUpdateJobStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.JobStatus) error) *MockStoreUpdateJobStatusCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -1010,6 +1011,44 @@ func (c *MockStoreUpdatePackageStatusCall) Do(f func(context.Context, uuid.UUID,
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockStoreUpdatePackageStatusCall) DoAndReturn(f func(context.Context, uuid.UUID, enums.PackageType, enums.PackageStatus) error) *MockStoreUpdatePackageStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// UpdateTaskCompletion mocks base method.
+func (m *MockStore) UpdateTaskCompletion(ctx context.Context, taskID uuid.UUID, exitCode int, stdout, stderr string, finishedAt time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTaskCompletion", ctx, taskID, exitCode, stdout, stderr, finishedAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTaskCompletion indicates an expected call of UpdateTaskCompletion.
+func (mr *MockStoreMockRecorder) UpdateTaskCompletion(ctx, taskID, exitCode, stdout, stderr, finishedAt any) *MockStoreUpdateTaskCompletionCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskCompletion", reflect.TypeOf((*MockStore)(nil).UpdateTaskCompletion), ctx, taskID, exitCode, stdout, stderr, finishedAt)
+	return &MockStoreUpdateTaskCompletionCall{Call: call}
+}
+
+// MockStoreUpdateTaskCompletionCall wrap *gomock.Call
+type MockStoreUpdateTaskCompletionCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockStoreUpdateTaskCompletionCall) Return(arg0 error) *MockStoreUpdateTaskCompletionCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockStoreUpdateTaskCompletionCall) Do(f func(context.Context, uuid.UUID, int, string, string, time.Time) error) *MockStoreUpdateTaskCompletionCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockStoreUpdateTaskCompletionCall) DoAndReturn(f func(context.Context, uuid.UUID, int, string, string, time.Time) error) *MockStoreUpdateTaskCompletionCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

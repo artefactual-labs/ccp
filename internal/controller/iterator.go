@@ -6,35 +6,35 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
 	"github.com/artefactual-labs/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
 
 var errEnd = errors.New("terminator")
 
 type jobIterator struct {
-	ctx      context.Context
-	logger   logr.Logger
-	metrics  *metrics.Metrics
-	gearman  *gearmin.Server
-	wf       *workflow.Document
-	pkg      *Package
-	nextLink uuid.UUID // Next workflow link or workflow chain link.
-	chain    *chain    // Current workflow chain
+	ctx        context.Context
+	logger     logr.Logger
+	metrics    *metrics.Metrics
+	dispatcher *dispatcher.Dispatcher
+	wf         *workflow.Document
+	pkg        *Package
+	nextLink   uuid.UUID // Next workflow link or workflow chain link.
+	chain      *chain    // Current workflow chain
 }
 
-func newJobIterator(ctx context.Context, logger logr.Logger, metrics *metrics.Metrics, gearman *gearmin.Server, wf *workflow.Document, pkg *Package) *jobIterator {
+func newJobIterator(ctx context.Context, logger logr.Logger, metrics *metrics.Metrics, dispatcher *dispatcher.Dispatcher, wf *workflow.Document, pkg *Package) *jobIterator {
 	iter := &jobIterator{
-		ctx:     ctx,
-		logger:  logger,
-		metrics: metrics,
-		gearman: gearman,
-		wf:      wf,
-		pkg:     pkg,
+		ctx:        ctx,
+		logger:     logger,
+		metrics:    metrics,
+		dispatcher: dispatcher,
+		wf:         wf,
+		pkg:        pkg,
 	}
 
 	return iter
@@ -141,7 +141,7 @@ func (i *jobIterator) buildJob(wl *workflow.Link, logger logr.Logger) (*job, err
 		"terminator", wl.End,
 	)
 
-	j, err := newJob(logger, i.metrics, i.chain, i.pkg, i.gearman, wl, i.wf)
+	j, err := newJob(logger, i.metrics, i.chain, i.pkg, i.dispatcher, wl, i.wf)
 	if err != nil {
 		return nil, fmt.Errorf("build job: %v", err)
 	}

@@ -5,22 +5,27 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
 	"github.com/artefactual-labs/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
 	"github.com/artefactual-labs/ccp/internal/derrors"
+	"github.com/artefactual-labs/ccp/internal/store/enums"
 	"github.com/artefactual-labs/ccp/internal/store/sqlcmysql"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
 
+// job is the representation of a single execution of a workflow link. It keeps
+// references to the workflow document and the package that is being processed,
+// as well as the dispatcher and the store. A *job implements the jobRunner
+// interface, which means it can be executed.
 type job struct {
 	logger  logr.Logger
 	metrics *metrics.Metrics
 
-	// gearman is used to dispatch jobs to MCPClient.
-	gearman *gearmin.Server
+	// dispatcher handles sending tasks to workers.
+	dispatcher *dispatcher.Dispatcher
 
 	// id of the job.
 	id uuid.UUID
@@ -43,7 +48,9 @@ type job struct {
 	// jobRunner is what makes a job executable.
 	jobRunner
 
-	// finalStatusRecorded remembers if updateStatusFromExitCode was used.
+	// finalStatusRecorded prevents multiple updates to the job's final status
+	// which can occur if both updateStatusFromExitCode and markComplete are
+	// called.
 	finalStatusRecorded bool
 }
 
@@ -52,17 +59,17 @@ type jobRunner interface {
 	exec(context.Context) (uuid.UUID, error)
 }
 
-func newJob(logger logr.Logger, metrics *metrics.Metrics, chain *chain, pkg *Package, gearman *gearmin.Server, wl *workflow.Link, wf *workflow.Document) (*job, error) {
+func newJob(logger logr.Logger, metrics *metrics.Metrics, chain *chain, pkg *Package, dispatcher *dispatcher.Dispatcher, wl *workflow.Link, wf *workflow.Document) (*job, error) {
 	j := &job{
-		logger:    logger,
-		metrics:   metrics,
-		gearman:   gearman,
-		id:        uuid.New(),
-		createdAt: time.Now().UTC(),
-		chain:     chain,
-		pkg:       pkg,
-		wl:        wl,
-		wf:        wf,
+		logger:     logger,
+		metrics:    metrics,
+		dispatcher: dispatcher,
+		id:         uuid.New(),
+		createdAt:  time.Now().UTC(),
+		chain:      chain,
+		pkg:        pkg,
+		wl:         wl,
+		wf:         wf,
 	}
 
 	var err error
@@ -134,11 +141,10 @@ func (j *job) save(ctx context.Context) (err error) {
 		ID:                j.id,
 		Type:              j.wl.Description.String(),
 		CreatedAt:         j.createdAt,
-		Createdtimedec:    fmt.Sprintf("%.9f", float64(j.createdAt.Nanosecond())/1e9),
 		Directory:         j.pkg.PathForDB(),
 		SIPID:             j.pkg.id,
 		Unittype:          j.pkg.jobUnitType(),
-		Currentstep:       3,
+		Currentstep:       int32(enums.JobStatusExecutingCommands),
 		Microservicegroup: j.wl.Group.String(),
 		Hidden:            false,
 		LinkID: uuid.NullUUID{
@@ -150,7 +156,7 @@ func (j *job) save(ctx context.Context) (err error) {
 
 // markAwaitingDecision is used by decision jobs to persist the awaiting status.
 func (j *job) markAwaitingDecision(ctx context.Context) error {
-	err := j.pkg.store.UpdateJobStatus(ctx, j.id, "STATUS_AWAITING_DECISION")
+	err := j.pkg.store.UpdateJobStatus(ctx, j.id, enums.JobStatusAwaitingDecision)
 	if err != nil {
 		return fmt.Errorf("mark awaiting decision: %v", err)
 	}
@@ -165,7 +171,7 @@ func (j *job) markComplete(ctx context.Context) error {
 		return nil
 	}
 
-	err := j.pkg.store.UpdateJobStatus(ctx, j.id, "STATUS_COMPLETED_SUCCESSFULLY")
+	err := j.pkg.store.UpdateJobStatus(ctx, j.id, enums.JobStatusCompletedSuccessfully)
 	if err != nil {
 		return fmt.Errorf("mark complete: %v", err)
 	}
@@ -175,6 +181,7 @@ func (j *job) markComplete(ctx context.Context) error {
 	return nil
 }
 
+// updateStatusFromExitCode is used by client jobs to persist the status.
 func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	status := ""
 	if ec, ok := j.wl.ExitCodes[code]; ok {
@@ -183,7 +190,16 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 		status = j.wl.FallbackJobStatus
 	}
 
-	err := j.pkg.store.UpdateJobStatus(ctx, j.id, status)
+	// Convert statuses from workflow.
+	jobStatus := enums.JobStatusUnknown
+	switch status {
+	case "Completed successfully":
+		jobStatus = enums.JobStatusCompletedSuccessfully
+	case "Failed":
+		jobStatus = enums.JobStatusFailed
+	}
+
+	err := j.pkg.store.UpdateJobStatus(ctx, j.id, jobStatus)
 	if err != nil {
 		return fmt.Errorf("update job status from exit code: %v", err)
 	}
@@ -193,30 +209,8 @@ func (j *job) updateStatusFromExitCode(ctx context.Context, code int) error {
 	return nil
 }
 
-// processTasksResults processes a set of task results produced by a client job,
-// e.g.: filesClientScriptJob. It returns the highest exist code seen.
-func (j *job) processTaskResults(cfg *workflow.LinkStandardTaskConfig, tr *taskResults) int {
-	maxExitCode := 0
-
-	for _, result := range tr.Results {
-		j.metrics.TaskCompleted(
-			result.task.CreatedAt,
-			result.FinishedAt,
-			cfg.Execute,
-			j.wl.Group.String(),
-			j.wl.Description.String(),
-		)
-
-		// Calculate the maximum exit code.
-		if result.ExitCode > maxExitCode {
-			maxExitCode = result.ExitCode
-		}
-	}
-
-	return maxExitCode
-}
-
-func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID { //nolint:unparam
+// exitCodeLinkID returns the next link ID to execute based on the exit code.
+func exitCodeLinkID(l *workflow.Link, code int) uuid.UUID {
 	ret := uuid.Nil
 
 	if ec, ok := l.ExitCodes[code]; ok {
@@ -240,6 +234,8 @@ type ConfigT interface {
 		workflow.LinkMicroServiceChoiceReplacementDic
 }
 
+// loadConfig loads the configuration from the workflow link into the provided
+// destination variable.
 func loadConfig[T ConfigT](wl *workflow.Link, dest *T) error {
 	config, ok := wl.Config.(T)
 	if !ok {

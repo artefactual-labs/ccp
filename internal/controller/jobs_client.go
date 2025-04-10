@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/google/uuid"
 
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
 	"github.com/artefactual-labs/ccp/internal/store"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
@@ -36,44 +38,26 @@ func newDirectoryClientScriptJob(j *job) (*directoryClientScriptJob, error) {
 }
 
 func (l *directoryClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
-	taskResult, err := l.submitTasks(ctx)
+	taskResults, err := l.submitTasks(ctx)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
 
-	exitCode := l.j.processTaskResults(l.config, taskResult)
-	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
-		return uuid.Nil, err
+	exitCode, err := processTaskResults(ctx, l.j, l.config, taskResults)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("process task results: %v", err)
 	}
 
-	if ec, ok := l.j.wl.ExitCodes[exitCode]; ok {
-		if ec.LinkID == nil {
-			return uuid.Nil, io.EOF // End of chain.
-		}
-		return *ec.LinkID, nil
-	}
-
-	if l.j.wl.FallbackLinkID == uuid.Nil {
-		return uuid.Nil, io.EOF // End of chain.
-	}
-
-	return l.j.wl.FallbackLinkID, nil
+	return nextLink(l.j, exitCode)
 }
 
-func (l *directoryClientScriptJob) submitTasks(ctx context.Context) (*taskResults, error) {
+func (l *directoryClientScriptJob) submitTasks(ctx context.Context) ([]*dispatcher.TaskResult, error) {
 	rm := l.j.pkg.unit.replacements(l.config.FilterSubdir).update(l.j.chain)
-	args := rm.replaceValues(l.config.Arguments)
-	stdout := rm.replaceValues(l.config.StdoutFile)
-	stderr := rm.replaceValues(l.config.StderrFile)
+	tasks := []*dispatcher.TaskRequest{prepareTask(rm, l.config)}
 
-	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
-	if err := taskBackend.submit(ctx, rm, args, false, stdout, stderr); err != nil {
-		return nil, err
-	}
-
-	results, err := taskBackend.wait(ctx)
+	results, err := l.j.dispatcher.Dispatch(ctx, l.j.id, l.config, tasks)
 	if err != nil {
-		return nil, fmt.Errorf("wait: %v", err)
+		return nil, fmt.Errorf("dispatch: %v", err)
 	}
 
 	return results, nil
@@ -113,54 +97,38 @@ func (l *filesClientScriptJob) exec(ctx context.Context) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("submit task: %v", err)
 	}
 
-	exitCode := l.j.processTaskResults(l.config, taskResults)
-	if err := l.j.updateStatusFromExitCode(ctx, exitCode); err != nil {
-		return uuid.Nil, err
+	exitCode, err := processTaskResults(ctx, l.j, l.config, taskResults)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("process task results: %v", err)
 	}
 
-	if ec, ok := l.j.wl.ExitCodes[exitCode]; ok {
-		if ec.LinkID == nil {
-			return uuid.Nil, io.EOF // End of chain.
-		}
-		return *ec.LinkID, nil
-	}
-
-	if l.j.wl.FallbackLinkID == uuid.Nil {
-		return uuid.Nil, io.EOF // End of chain.
-	}
-
-	return l.j.wl.FallbackLinkID, nil
+	return nextLink(l.j, exitCode)
 }
 
-func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) (*taskResults, error) {
-	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain)
-	taskBackend := newTaskBackend(l.j.logger, l.j.metrics, l.j, l.j.pkg.store, l.j.gearman, l.config)
-
+func (l *filesClientScriptJob) submitTasks(ctx context.Context, filterSubDir string) ([]*dispatcher.TaskResult, error) {
 	files, err := l.j.pkg.Files(ctx, l.config.FilterFileEnd, filterSubDir)
 	if err != nil {
 		return nil, err
 	}
 	if len(files) == 0 {
-		return &taskResults{}, nil // Nothing to do.
+		return []*dispatcher.TaskResult{}, nil // Nothing to do.
 	}
+
+	rm := l.j.pkg.unit.replacements(filterSubDir).update(l.j.chain)
+	tasks := make([]*dispatcher.TaskRequest, 0, len(files))
 
 	for _, fileReplacements := range files {
 		rm = rm.with(fileReplacements)
-		args := rm.replaceValues(l.config.Arguments)
-		stdout := rm.replaceValues(l.config.StdoutFile)
-		stderr := rm.replaceValues(l.config.StderrFile)
-
-		if err := taskBackend.submit(ctx, rm, args, false, stdout, stderr); err != nil {
-			return nil, err
-		}
+		task := prepareTask(rm, l.config)
+		tasks = append(tasks, task)
 	}
 
-	res, err := taskBackend.wait(ctx)
+	results, err := l.j.dispatcher.Dispatch(ctx, l.j.id, l.config, tasks)
 	if err != nil {
-		return nil, fmt.Errorf("wait: %v", err)
+		return nil, fmt.Errorf("dispatch: %v", err)
 	}
 
-	return res, nil
+	return results, nil
 }
 
 // filterSubDir returns the directory to filter files on. This path is usually
@@ -188,4 +156,71 @@ func (l *filesClientScriptJob) filterSubDir(ctx context.Context) (string, error)
 	}
 
 	return filterSubDir, nil
+}
+
+// prepareTask prepares a task request for the dispatcher.
+func prepareTask(rm replacementMapping, linkConfig *workflow.LinkStandardTaskConfig) *dispatcher.TaskRequest {
+	req := &dispatcher.TaskRequest{
+		Arguments:  rm.replaceValues(linkConfig.Arguments),
+		StdoutFile: rm.replaceValues(linkConfig.StdoutFile),
+		StderrFile: rm.replaceValues(linkConfig.StderrFile),
+	}
+
+	if val, ok := rm["fileUUID"]; ok {
+		if id, err := uuid.Parse(string(val)); err == nil {
+			req.FileID = id
+		}
+	}
+
+	if val, ok := rm["%relativeLocation%"]; ok {
+		if path, err := filepath.Abs(string(val)); err == nil {
+			req.RelativeLocation = filepath.Base(path)
+		}
+	}
+
+	return req
+}
+
+// processTasksResults processes a set of task results produced by a client job,
+// e.g.: filesClientScriptJob. It returns the highest exist code seen because
+// that is the one that will be used to determine the next link in the chain.
+func processTaskResults(ctx context.Context, j *job, cfg *workflow.LinkStandardTaskConfig, results []*dispatcher.TaskResult) (int, error) {
+	maxExitCode := 0
+
+	for _, item := range results {
+		j.metrics.TaskCompleted(
+			item.CreatedAt,
+			item.FinishedAt,
+			cfg.Execute,
+			j.wl.Group.String(),
+			j.wl.Description.String(),
+		)
+
+		// Calculate the maximum exit code.
+		if item.ExitCode > maxExitCode {
+			maxExitCode = item.ExitCode
+		}
+	}
+
+	if err := j.updateStatusFromExitCode(ctx, maxExitCode); err != nil {
+		return -1, err
+	}
+
+	return maxExitCode, nil
+}
+
+// nextLink returns the next link in the chain based on the exit code.
+func nextLink(job *job, exitCode int) (uuid.UUID, error) {
+	if ec, ok := job.wl.ExitCodes[exitCode]; ok {
+		if ec.LinkID == nil {
+			return uuid.Nil, io.EOF // End of chain.
+		}
+		return *ec.LinkID, nil
+	}
+
+	if job.wl.FallbackLinkID == uuid.Nil {
+		return uuid.Nil, io.EOF // End of chain.
+	}
+
+	return job.wl.FallbackLinkID, nil
 }

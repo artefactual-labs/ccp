@@ -95,7 +95,7 @@ type Chain struct {
 type Link struct {
 	ID                uuid.UUID            `json:"-"`
 	Manager           string               `json:"-"`
-	Config            interface{}          `json:"config"`
+	Config            any                  `json:"config"`
 	Description       I18nField            `json:"description"`
 	ExitCodes         map[int]LinkExitCode `json:"exit_codes"`
 	FallbackJobStatus string               `json:"fallback_job_status"`

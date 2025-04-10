@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/jellydator/ttlcache/v3"

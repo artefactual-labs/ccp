@@ -29,7 +29,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache-dependency-path: go.sum
+      - name: Install Just
+        uses: extractions/setup-just@v2
       - name: Get date
         id: get-date
         shell: bash
@@ -44,7 +45,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-golangci-lint-cache-
       - name: Run golangci-lint
-        run: make lint
+        run: just lint --fix=0
         env:
           GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
   test:
@@ -57,9 +58,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache-dependency-path: go.sum
+      - name: Install Just
+        uses: extractions/setup-just@v2
       - name: Run tests
-        run: go test -race ./...
+        run: just test "" "-race"
   mod:
     name: Check mod tidy
     runs-on: ubuntu-latest
@@ -70,8 +72,5 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache-dependency-path: go.sum
       - name: Check
-        run: |
-          go mod tidy
-          git diff --name-only --exit-code || (echo "Please run 'go mod tidy'."; exit 1)
+        run: go mod tidy -diff

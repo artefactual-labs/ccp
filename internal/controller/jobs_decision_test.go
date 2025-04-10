@@ -20,13 +20,13 @@ func TestNextChainDecisionJob(t *testing.T) {
 	t.Run("Honours preconfigured choices", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "56eebd45-5600-4768-a8c2-ec0114555a3d")
-		createAutomatedProcessingConfig(t, job.pkg.path)
+		tj := createJob(t, "56eebd45-5600-4768-a8c2-ec0114555a3d")
+		createAutomatedProcessingConfig(t, tj.job.pkg.path)
 
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("e9eaef1e-c2e0-4e3b-b942-bfb537162795"))
 		assert.NilError(t, err)
 	})
@@ -34,12 +34,12 @@ func TestNextChainDecisionJob(t *testing.T) {
 	t.Run("Creates a decision", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "56eebd45-5600-4768-a8c2-ec0114555a3d")
+		tj := createJob(t, "56eebd45-5600-4768-a8c2-ec0114555a3d")
 
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Generate transfer structure report", []choice{
@@ -56,12 +56,12 @@ func TestNextChainDecisionJob(t *testing.T) {
 	t.Run("Excludes choices related to disabled abilities", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
+		tj := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
 
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
@@ -78,12 +78,12 @@ func TestNextChainDecisionJob(t *testing.T) {
 	t.Run("Resolves decision when the position is unknown", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
+		tj := createJob(t, "bb194013-597c-4e4a-8493-b36d190f8717")
 
-		store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Create SIP(s)", []choice{
@@ -104,11 +104,11 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 	t.Run("Honours database context", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "a0db8294-f02a-4f49-a557-b1310a715ffc")
+		tj := createJob(t, "a0db8294-f02a-4f49-a557-b1310a715ffc")
 
-		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-		store.EXPECT().ReadDict(mockutil.Context(), "upload-archivesspace_v0.0").Return(
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().ReadDict(mockutil.Context(), "upload-archivesspace_v0.0").Return(
 			map[string]string{
 				"username": "test",
 				"password": "test",
@@ -116,11 +116,11 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 			nil,
 		)
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("ff89a530-0540-4625-8884-5a2198dea05a"))
 		assert.NilError(t, err)
 
-		assertChainContext(t, job.chain, map[string]string{
+		assertChainContext(t, tj.job.chain, map[string]string{
 			"%username%": "test",
 			"%password%": "test",
 		})
@@ -129,17 +129,17 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 	t.Run("Honours preconfigured choices", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "8882bad4-561c-4126-89c9-f7f0c083d5d7")
-		createAutomatedProcessingConfig(t, job.pkg.path)
+		tj := createJob(t, "8882bad4-561c-4126-89c9-f7f0c083d5d7")
+		createAutomatedProcessingConfig(t, tj.job.pkg.path)
 
-		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c"))
 		assert.NilError(t, err)
 
-		assertChainContext(t, job.chain, map[string]string{
+		assertChainContext(t, tj.job.chain, map[string]string{
 			"%AssignUUIDsToDirectories%": "True",
 		})
 	})
@@ -147,12 +147,12 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 	t.Run("Creates a decision", func(t *testing.T) {
 		t.Parallel()
 
-		job, store := createJob(t, "8882bad4-561c-4126-89c9-f7f0c083d5d7")
+		tj := createJob(t, "8882bad4-561c-4126-89c9-f7f0c083d5d7")
 
-		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		id, err := job.exec(t.Context())
+		id, err := tj.job.exec(t.Context())
 		assert.Equal(t, id, uuid.Nil)
 
 		decision := assertErrWait(t, err, "Assign UUIDs to directories?", []choice{
@@ -165,7 +165,7 @@ func TestUpdateContextDecisionJob(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Equal(t, nextLink, uuid.MustParse("5415c813-3637-49ab-afec-9b435c2e4d2c"))
 
-		assertChainContext(t, job.chain, map[string]string{
+		assertChainContext(t, tj.job.chain, map[string]string{
 			"%AssignUUIDsToDirectories%": "False",
 		})
 	})

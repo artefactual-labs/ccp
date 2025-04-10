@@ -20,6 +20,10 @@ linters:
           alias: adminv1
         - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1/adminv1beta1connect
           alias: adminv1connect
+        - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/worker/v1beta1
+          alias: workerv1
+        - pkg: github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/worker/v1beta1/workerv1beta1connect
+          alias: workerv1connect
       no-unaliased: true
       no-extra-aliases: false
   exclusions:

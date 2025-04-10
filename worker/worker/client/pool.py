@@ -27,6 +27,7 @@ from typing import TypeVar
 import django
 from django import db
 from django.conf import settings
+from gearman.errors import ServerUnavailable
 
 django.setup()
 
@@ -95,7 +96,13 @@ def run_gearman_worker(
         max_jobs_to_process=max_jobs_to_process,
     )
     logger.debug("Worker process %s starting", process_id)
-    worker.work()
+    try:
+        worker.work()
+    except Exception as exc:
+        if isinstance(exc, ServerUnavailable):
+            logger.error("Worker process %s: ServerUnavailable: %s", process_id, exc)
+        else:
+            logger.exception("Worker process %s: Exception occurred", process_id)
     logger.debug("Worker process %s exiting", process_id)
 
 

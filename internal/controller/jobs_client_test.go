@@ -1,110 +1,137 @@
 package controller
 
 import (
-	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/artefactual-labs/gearmin/gearmintest"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/mikespook/gearman-go/worker"
 	"go.artefactual.dev/tools/mockutil"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
+	"github.com/artefactual-labs/ccp/internal/store"
+	"github.com/artefactual-labs/ccp/internal/store/enums"
 )
 
 func TestDirectoryClientScriptJob(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Runs a single task", func(t *testing.T) {
+	t.Run("Runs a task and handles its success outcome", func(t *testing.T) {
 		t.Parallel()
 
-		jobs := 0
-		jobHandler := func(job worker.Job) ([]byte, error) {
-			jobs++
-			tasks := decodeTasks(t, job)
-			task1 := tasks[0]
-			assert.DeepEqual(t,
-				task1,
-				&task{
-					ID:   task1.ID,
-					Args: `"%SIPDirectory%" "%watchDirectoryPath%workFlowDecisions/compressionAIPDecisions/." "%SIPUUID%" "%sharedPath%"`,
-				},
-				cmp.AllowUnexported(task{}),
-				cmpopts.IgnoreFields(task{}, "CreatedAt"),
-			)
-			return encodeTaskResults(t, map[uuid.UUID]*taskResult{
-				task1.ID: {
-					ExitCode:   0,
-					FinishedAt: time.Now(),
-					Stdout:     ``,
-				},
-			}), nil
-		}
+		tj := createJob(t, "002716a1-ae29-4f36-98ab-0d97192669c4") // Move to compressionAIPDecisions directory.
+		createAutomatedProcessingConfig(t, tj.job.pkg.path)
 
-		job, store := createJobWithHandlers(t,
-			"002716a1-ae29-4f36-98ab-0d97192669c4", // Move to compressionAIPDecisions directory.
-			map[string]gearmintest.Handler{"movesip_v0.0": jobHandler},
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), tj.job.id, enums.JobStatusCompletedSuccessfully).Return(nil).Times(1)
+
+		gomock.InOrder(
+			tj.backend.EXPECT().Name().Return("workhub").Times(1),
+			tj.backend.EXPECT().
+				Dispatch(mockutil.Context(), tj.job.id, "moveSIP_v0.0", gomock.Any()).
+				Return([]*dispatcher.TaskResult{
+					{
+						ExitCode: 0,
+					},
+				}, nil).Times(1),
 		)
-		createAutomatedProcessingConfig(t, job.pkg.path)
 
-		store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
-		store.EXPECT().UpdateJobStatus(mockutil.Context(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-		store.EXPECT().CreateTasks(mockutil.Context(), gomock.Any()).Return(nil).AnyTimes()
+		_, ok := tj.job.jobRunner.(*directoryClientScriptJob)
+		assert.Assert(t, ok)
 
-		_, err := job.exec(t.Context())
-		assert.ErrorIs(t, err, io.EOF) // End of chain.
-		assert.Equal(t, jobs, 1)
+		nextLinkID, err := tj.job.exec(t.Context())
+		assert.Equal(t, nextLinkID, uuid.Nil)
+		assert.ErrorIs(t, err, io.EOF)
+	})
+
+	t.Run("Runs a task and handles its failed outcome", func(t *testing.T) {
+		t.Parallel()
+
+		tj := createJob(t, "002716a1-ae29-4f36-98ab-0d97192669c4") // Move to compressionAIPDecisions directory.
+		createAutomatedProcessingConfig(t, tj.job.pkg.path)
+
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), tj.job.id, enums.JobStatusFailed).Return(nil).Times(1)
+
+		gomock.InOrder(
+			tj.backend.EXPECT().Name().Return("workhub").Times(1),
+			tj.backend.EXPECT().
+				Dispatch(mockutil.Context(), tj.job.id, "moveSIP_v0.0", gomock.Any()).
+				Return([]*dispatcher.TaskResult{
+					{
+						ExitCode: 1,
+					},
+				}, nil).Times(1),
+		)
+
+		_, ok := tj.job.jobRunner.(*directoryClientScriptJob)
+		assert.Assert(t, ok)
+
+		nextLinkID, err := tj.job.exec(t.Context())
+		assert.NilError(t, err)
+		assert.Equal(t, nextLinkID, uuid.MustParse("7d728c39-395f-4892-8193-92f086c0546f"))
 	})
 }
 
 func TestFilesClientScriptJob(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Runs multiple tasks", func(t *testing.T) {
+	t.Run("Runs multiple task and handles its success outcome", func(t *testing.T) {
 		t.Parallel()
 
-		jobs := 0
-		jobHandler := func(job worker.Job) ([]byte, error) {
-			jobs++
-			return []byte(""), nil
-		}
+		tj := createJob(t, "0e41c244-6c3e-46b9-a554-65e66e5c9324") // Identify file format of attachments.
+		createAutomatedProcessingConfig(t, tj.job.pkg.path)
 
-		job, _ := createJobWithHandlers(t,
-			"0e41c244-6c3e-46b9-a554-65e66e5c9324", // Identify file format of attachments.
-			map[string]gearmintest.Handler{"identifyfileformat_v0.0": jobHandler},
+		tj.store.EXPECT().CreateJob(mockutil.Context(), gomock.Any()).Return(nil).Times(1)
+		tj.store.EXPECT().UpdateJobStatus(mockutil.Context(), tj.job.id, enums.JobStatusCompletedSuccessfully).Return(nil).Times(1)
+		tj.store.EXPECT().ReadUnitVar(mockutil.Context(), tj.job.pkg.id, enums.PackageTypeTransfer, "identifyFileFormat_v0.0").Return("", nil).Times(1)
+		tj.store.EXPECT().Files(mockutil.Context(), tj.job.pkg.id, enums.PackageTypeTransfer, "", "objects/attachments", "").Return([]store.File{
+			{
+				ID:               uuid.MustParse("c495f089-896b-44f5-b0ac-5226625abd9b"),
+				CurrentLocation:  "f1",
+				OriginalLocation: "f1",
+			},
+			{
+				ID:               uuid.MustParse("6f2c3b0f-fbab-45ba-8eb0-acb2add65c63"),
+				CurrentLocation:  "f2",
+				OriginalLocation: "f2",
+			},
+		}, nil).Times(1)
+
+		gomock.InOrder(
+			tj.backend.EXPECT().Name().Return("workhub").Times(1),
+			tj.backend.EXPECT().
+				Dispatch(mockutil.Context(), tj.job.id, "identifyFileFormat_v0.0",
+					mockutil.Func("", func(tasks []*dispatcher.Task) error {
+						assert.Equal(t, len(tasks), 2)
+						return nil
+					}),
+				).
+				Return([]*dispatcher.TaskResult{
+					{
+						ExitCode: 0,
+					},
+					{
+						ExitCode: 0,
+					},
+				}, nil).Times(1),
 		)
-		createAutomatedProcessingConfig(t, job.pkg.path)
+
+		attachmentsDir := filepath.Join(tj.job.pkg.path, "objects/attachments")
+		_ = os.MkdirAll(attachmentsDir, os.FileMode(0o755))
+		_, _ = os.CreateTemp(attachmentsDir, "f1-*")
+		_, _ = os.CreateTemp(attachmentsDir, "f2-*")
+
+		_, ok := tj.job.jobRunner.(*filesClientScriptJob)
+		assert.Assert(t, ok)
+
+		// TODO: verify tasks requested to the dispatcher.
+
+		nextLinkID, err := tj.job.exec(t.Context())
+		assert.Equal(t, nextLinkID, uuid.MustParse("95616c10-a79f-48ca-a352-234cc91eaf08"))
+		assert.NilError(t, err)
 	})
-}
-
-func decodeTasks(t *testing.T, job worker.Job) []*task {
-	t.Helper()
-
-	tasks := &tasks{}
-	err := json.Unmarshal(job.Data(), tasks)
-	assert.NilError(t, err)
-
-	ret := make([]*task, 0, len(tasks.Tasks))
-	for _, t := range tasks.Tasks {
-		ret = append(ret, t)
-	}
-
-	return ret
-}
-
-func encodeTaskResults(t *testing.T, res map[uuid.UUID]*taskResult) []byte {
-	t.Helper()
-
-	taskResults := &taskResults{
-		Results: res,
-	}
-
-	blob, err := json.Marshal(taskResults)
-	assert.NilError(t, err)
-
-	return blob
 }

@@ -45,7 +45,7 @@ message Job {
   PackageType package_type = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum = {
-      defined_only: true,
+      defined_only: true
       in: [
         1, // "unitTransfer"
         2, // "unitSIP"

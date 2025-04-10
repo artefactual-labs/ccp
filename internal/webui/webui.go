@@ -85,7 +85,7 @@ func (s *Server) configureRouter() error {
 	return nil
 }
 
-func (s *Server) json(w http.ResponseWriter, code int, i interface{}) {
+func (s *Server) json(w http.ResponseWriter, code int, i any) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 	enc := json.NewEncoder(w)
