@@ -17,6 +17,7 @@ func (m *Build) WorkerImage() *dagger.Container {
 	return m.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 		Dockerfile: "Dockerfile",
 		Target:     "worker",
+		Platform:   "linux/amd64",
 	})
 }
 

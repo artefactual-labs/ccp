@@ -2,37 +2,43 @@
 name: ccp
 
 volumes:
-
-  # Internal named volumes.
-  # These are not accessible outside of the docker host and are maintained by
-  # Docker.
   mysql_data:
-  grafana_data:
-  prometheus_data:
-
-  # External named volumes.
-  # These are intended to be accessible beyond the docker host (e.g. via NFS).
-  # They use bind mounts to mount a specific "local" directory on the docker
-  # host - the expectation being that these directories are actually mounted
-  # filesystems from elsewhere.
   ccp_data:
-    name: "ccp-data"
-    external: true
 
+networks:
+  backend:
+    driver: bridge
 
 services:
-
   mysql:
-    image: "percona:8.0"
+    image: "percona/percona-server:8.4.5"
     command: "--character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci"
     environment:
       MYSQL_ROOT_PASSWORD: "12345"
-      # These are used in the settings.testmysql modules
+      MYSQL_DATABASE: "CCP"
       MYSQL_USER: "archivematica"
       MYSQL_PASSWORD: "demo"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p12345",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - "./etc/mysql/tuning.cnf:/etc/my.cnf.d/tuning.cnf:ro"
       - "mysql_data:/var/lib/mysql"
+    networks:
+      - "backend"
     ports:
       - "127.0.0.1:63001:3306"
     cap_add:
@@ -55,16 +61,18 @@ services:
       - "CCP_API_ADMIN_ADDR=:8000"
       - "CCP_WEBUI_ADDR=:8001"
       - "CCP_METRICS_ADDR=:7999"
+      - "CCP_PROVISIONER_TYPE=local"
     volumes:
       - "./submodules/archivematica-sampledata/:/home/archivematica/archivematica-sampledata/:ro"
       - "ccp_data:/var/archivematica/sharedDirectory:rw"
-    links:
-      - "mysql"
+    networks:
+      - "backend"
     ports:
       - "63030:8000"
       - "63031:8001"
 
   worker:
+    platform: "linux/amd64"
     build:
       context: "../"
       target: "worker"
@@ -77,43 +85,44 @@ services:
       DJANGO_SECRET_KEY: "12345"
       ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "ccp:4730"
       ARCHIVEMATICA_WORKER_CAPTURE_CLIENT_SCRIPT_OUTPUT: "true"
-      ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_PORT: "7999"
-      ARCHIVEMATICA_WORKER_PROMETHEUS_BIND_ADDRESS: "0.0.0.0"
       ARCHIVEMATICA_WORKER_DB_USER: "archivematica"
       ARCHIVEMATICA_WORKER_DB_PASSWORD: "demo"
       ARCHIVEMATICA_WORKER_DB_HOST: "mysql"
       ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
     volumes:
-      - "../worker:/src"
-      - "/src/.venv"
       - "ccp_data:/var/archivematica/sharedDirectory:rw"
-    links:
-      - "mysql"
-      - "ccp"
+    networks:
+      - "backend"
 
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-      - ./etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - 63090:9090
-    profiles:
-      - "observability"
-
-  grafana:
-    image: grafana/grafana:latest
+  migrate:
+    platform: "linux/amd64"
+    build:
+      context: "../"
+      target: "worker"
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        UBUNTU_VERSION: ${UBUNTU_VERSION:-24.04}
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12.5}
+    entrypoint: >
+      /src/manage.py install
+        --wait-for-db
+        --migrate
+        --username="test"
+        --password="test"
+        --email="test@test.com"
+        --org-name="test"
+        --org-id="test"
+        --api-key="test"
+        --site-url="http://archivematica-dashboard:8000"
+        --skip-checks
     environment:
-      GF_SECURITY_ADMIN_USER: "test"
-      GF_SECURITY_ADMIN_PASSWORD: "test"
-    volumes:
-      - ./etc/grafana/provisioning:/etc/grafana/provisioning
-      - grafana_data:/var/lib/grafana
-    ports:
-      - 63091:3000
-    links:
-      - "prometheus"
-    profiles:
-      - "observability"
+      DJANGO_SECRET_KEY: "12345"
+      ARCHIVEMATICA_WORKER_GEARMAN_SERVER: "ccp:4730"
+      ARCHIVEMATICA_WORKER_CAPTURE_CLIENT_SCRIPT_OUTPUT: "true"
+      ARCHIVEMATICA_WORKER_DB_USER: "archivematica"
+      ARCHIVEMATICA_WORKER_DB_PASSWORD: "demo"
+      ARCHIVEMATICA_WORKER_DB_HOST: "mysql"
+      ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
+    networks:
+      - "backend"

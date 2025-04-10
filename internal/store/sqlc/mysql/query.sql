@@ -48,6 +48,14 @@ LEFT JOIN SIPs s ON s.sipUUID = j.SIPUUID
 WHERE j.unitType = 'unitSIP' AND NOT j.SIPUUID LIKE '%None%' AND s.hidden = 0;
 
 --
+-- Tasks
+--
+
+-- name: UpdateTaskCompletion :exec
+UPDATE Tasks SET exitCode = ?, endTime = ?, stdOut = ?, stdError = ?
+WHERE taskUUID = ?;
+
+--
 -- Transfers
 --
 

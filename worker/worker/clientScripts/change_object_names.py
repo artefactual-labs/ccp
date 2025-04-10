@@ -31,6 +31,7 @@ from worker.main.models import Event
 from worker.main.models import File
 from worker.main.models import Transfer
 from worker.utils.custom_handlers import get_script_logger
+from worker.version import get_full_version
 
 logger = get_script_logger("archivematica.worker.changeObjectNames")
 
@@ -44,7 +45,7 @@ class NameChanger:
     BATCH_SIZE = 2000
     EVENT_DETAIL = (
         'prohibited characters removed: program="change_names"; version="'
-        + change_names.VERSION
+        + get_full_version()
         + '"'
     )
     EVENT_OUTCOME_DETAIL = 'Original name="{}"; new name="{}"'

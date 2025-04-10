@@ -27,7 +27,7 @@ type Store interface {
 	CreateJob(ctx context.Context, params *sqlc.CreateJobParams) error
 
 	// UpdateJobStatus modifies the status of a Job.
-	UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) error
+	UpdateJobStatus(ctx context.Context, id uuid.UUID, status enums.JobStatus) error
 
 	// FindAwaitingJob returns the first job awaiting a decision.
 	FindAwaitingJob(ctx context.Context, params *FindAwaitingJobParams) (*adminv1.Job, error)
@@ -38,6 +38,9 @@ type Store interface {
 
 	// CreateTasks creates a group of Tasks in bulk.
 	CreateTasks(ctx context.Context, tasks []*Task) error
+
+	// UpdateTaskCompletion updates the completion status of a task.
+	UpdateTaskCompletion(ctx context.Context, taskID uuid.UUID, exitCode int, stdout, stderr string, finishedAt time.Time) error
 
 	// ReadPackagesWithCreationTimestamps returns a list of packages along with
 	// their creation timestamps. It excludes hidden packages.

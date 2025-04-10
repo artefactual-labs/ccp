@@ -125,34 +125,32 @@ func (s *mysqlStoreImpl) RemoveTransientData(ctx context.Context) (err error) {
 	return nil
 }
 
+func (s *mysqlStoreImpl) UpdateTaskCompletion(ctx context.Context, taskID uuid.UUID, exitCode int, stdout, stderr string, finishedAt time.Time) (err error) {
+	defer wrap(&err, "UpdateTaskCompletion(%s, %d)", taskID, exitCode)
+
+	return s.queries.UpdateTaskCompletion(ctx, &sqlc.UpdateTaskCompletionParams{
+		Taskuuid: taskID,
+		Exitcode: sql.NullInt64{Int64: int64(exitCode), Valid: true},
+		Endtime:  sql.NullTime{Time: finishedAt, Valid: true},
+		Stdout:   stdout,
+		Stderror: stderr,
+	})
+}
+
 func (s *mysqlStoreImpl) CreateJob(ctx context.Context, params *sqlc.CreateJobParams) (err error) {
 	defer wrap(&err, "CreateJob")
+
+	params.Createdtimedec = fmt.Sprintf("%.9f", float64(params.CreatedAt.Nanosecond())/1e9)
 
 	return s.queries.CreateJob(ctx, params)
 }
 
-func (s *mysqlStoreImpl) UpdateJobStatus(ctx context.Context, id uuid.UUID, status string) (err error) {
+func (s *mysqlStoreImpl) UpdateJobStatus(ctx context.Context, id uuid.UUID, status enums.JobStatus) (err error) {
 	defer wrap(&err, "UpdateJobStatus(%s, %s)", id, status)
-
-	var step int32
-	switch status {
-	case "Unknown", "STATUS_UNKNOWN", "":
-		step = 0
-	case "Awaiting decision", "STATUS_AWAITING_DECISION":
-		step = 1
-	case "Completed successfully", "STATUS_COMPLETED_SUCCESSFULLY":
-		step = 2
-	case "Executing command(s)", "STATUS_EXECUTING_COMMANDS":
-		step = 3
-	case "Failed", "STATUS_FAILED":
-		step = 4
-	default:
-		return fmt.Errorf("unknown status: %q", status)
-	}
 
 	return s.queries.UpdateJobStatus(ctx, &sqlc.UpdateJobStatusParams{
 		ID:          id,
-		Currentstep: step,
+		Currentstep: int32(status), //nolint:gosec
 	})
 }
 

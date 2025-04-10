@@ -293,7 +293,7 @@ func (p *Package) Files(ctx context.Context, filterFilenameEnd, filterSubdir str
 
 	startPath := p.Path()
 	if filterSubdir != "" {
-		startPath += filterSubdir
+		startPath = filepath.Join(startPath, filterSubdir)
 	}
 	err = filepath.WalkDir(startPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -310,9 +310,9 @@ func (p *Package) Files(ctx context.Context, filterFilenameEnd, filterSubdir str
 			return nil
 		}
 		ret = append(ret, map[string]replacement{
-			"%relativeLocation": replacement(path),
-			"%fileUUID%":        replacement("None"),
-			"%fileGrpUse%":      replacement(""),
+			"%relativeLocation%": replacement(path),
+			"%fileUUID%":         replacement("None"),
+			"%fileGrpUse%":       replacement(""),
 		})
 		return nil
 	})
@@ -697,9 +697,7 @@ type replacementMapping map[string]replacement
 // copy returns a new map with copied replacements.
 func (rm replacementMapping) copy() replacementMapping {
 	n := map[string]replacement{}
-	for k, v := range rm {
-		n[k] = v
-	}
+	maps.Copy(n, rm)
 
 	return n
 }
@@ -716,9 +714,7 @@ func (rm replacementMapping) update(c *chain) replacementMapping {
 // with returns a copy of the mapping with input merged into it.
 func (rm replacementMapping) with(input replacementMapping) replacementMapping {
 	ret := rm.copy()
-	for k, v := range input {
-		ret[k] = v
-	}
+	maps.Copy(ret, input)
 
 	return ret
 }

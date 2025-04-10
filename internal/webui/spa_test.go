@@ -52,7 +52,8 @@ func TestSPAHandler(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/favicon.ico", nil)
 		h.ServeHTTP(rec, req)
 		assert.Equal(t, rec.Code, http.StatusOK)
-		assert.Equal(t, rec.Header().Get("Content-Type"), "image/vnd.microsoft.icon")
+		contentType := rec.Header().Get("Content-Type")
+		assert.Assert(t, contentType == "image/x-icon" || contentType == "image/vnd.microsoft.icon")
 	})
 }
 

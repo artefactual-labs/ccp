@@ -14,9 +14,12 @@ import (
 
 	"github.com/artefactual-labs/ccp/internal/api/admin"
 	"github.com/artefactual-labs/ccp/internal/controller"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
+	"github.com/artefactual-labs/ccp/internal/provisioner"
 	"github.com/artefactual-labs/ccp/internal/store"
 	"github.com/artefactual-labs/ccp/internal/webui"
 	"github.com/artefactual-labs/ccp/internal/workflow"
+	"github.com/artefactual-labs/ccp/internal/workhub"
 )
 
 type Server struct {
@@ -33,6 +36,12 @@ type Server struct {
 
 	// Embedded job server compatible with Gearman.
 	gearman *gearmin.Server
+
+	// Worker server.
+	workhubServer *workhub.Server
+
+	// Worker provisioner.
+	provisioner *provisioner.Provisioner
 
 	// Filesystem watcher.
 	watcher *watcher.Batcher
@@ -111,7 +120,23 @@ func (s *Server) Run() error {
 		return fmt.Errorf("error creating built-in processing configurations: %v", err)
 	}
 
-	s.logger.V(1).Info("Creating Gearman job server.")
+	s.logger.V(1).Info("Creating worker server.")
+	workerHub := workhub.NewHub(s.logger.WithName("workhub.hub"))
+	s.workhubServer = workhub.NewServer(s.logger.WithName("workhub.server"), s.config.hub, workerHub)
+	if err := s.workhubServer.Run(); err != nil {
+		return fmt.Errorf("error creating worker server: %v", err)
+	}
+
+	s.logger.V(1).Info("Creating worker provisioner.")
+	s.config.provisioner.Addr = s.workhubServer.Addr()
+	if s.provisioner, err = provisioner.New(s.logger.WithName("provisioner"), s.config.provisioner); err != nil {
+		return fmt.Errorf("error creating worker provisioner: %v", err)
+	}
+	if err := s.provisioner.Run(s.ctx); err != nil {
+		return fmt.Errorf("error creating worker provisioner: %v", err)
+	}
+
+	s.logger.V(1).Info("Creating gearmin server.")
 	ln, err := net.Listen("tcp", s.config.gearmin.addr)
 	if err != nil {
 		return fmt.Errorf("error creating gearmin listener: %v", err)
@@ -119,8 +144,20 @@ func (s *Server) Run() error {
 		s.gearman = gearmin.NewServer(ln)
 	}
 
+	s.logger.V(1).Info("Creating dispatcher.")
+	dispatcher, err := dispatcher.New(
+		s.logger.WithName("dispatcher"),
+		s.metrics.metrics,
+		s.store,
+		s.gearman, // gearmin backend dependency.
+		dispatcher.NewWorkhubSubmitter(workerHub), // workhub backend dependency.
+	)
+	if err != nil {
+		return fmt.Errorf("error creating dispatcher: %v", err)
+	}
+
 	s.logger.V(1).Info("Creating controller.")
-	s.controller = controller.New(s.logger.WithName("controller"), s.metrics.metrics, s.store, s.gearman, wf, s.config.sharedDir, watchedDir)
+	s.controller = controller.New(s.logger.WithName("controller"), s.metrics.metrics, s.store, dispatcher, wf, s.config.sharedDir, watchedDir)
 	if err := s.controller.Run(); err != nil {
 		return fmt.Errorf("error creating controller: %v", err)
 	}
@@ -153,12 +190,21 @@ func (s *Server) Run() error {
 func (s *Server) Close() error {
 	var errs error
 
+	// Short-lived context for the shutdown process.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	s.logger.Info("Shutting down...")
 
 	s.cancel() // Cancel the root context.
+
+	if s.provisioner != nil {
+		errs = errors.Join(errs, s.provisioner.Close(ctx))
+	}
+
+	if s.workhubServer != nil {
+		errs = errors.Join(errs, s.workhubServer.Close(ctx))
+	}
 
 	if s.store != nil && s.store.Running() {
 		errs = errors.Join(errs, s.store.Close())

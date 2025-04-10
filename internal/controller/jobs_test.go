@@ -4,53 +4,58 @@ import (
 	"context"
 	"testing"
 
-	"github.com/artefactual-labs/gearmin/gearmintest"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"github.com/mikespook/gearman-go/worker"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-labs/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher/dispatchermock"
 	"github.com/artefactual-labs/ccp/internal/store/enums"
 	"github.com/artefactual-labs/ccp/internal/store/storemock"
 	"github.com/artefactual-labs/ccp/internal/workflow"
 )
 
-func createJob(t *testing.T, linkID string) (*job, *storemock.MockStore) {
-	t.Helper()
+type testJob struct {
+	job *job
 
-	return createJobWithHandlers(t, linkID, nil)
+	store      *storemock.MockStore
+	backend    *dispatchermock.MockBackend
+	dispatcher *dispatcher.Dispatcher
 }
 
-func createJobWithHandlers(t *testing.T, linkID string, handlers map[string]gearmintest.Handler) (*job, *storemock.MockStore) {
+// createJob creates a new job for testing purposes.
+func createJob(t *testing.T, linkID string) *testJob {
 	t.Helper()
 
-	tmpDir := fs.NewDir(t, "ccp", fs.WithDir("sharedDir/tmp/pkg"))
+	logger := logr.Discard()
+	metrics := metrics.NewMetrics(nil)
+	ctrl := gomock.NewController(t)
+	backend := dispatchermock.NewMockBackend(ctrl)
+	store := storemock.NewMockStore(ctrl)
+	dispatcher := dispatcher.NewWithBackend(logger, metrics, store, backend)
 
-	if handlers == nil {
-		handlers = map[string]gearmintest.Handler{
-			"hello": func(job worker.Job) ([]byte, error) {
-				return []byte("hi!"), nil
-			},
-		}
-	}
-	gearmin := gearmintest.Server(t, handlers)
 	wf, _ := workflow.Default()
 	ln := wf.Links[uuid.MustParse(linkID)]
-	store := storemock.NewMockStore(gomock.NewController(t))
 	chain := newChain(nil)
 
+	tmpDir := fs.NewDir(t, "ccp", fs.WithDir("sharedDir/tmp/pkg"))
 	pkg := newPackage(logr.Discard(), store, tmpDir.Join("sharedDir"))
 	pkg.id = uuid.New()
 	pkg.unit = &noUnit{}
 	pkg.path = tmpDir.Join("sharedDir/tmp/pkg")
 
-	job, err := newJob(logr.Discard(), metrics.NewMetrics(nil), chain, pkg, gearmin, ln, wf)
+	job, err := newJob(logger, metrics, chain, pkg, dispatcher, ln, wf)
 	assert.NilError(t, err)
 
-	return job, store
+	return &testJob{
+		job:        job,
+		store:      store,
+		backend:    backend,
+		dispatcher: dispatcher,
+	}
 }
 
 type noUnit struct{}

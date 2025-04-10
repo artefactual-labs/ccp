@@ -6,18 +6,19 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
 
 	"connectrpc.com/authn"
-	"github.com/artefactual-labs/gearmin"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
 	adminv1 "github.com/artefactual-labs/ccp/internal/api/gen/archivematica/ccp/admin/v1beta1"
 	"github.com/artefactual-labs/ccp/internal/cmd/servercmd/metrics"
+	"github.com/artefactual-labs/ccp/internal/controller/dispatcher"
 	"github.com/artefactual-labs/ccp/internal/derrors"
 	"github.com/artefactual-labs/ccp/internal/store"
 	"github.com/artefactual-labs/ccp/internal/workflow"
@@ -37,8 +38,8 @@ type Controller struct {
 	// Application store.
 	store store.Store
 
-	// Embedded job server compatible with Gearman.
-	gearman *gearmin.Server
+	// Dispatcher for background execution.
+	dispatcher *dispatcher.Dispatcher
 
 	// wf is the workflow document.
 	wf *workflow.Document
@@ -75,12 +76,12 @@ type Controller struct {
 	closeOnce sync.Once
 }
 
-func New(logger logr.Logger, metrics *metrics.Metrics, store store.Store, gearman *gearmin.Server, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
+func New(logger logr.Logger, metrics *metrics.Metrics, store store.Store, dispatcher *dispatcher.Dispatcher, wf *workflow.Document, sharedDir, watchedDir string) *Controller {
 	c := &Controller{
 		logger:           logger,
 		metrics:          metrics,
 		store:            store,
-		gearman:          gearman,
+		dispatcher:       dispatcher,
 		wf:               wf,
 		sharedDir:        sharedDir,
 		watchedDir:       watchedDir,
@@ -215,7 +216,7 @@ func (c *Controller) pick() {
 		logger.Info("Processing started.")
 		defer c.deactivate(pkg)
 
-		iter := newJobIterator(c.groupCtx, logger, c.metrics, c.gearman, c.wf, pkg)
+		iter := newJobIterator(c.groupCtx, logger, c.metrics, c.dispatcher, c.wf, pkg)
 		for {
 			err := iter.next() // Runs the next job.
 
@@ -242,7 +243,7 @@ func (c *Controller) deactivate(pkg *Package) {
 
 	for i, item := range c.activePackages {
 		if item.id == pkg.id {
-			c.activePackages = append(c.activePackages[:i], c.activePackages[i+1:]...)
+			c.activePackages = slices.Delete(c.activePackages, i, i+1)
 			c.metrics.ActivePackageGauge.Dec()
 			c.metrics.PackageQueueLengthGauge.WithLabelValues(pkg.packageType().String()).Dec()
 			break
@@ -284,7 +285,7 @@ func (c *Controller) queueToAwait(pkg *Package, dec *decision) error {
 	}
 
 	// Remove from the active list.
-	c.activePackages = append(c.activePackages[:*pos], c.activePackages[*pos+1:]...)
+	c.activePackages = slices.Delete(c.activePackages, *pos, *pos+1)
 
 	// Add to the awaiting list.
 	if l, ok := c.awaitingPackages[pkg.id]; !ok {
@@ -320,7 +321,7 @@ func (c *Controller) dequeueFromAwait(pkg *Package, dec *decision) {
 	}
 
 	// Remove the decision from the slice.
-	decisions = append(decisions[:*pos], decisions[*pos+1:]...)
+	decisions = slices.Delete(decisions, *pos, *pos+1)
 
 	// Update the awaitingPackages map.
 	if len(decisions) == 0 {

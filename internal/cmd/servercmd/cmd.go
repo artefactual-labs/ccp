@@ -37,6 +37,9 @@ func New(rootConfig *rootcmd.Config, out io.Writer) *ffcli.Command {
 	fs.StringVar(&cfg.webui.Addr, "webui.addr", ":8001", "Web UI listen address")
 	fs.StringVar(&cfg.gearmin.addr, "gearmin.addr", ":4730", "Gearmin job server listen address")
 	fs.StringVar(&cfg.metrics.Addr, "metrics.addr", "", "Prometheus HTTP API listen address")
+	fs.StringVar(&cfg.hub.Addr, "hub.addr", ":8002", "Worker API listen address")
+	fs.Var(&cfg.provisioner.Type, "provisioner.type", "Provisioner type, e.g.: \"local\", leave empty to disable)")
+	fs.IntVar(&cfg.provisioner.Count, "provisioner.count", 1, "Number of workers to provision (if enabled)")
 
 	rootConfig.RegisterFlags(fs)
 

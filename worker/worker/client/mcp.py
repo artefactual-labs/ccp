@@ -20,10 +20,7 @@ def main() -> None:
 
     # Use local XML schemas for validation.
     os.environ["XML_CATALOG_FILES"] = str(
-        importlib.resources.files("worker")
-        / "assets"
-        / "catalog"
-        / "catalog.xml"
+        importlib.resources.files("worker") / "assets" / "catalog" / "catalog.xml"
     )
 
     pool = WorkerPool()

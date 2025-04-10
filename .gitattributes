@@ -1,2 +1,6 @@
-*.py ident
-*.sh ident
+internal/api/gen/** linguist-generated=true
+web/src/gen/** linguist-generated=true
+internal/controller/dispatcher/dispatchermock/** linguist-generated=true
+internal/store/storemock/** linguist-generated=true
+internal/store/sqlcmysql/** linguist-generated=true
+internal/store/enums/*_enum.go linguist-generated=true

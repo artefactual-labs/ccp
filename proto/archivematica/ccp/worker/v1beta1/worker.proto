@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package archivematica.ccp.worker.v1beta1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// WorkerService is hosted by the central scheduler/dispatcher.
+// Workers connect to this service to grab batches and report results.
+service WorkerService {
+  // GrabBatch allows a worker to poll for and receive a batch of tasks.
+  //
+  // This should be implemented as a long-poll on the server side,
+  // holding the request until a batch is available or a timeout occurs.
+  rpc GrabBatch(GrabBatchRequest) returns (GrabBatchResponse);
+
+  // CompleteBatch allows a worker to report the final completion status of a
+  // batch.
+  //
+  // This should be called after the worker has finished processing a batch.
+  rpc CompleteBatch(CompleteBatchRequest) returns (CompleteBatchResponse);
+
+  // Heartbeat allows a worker to signal its liveness.
+  //
+  // A worker should call this periodically (e.g., every minute) after receiving
+  // a batch via GrabBatch and before calling CompleteBatch, especially if batch
+  // processing might exceed the server's configured worker expiration timeout.
+  // This prevents the server from incorrectly assuming the worker has crashed
+  // during long-running tasks.
+  //
+  // Calling Heartbeat while idle (waiting to GrabBatch) is generally not
+  // necessary, as the GrabBatch call itself signals liveness.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+message GrabBatchRequest {
+  // This ID uniquely identifies a specific worker instance across restarts.
+  //
+  // The server uses it for tracking, state management, and correlating tasks.
+  // Workers should aim for a stable ID.
+  string worker_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GrabBatchResponse {
+  // The ID of the batch assigned to the worker.
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // All tasks in the batch are expected to use the same function.
+  string function = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Contains details of the tasks assigned to the worker as part of a batch.
+  //
+  // This list can be empty if no batch is immediately available (e.g. due to
+  // server long-poll timeout), in which case the worker should immediately
+  // retry the request.
+  repeated Task tasks = 3;
+}
+
+message CompleteBatchRequest {
+  // Worker reporting the result.
+  string worker_id = 1 [(buf.validate.field).string.uuid = true];
+
+  // The batch being reported on.
+  string batch_id = 2 [(buf.validate.field).string.uuid = true];
+
+  // The final result details.
+  repeated TaskResult results = 3;
+}
+
+message CompleteBatchResponse {}
+
+// Contains the details needed for a worker to execute a specific task,
+// sent by the server within GrabBatchResponse.
+message Task {
+  // Identifier for the task.
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Identifier of the batch this task belongs to.
+  string batch_id = 2 [(buf.validate.field).string.uuid = true];
+
+  // The specific function the worker should run.
+  string function = 3 [(buf.validate.field).string.min_len = 1];
+
+  // The function arguments.
+  string arguments = 4;
+
+  // Indicates if the server expects stdout/stderr to be captured and returned.
+  bool wants_output = 5;
+
+  // When the task was created.
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// Represents the final result of a task execution.
+message TaskResult {
+  // Identifier for the task.
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Exit code.
+  int32 exit_code = 2;
+
+  // Standard output.
+  bytes stdout = 3;
+
+  // Standard error output.
+  bytes stderr = 4;
+
+  // When the task completed.
+  google.protobuf.Timestamp finished_at = 5;
+}
+
+// Represents a heartbeat signal from the worker to the server.
+message HeartbeatRequest {
+  // Worker ID.
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+// Represents the server's response to a heartbeat signal.
+message HeartbeatResponse {}
