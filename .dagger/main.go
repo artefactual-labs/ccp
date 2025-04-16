@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	goVersion           = "1.24.1"
+	goVersion           = "1.24.2"
 	golangciLintVersion = "v2.0.2"
 
 	gitURL = "https://github.com/artefactual-labs/ccp.git"
