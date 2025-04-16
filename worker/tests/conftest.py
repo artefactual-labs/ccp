@@ -1,3 +1,4 @@
+import importlib.resources
 import pathlib
 
 import pytest
@@ -14,13 +15,7 @@ def set_xml_catalog_files(monkeypatch: pytest.MonkeyPatch) -> None:
     """Use local XML schemas for validation."""
     monkeypatch.setenv(
         "XML_CATALOG_FILES",
-        str(
-            pathlib.Path(__file__).parent.parent
-            / "worker"
-            / "assets"
-            / "catalog"
-            / "catalog.xml"
-        ),
+        str(importlib.resources.files("worker") / "assets" / "catalog" / "catalog.xml"),
     )
 
 
