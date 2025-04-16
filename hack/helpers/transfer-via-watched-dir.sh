@@ -19,4 +19,4 @@ else
 fi
 
 
-mv $transfer ~/.ccp/am-pipeline-data/watchedDirectories/activeTransfers/standardTransfer/
+mv $transfer ~/.ccp/data/watchedDirectories/activeTransfers/standardTransfer/

@@ -1,14 +1,10 @@
 .DEFAULT_GOAL := help
 
-# Paths for Docker named volumes
-AM_PIPELINE_DATA ?= $(HOME)/.ccp/am-pipeline-data
+# Paths for Docker named volumes.
+CCP_DATA ?= $(HOME)/.ccp/data
 
 CALLER_UID=$(shell id -u)
 CALLER_GID=$(shell id -g)
-
-NULL :=
-SPACE := $(NULL) $(NULL)
-COMMA := ,
 
 define create_db
 	docker compose exec -T mysql mysql -hlocalhost -uroot -p12345 -e '\
@@ -23,24 +19,24 @@ define grant_all_on_db
 endef
 
 create-volumes:  ## Create external data volumes.
-	mkdir -p ${AM_PIPELINE_DATA}
+	mkdir -p ${CCP_DATA}
 	docker volume create \
 		--opt type=none \
 		--opt o=bind \
-		--opt device=$(AM_PIPELINE_DATA) \
-			ccp-am-pipeline-data
+		--opt device=$(CCP_DATA) \
+			ccp-data
 
-build:  # Build Compose services.
+build:  ## Build Compose services.
 	docker compose build \
 		--build-arg USER_ID=$(CALLER_UID) \
 		--build-arg GROUP_ID=$(CALLER_GID)
 
 run:
-	$(MAKE) flush-shared-dir
+	$(MAKE) flush-data-dir
 	docker compose up -d --force-recreate --build --no-deps mysql ccp worker
 	docker compose logs -f ccp worker
 
-manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage-ss ARG=shell`
+manage:  ## Run Django /manage.py on Dashboard, suppling <command> [options] as value to ARG, e.g., `make manage ARG=shell`
 	docker compose run \
 		--user $(CALLER_UID):$(CALLER_GID) \
 		--rm \
@@ -79,15 +75,15 @@ dbdump:  ## Dump database.
 dbschemadump:  ## Dump shema.
 	@docker-compose exec mysql mysqldump -hlocalhost -uroot -p12345 --no-data --skip-add-drop-table CCP
 
-flush: flush-shared-dir bootstrap restart  ## Delete ALL user data.
+flush: flush-data-dir bootstrap restart  ## Delete ALL user data.
 
-flush-shared-dir-mcp-configs:  ## Delete processing configurations - it restarts the server.
-	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/defaultProcessingMCP.xml
-	rm -f ${AM_PIPELINE_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/automatedProcessingMCP.xml
+flush-data-mcp-configs:  ## Delete processing configurations - it restarts the server.
+	rm -f ${CCP_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/defaultProcessingMCP.xml
+	rm -f ${CCP_DATA}/sharedMicroServiceTasksConfigs/processingMCPConfigs/automatedProcessingMCP.xml
 	docker compose restart --no-deps ccp
 
-flush-shared-dir:  ## Delete contents of the shared directory data volume.
-	rm -rf ${AM_PIPELINE_DATA}/*
+flush-data-dir:  ## Delete contents of the shared directory data volume.
+	rm -rf ${CCP_DATA}/*
 
 flush-logs:  ## Delete container logs - requires root privileges.
 	@./helpers/flush-docker-logs.sh

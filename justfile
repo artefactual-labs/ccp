@@ -101,6 +101,8 @@ worker-test-application *args:
 pre-commit *args:
   uvx pre-commit run --all-files {{args}}
 
+alias list-go-deps := list-go-deps-updates-direct
+
 # List all of the modules that are dependencies of your current Go module.
 list-go-deps-all:
   go list -u -m -json all | go tool bine run go-mod-outdated

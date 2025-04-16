@@ -15,8 +15,8 @@ volumes:
   # They use bind mounts to mount a specific "local" directory on the docker
   # host - the expectation being that these directories are actually mounted
   # filesystems from elsewhere.
-  archivematica_pipeline_data:
-    name: "ccp-am-pipeline-data"
+  ccp_data:
+    name: "ccp-data"
     external: true
 
 
@@ -57,7 +57,7 @@ services:
       - "CCP_METRICS_ADDR=:7999"
     volumes:
       - "./submodules/archivematica-sampledata/:/home/archivematica/archivematica-sampledata/:ro"
-      - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
+      - "ccp_data:/var/archivematica/sharedDirectory:rw"
     links:
       - "mysql"
     ports:
@@ -86,7 +86,7 @@ services:
     volumes:
       - "../worker:/src"
       - "/src/.venv"
-      - "archivematica_pipeline_data:/var/archivematica/sharedDirectory:rw"
+      - "ccp_data:/var/archivematica/sharedDirectory:rw"
     links:
       - "mysql"
       - "ccp"

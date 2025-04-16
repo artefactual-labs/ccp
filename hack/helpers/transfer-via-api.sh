@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-grpcurl \
+go tool bine run grpcurl \
   -plaintext \
   -H "Authorization: ApiKey test:test" \
   -d '{
