@@ -96,6 +96,7 @@ module = [
     "worker.clientScripts.transcribe_file",
     "worker.clientScripts.validate_file",
     "worker.utils.executeOrRunSubProcess",
+    "tests.conftest",
     "tests.test_characterize_file",
     "tests.test_create_mets_v2",
     "tests.test_fpr_commands",

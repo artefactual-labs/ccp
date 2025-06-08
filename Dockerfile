@@ -140,10 +140,6 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
 
 ENV PATH="/src/.venv/bin:$PATH"
 
-# Assets needed by FPR scripts.
-COPY --link worker/externals/fido/ /usr/lib/archivematica/archivematicaCommon/externals/fido/
-COPY --link worker/externals/fiwalk_plugins/ /usr/lib/archivematica/archivematicaCommon/externals/fiwalk_plugins/
-
 ENTRYPOINT ["worker"]
 
 # -----------------------------------------------------------------------------
