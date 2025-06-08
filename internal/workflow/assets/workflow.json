@@ -2426,8 +2426,8 @@
       "config": {
         "@manager": "linkTaskManagerFiles",
         "@model": "StandardTaskConfig",
-        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\" \"%taskUUID%\"",
-        "execute": "archivematicaClamscan_v0.0",
+        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\"",
+        "execute": "antivirus_v0.0",
         "filter_subdir": "objects/submissionDocumentation",
         "stderr_file": "%SIPLogsDirectory%clamAVScan.txt"
       },
@@ -2457,8 +2457,8 @@
       "config": {
         "@manager": "linkTaskManagerFiles",
         "@model": "StandardTaskConfig",
-        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\" \"%taskUUID%\"",
-        "execute": "archivematicaClamscan_v0.0",
+        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\"",
+        "execute": "antivirus_v0.0",
         "stderr_file": "%SIPLogsDirectory%clamAVScan.txt"
       },
       "description": {
@@ -2757,8 +2757,8 @@
       "config": {
         "@manager": "linkTaskManagerFiles",
         "@model": "StandardTaskConfig",
-        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\" \"%taskUUID%\"",
-        "execute": "archivematicaClamscan_v0.0",
+        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\"",
+        "execute": "antivirus_v0.0",
         "stderr_file": "%SIPLogsDirectory%clamAVScan.txt"
       },
       "description": {
@@ -6335,8 +6335,8 @@
       "config": {
         "@manager": "linkTaskManagerFiles",
         "@model": "StandardTaskConfig",
-        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\" \"%taskUUID%\"",
-        "execute": "archivematicaClamscan_v0.0",
+        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\"",
+        "execute": "antivirus_v0.0",
         "filter_subdir": "objects/"
       },
       "description": {
@@ -6882,8 +6882,8 @@
       "config": {
         "@manager": "linkTaskManagerFiles",
         "@model": "StandardTaskConfig",
-        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\" \"%taskUUID%\"",
-        "execute": "archivematicaClamscan_v0.0",
+        "arguments": "\"%fileUUID%\" \"%relativeLocation%\" \"%date%\"",
+        "execute": "antivirus_v0.0",
         "filter_subdir": "objects/metadata",
         "stderr_file": "%SIPLogsDirectory%clamAVScan.txt"
       },
