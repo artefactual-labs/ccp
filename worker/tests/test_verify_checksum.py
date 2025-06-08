@@ -33,6 +33,7 @@ from worker.clientScripts.verify_checksum import NoHashCommandAvailable
 from worker.clientScripts.verify_checksum import PREMISFailure
 from worker.clientScripts.verify_checksum import get_file_queryset
 from worker.clientScripts.verify_checksum import write_premis_event_per_file
+from worker.main.models import Agent
 from worker.main.models import Event
 from worker.main.models import File
 
@@ -278,6 +279,14 @@ class TestHashsum:
         """Test that the microservice job connects to the database as
         anticipated, writes its data, and that data can then be retrieved.
         """
+        Agent.objects.get_or_create(
+            pk=2,
+            agenttype="organization",
+            identifiervalue="ORG",
+            name="Your Organization Name Here",
+            identifiertype="repository code",
+        )
+
         # Values the job will write.
         algorithms = ["md5", "sha512", "sha1"]
         event_type = "fixity check"

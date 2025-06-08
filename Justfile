@@ -157,23 +157,24 @@ worker-upstream-changes:
 
 # Update worker dependencies.
 [group("worker")]
+[working-directory("worker")]
 worker-update-deps: (install "uv")
-  #!/usr/bin/env bash
-  cd worker
-  uv sync --frozen
-  uv lock --upgrade
+  uv sync --frozen && uv lock --upgrade
 
 # List outdated worker dependencies.
 [group("worker")]
+[working-directory("worker")]
 worker-list-outdated-deps: (install "uv")
-  uv --project=worker pip list --outdated
+  uv pip list --outdated
 
 # Test worker migrations.
 [group("worker")]
+[working-directory("worker")]
 worker-test-migrations: (install "uv")
-  uv run --project=worker django-admin makemigrations --settings=settings.test --check --dry-run
+  uv run django-admin makemigrations --settings=settings.test --check --dry-run
 
 # Test worker application.
 [group("worker")]
+[working-directory("worker")]
 worker-test-application *args: (install "uv")
-  uv run --project=worker pytest {{args}}
+  uv run pytest {{args}}

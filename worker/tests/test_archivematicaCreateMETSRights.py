@@ -8,6 +8,9 @@ from worker.utils.namespaces import NSMAP
 
 @pytest.fixture()
 def rights_statement(db, sip_file):
+    models.MetadataAppliesToType.objects.get_or_create(
+        pk="7f04d9d4-92c2-44a5-93dc-b7bfdf0c1f17", description="File"
+    )
     statement = models.RightsStatement.objects.create(
         metadataappliestotype=models.MetadataAppliesToType.objects.get(
             id=models.MetadataAppliesToType.FILE_TYPE
