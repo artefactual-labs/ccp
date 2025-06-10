@@ -3,8 +3,8 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG PYTHON_VERSION=3.12.11
 ARG GO_VERSION=1.24.4
-ARG UV_VERSION=0.7.11
-ARG NODE_VERSION=20
+ARG UV_VERSION=0.7.12
+ARG NODE_VERSION=22
 ARG MEDIAAREA_VERSION=1.0-25
 ARG JHOVE_VERSION=1.32.1-1~22.04
 
@@ -176,7 +176,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 
 # -----------------------------------------------------------------------------
 
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:8dd8d3ca2cf283383304fd45a5c9c74d5f2cd9da8d3b077d720e264880077c65 AS ccp
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:188ddfb9e497f861177352057cb21913d840ecae6c843d39e00d44fa64daa51c AS ccp
 COPY --from=go-builder /out/ccp /ccp
 ARG USER_ID
 ARG GROUP_ID

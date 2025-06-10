@@ -2,5 +2,5 @@
 version: v2
 deps:
   - name: buf.build/bufbuild/protovalidate
-    commit: 0409229c37804d6187ee0806eb4eebce
-    digest: b5:795db9d3a6e066dc61d99ac651fa7f136171869abe2211ca272dd84aada7bc4583b9508249fa5b61300a5b1fe8b6dbf6edbc088aa0345d1ccb9fff705e3d48e9
+    commit: b52ab10f44684cb19d1fbcad56aedd36
+    digest: b5:5f464399f5ea7546eb3c6a4e822a306da538298f3d87e9f974f4523d4955de396eb2b8b52a2f3f06ac290764d80cecbaa0a4c96560558e43d9b1c722e61a9d5c

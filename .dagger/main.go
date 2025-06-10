@@ -13,8 +13,8 @@ const (
 
 	gitURL = "https://github.com/artefactual-labs/ccp.git"
 
-	alpineImage = "alpine:3.20.1"
-	mysqlImage  = "mysql:8.4.1"
+	alpineImage = "alpine:3.22.0"
+	mysqlImage  = "mysql:8.4.5"
 )
 
 type CCP struct {
