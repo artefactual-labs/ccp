@@ -3,8 +3,8 @@ module github.com/artefactual-labs/ccp
 go 1.24.4
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250603165357-b52ab10f4468.1
-	buf.build/go/protovalidate v0.12.0
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250612022732-297b8109523d.1
+	buf.build/go/protovalidate v0.13.0
 	connectrpc.com/authn v0.2.0
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/grpchealth v1.4.0
