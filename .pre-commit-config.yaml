@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: pretty-format-json
     args: [--no-ensure-ascii, --autofix]
@@ -9,13 +9,13 @@ repos:
         internal/workflow/assets/.*\.json
       )
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.13
+  rev: v0.12.12
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix]
   - id: ruff-format
 - repo: https://github.com/adamchainz/django-upgrade
-  rev: "1.25.0"
+  rev: "1.27.0"
   hooks:
   - id: django-upgrade
     args: [--target-version, "4.2"]
@@ -38,7 +38,7 @@ repos:
         worker/install/README\.md
       )
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.16.0
+  rev: v1.17.1
   hooks:
   - id: mypy
     files: "^worker/"
