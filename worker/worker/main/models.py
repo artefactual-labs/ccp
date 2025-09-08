@@ -944,6 +944,9 @@ class Job(models.Model):
                 )
             ),
             models.Index(fields=("jobtype", "currentstep")),
+            models.Index(
+                fields=("unittype", "sipuuid", "createdtime", "createdtimedec")
+            ),
         ]
 
     @staticmethod
