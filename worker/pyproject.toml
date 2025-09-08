@@ -6,7 +6,7 @@ dependencies = [
     "Django>=4.2,<5",
     "agentarchives>=0.9.0",
     "ammcpc>=0.2.0",
-    "bagit",
+    "bagit==1.9.0",
     "clamav-client>=0.7.1",
     "django-autoslug>=1.9.9",
     "django-tastypie>=0.14.7",
@@ -37,7 +37,6 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-bagit = { git = "https://github.com/LibraryOfCongress/bagit-python", rev = "v1.9b2" }
 gearman3 = { git = "https://github.com/artefactual-labs/python-gearman.git", rev = "b68efc868c7a494dd6a2d2e820fb098a6da9f797" }
 opf-fido = { git = "https://github.com/artefactual-labs/fido.git", rev = "564ceb8018a8650fe931cf20e6780ee008e60fca" }
 
