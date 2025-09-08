@@ -19,8 +19,12 @@ def main() -> None:
     metrics.start_prometheus_server()
 
     # Use local XML schemas for validation.
-    os.environ["XML_CATALOG_FILES"] = str(
+    existing_catalogs = os.environ.get("XML_CATALOG_FILES", "")
+    catalog = str(
         importlib.resources.files("worker") / "assets" / "catalog" / "catalog.xml"
+    )
+    os.environ["XML_CATALOG_FILES"] = (
+        f"{catalog} {existing_catalogs}" if existing_catalogs else catalog
     )
 
     pool = WorkerPool()
