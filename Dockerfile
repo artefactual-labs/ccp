@@ -6,7 +6,7 @@ ARG GO_VERSION=1.24.4
 ARG UV_VERSION=0.7.12
 ARG NODE_VERSION=22
 ARG MEDIAAREA_VERSION=1.0-25
-ARG JHOVE_VERSION=1.32.1-1~22.04
+ARG JHOVE_VERSION=1.34.0-1~22.04
 
 # -----------------------------------------------------------------------------
 

@@ -89,6 +89,7 @@ services:
       ARCHIVEMATICA_WORKER_DB_PASSWORD: "demo"
       ARCHIVEMATICA_WORKER_DB_HOST: "mysql"
       ARCHIVEMATICA_WORKER_DB_DATABASE: "CCP"
+      XML_CATALOG_FILES: "/src/hack/submodules/archivematica-sampledata/xml-validation/catalog.xml"
     volumes:
       - "ccp_data:/var/archivematica/sharedDirectory:rw"
     networks:
