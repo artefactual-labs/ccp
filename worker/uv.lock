@@ -211,7 +211,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/d8/96/2e27e872d34f360ac
 [[package]]
 name = "gearman3"
 version = "0.2.1"
-source = { git = "https://github.com/artefactual-labs/python-gearman.git?rev=b68efc868c7a494dd6a2d2e820fb098a6da9f797#b68efc868c7a494dd6a2d2e820fb098a6da9f797" }
+source = { git = "https://github.com/artefactual-labs/python-gearman.git?rev=5ec784580e5320a089f969d4936512cd3b68479d#5ec784580e5320a089f969d4936512cd3b68479d" }
 
 [[package]]
 name = "idna"
@@ -604,7 +604,7 @@ requires-dist = [
     { name = "django", specifier = ">=4.2,<5" },
     { name = "django-autoslug", specifier = ">=1.9.9" },
     { name = "django-tastypie", specifier = ">=0.14.7" },
-    { name = "gearman3", git = "https://github.com/artefactual-labs/python-gearman.git?rev=b68efc868c7a494dd6a2d2e820fb098a6da9f797" },
+    { name = "gearman3", git = "https://github.com/artefactual-labs/python-gearman.git?rev=5ec784580e5320a089f969d4936512cd3b68479d" },
     { name = "lxml", specifier = ">=5.3.0" },
     { name = "metsrw", specifier = ">=0.5.1" },
     { name = "opf-fido", git = "https://github.com/artefactual-labs/fido.git?rev=564ceb8018a8650fe931cf20e6780ee008e60fca" },
