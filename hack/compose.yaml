@@ -72,7 +72,6 @@ services:
       - "63031:8001"
 
   worker:
-    platform: "linux/amd64"
     build:
       context: "../"
       target: "worker"
@@ -96,7 +95,6 @@ services:
       - "backend"
 
   migrate:
-    platform: "linux/amd64"
     build:
       context: "../"
       target: "worker"
